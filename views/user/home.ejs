@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEARGRID - Gaming Gear Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
+        }
+        
+        .hero-section {
+            background: linear-gradient(to bottom right, #000000, #1a1a1a);
+        }
+        
+        .product-card {
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .cyber-gradient {
+            background: linear-gradient(135deg, #1e40af 0%, #0891b2 50%, #1e3a8a 100%);
+        }
+        
+        .btn-cyan {
+            background: #06b6d4;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-cyan:hover {
+            background: #0891b2;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <%-include("../../views/partials/header.ejs")%>
+
+    <!-- Hero Section -->
+    <section class="hero-section pt-24 pb-12 min-h-screen flex items-center">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-8 items-center">
+            <div>
+                <h1 class="text-6xl font-bold mb-6 leading-tight">
+                    THE CHAMPION OF PRO<br>
+                    KEYBOARDS HAS ARRIVED
+                </h1>
+                <p class="text-gray-400 mb-8 text-lg leading-relaxed">
+                    Elevate your game with tenkeyless cutting-edge switches,<br>
+                    lightning-fast response, and precision.
+                </p>
+                <button class="btn-cyan text-black font-bold px-8 py-3 rounded text-sm">
+                    SHOP APEX 5 TKL SERIES
+                </button>
+            </div>
+            
+            <div class="relative">
+                <div class="w-full h-96 bg-gray-800 rounded-lg flex items-center justify-center text-gray-600">
+                    [Keyboard Hero Image]
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Shop Section -->
+    <section class="py-12 bg-zinc-900">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center justify-center mb-8">
+                <button class="text-sm font-medium flex items-center gap-2">
+                    SHOP NEW & BEST SELLERS <span>▼</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- Product Card 1 -->
+                <div class="product-card rounded-lg overflow-hidden">
+                    <div class="bg-white p-6 flex items-center justify-center h-48">
+                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+                            [Keyboard]
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white text-black">
+                        <div class="flex gap-2 mb-2">
+                            <span class="w-3 h-3 bg-black rounded-full border border-gray-300"></span>
+                            <span class="w-3 h-3 bg-gray-300 rounded-full border border-gray-300"></span>
+                        </div>
+                        <h3 class="font-bold text-sm mb-1">G515 TKL</h3>
+                        <p class="text-2xl font-bold mb-1">$249</p>
+                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
+                        <div class="flex items-center gap-1 text-xs mt-2">
+                            <span class="text-yellow-500">★★★★★</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Card 2 -->
+                <div class="product-card rounded-lg overflow-hidden">
+                    <div class="bg-white p-6 flex items-center justify-center h-48">
+                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+                            [Keyboard]
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white text-black relative">
+                        <div class="flex gap-2 mb-2">
+                            <span class="w-3 h-3 bg-black rounded-full border border-gray-300"></span>
+                            <span class="w-3 h-3 bg-gray-300 rounded-full border border-gray-300"></span>
+                        </div>
+                        <h3 class="font-bold text-sm mb-1">G915 X LIGHTSPEED</h3>
+                        <p class="text-2xl font-bold mb-1">$199.99</p>
+                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
+                        <div class="flex items-center gap-1 text-xs mt-2">
+                            <span class="text-yellow-500">★★★★★</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Card 3 -->
+                <div class="product-card rounded-lg overflow-hidden">
+                    <div class="bg-white p-6 flex items-center justify-center h-48">
+                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+                            [Headset]
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white text-black relative">
+                        <div class="flex gap-2 mb-2">
+                            <span class="w-3 h-3 bg-black rounded-full border border-gray-300"></span>
+                            <span class="w-3 h-3 bg-gray-300 rounded-full border border-gray-300"></span>
+                        </div>
+                        <h3 class="font-bold text-sm mb-1">PRO X2G (GEN 5)</h3>
+                        <p class="text-2xl font-bold mb-1">$199.99</p>
+                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
+                        <div class="flex items-center gap-1 text-xs mt-2">
+                            <span class="text-yellow-500">★★★★★</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Card 4 -->
+                <div class="product-card rounded-lg overflow-hidden">
+                    <div class="bg-white p-6 flex items-center justify-center h-48">
+                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+                            [Keyboard]
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white text-black relative">
+                        <div class="flex gap-2 mb-2">
+                            <span class="w-3 h-3 bg-pink-500 rounded-full"></span>
+                            <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
+                            <span class="w-3 h-3 bg-gray-300 rounded-full"></span>
+                        </div>
+                        <h3 class="font-bold text-sm mb-1">G915 X</h3>
+                        <p class="text-2xl font-bold mb-1">$219</p>
+                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
+                        <div class="flex items-center gap-1 text-xs mt-2">
+                            <span class="text-yellow-500">★★★★★</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Card 5 -->
+                <div class="product-card rounded-lg overflow-hidden">
+                    <div class="bg-white p-6 flex items-center justify-center h-48">
+                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+                            [Mouse]
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white text-black relative">
+                        <div class="flex gap-2 mb-2">
+                            <span class="w-3 h-3 bg-black rounded-full border border-gray-300"></span>
+                            <span class="w-3 h-3 bg-gray-300 rounded-full border border-gray-300"></span>
+                        </div>
+                        <h3 class="font-bold text-sm mb-1">PRO X SUPERLIGHT 2 DEX</h3>
+                        <p class="text-2xl font-bold mb-1">$199.99</p>
+                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
+                        <div class="flex items-center gap-1 text-xs mt-2">
+                            <span class="text-yellow-500">★★★★★</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Card 6 -->
+                <div class="product-card rounded-lg overflow-hidden">
+                    <div class="bg-white p-6 flex items-center justify-center h-48">
+                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+                            [Mouse]
+                        </div>
+                    </div>
+                    <div class="p-4 bg-white text-black relative">
+                        <div class="flex gap-2 mb-2">
+                            <span class="w-3 h-3 bg-black rounded-full border border-gray-300"></span>
+                            <span class="w-3 h-3 bg-pink-500 rounded-full"></span>
+                            <span class="w-3 h-3 bg-gray-300 rounded-full"></span>
+                        </div>
+                        <h3 class="font-bold text-sm mb-1">G502 X PLUS</h3>
+                        <p class="text-lg"><span class="font-bold">$99.99</span> <span class="line-through text-gray-400">$159.99</span></p>
+                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
+                        <div class="flex items-center gap-1 text-xs mt-2">
+                            <span class="text-yellow-500">★★★★★</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cyber Monday Banner -->
+    <section class="relative overflow-hidden">
+        <div class="grid md:grid-cols-2">
+            <!-- Left Side -->
+            <div class="bg-black p-16 md:p-24 flex items-center justify-center min-h-[600px]">
+                <div class="max-w-lg">
+                    <p class="text-cyan-400 text-xs mb-3 tracking-widest font-semibold">2024 SALES EVENT</p>
+                    <h2 class="text-6xl md:text-7xl font-bold mb-6">
+                        CYBER <span class="text-cyan-400">MONDAY</span>
+                    </h2>
+                    <p class="text-gray-400 mb-4 text-sm leading-relaxed">
+                        UP TO $500 IN PROMOTIONAL DISCOUNTS<br>
+                        FREE HARDWARE UPGRADES, GAME BUNDLES<br>
+                        AND $200 OFF ORDERS OVER $2,999 **
+                    </p>
+                    <button class="border-2 border-white hover:bg-white hover:text-black px-8 py-3 rounded text-sm font-bold transition mt-6">
+                        SHOP NOW
+                    </button>
+                    <p class="text-gray-600 text-xs mt-6 leading-relaxed">
+                        ** $200 off orders of $2,999 or more on participating desktop PCs, ending 11/30/23 at 11:59pm PT. Some exclusions apply.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Right Side -->
+            <div class="cyber-gradient p-16 md:p-24 flex items-center justify-center relative min-h-[600px]">
+                <div class="relative">
+                    <div class="w-96 h-96 bg-black/30 rounded-2xl flex items-center justify-center text-gray-400">
+                        [Gaming PC Image]
+                    </div>
+                    
+                    <!-- Floating Icons -->
+                    <div class="absolute -left-16 top-1/2 -translate-y-1/2 flex flex-col items-center">
+                        <div class="w-20 h-20 bg-cyan-400 rounded-full flex items-center justify-center mb-3">
+                            <span class="text-3xl">🎮</span>
+                        </div>
+                        <p class="text-xs text-center text-white font-semibold">GET FREE<br>GAME BUNDLE</p>
+                    </div>
+                    
+                    <div class="absolute -right-16 top-1/2 -translate-y-1/2 flex flex-col items-center">
+                        <div class="w-20 h-20 bg-pink-500 rounded-full flex items-center justify-center mb-3">
+                            <span class="text-3xl">⬆️</span>
+                        </div>
+                        <p class="text-xs text-center text-white font-semibold">GET FREE<br>HARDWARE UPGRADE</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gaming Icons Section -->
+    <section class="bg-zinc-950 py-16">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-center items-center gap-12 mb-8 opacity-60">
+                <div class="text-center">
+                    <div class="text-4xl mb-2">⚔️</div>
+                    <p class="text-xs">Swift</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">🛡️</div>
+                    <p class="text-xs">Sounds</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">🦅</div>
+                    <p class="text-xs">Impulse</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">🦁</div>
+                    <p class="text-xs">Roa</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">🐺</div>
+                    <p class="text-xs">Dakaris</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">🦈</div>
+                    <p class="text-xs">Aviulas</p>
+                </div>
+            </div>
+            
+            <p class="text-center text-gray-400 text-sm max-w-3xl mx-auto">
+                Take quick control of the unforgiving gaming arena with our performance-oriented Set machines. Get 
+                seduced by<br>the raw power of SSR and NVDIA Series on the battlefield today
+            </p>
+        </div>
+    </section>
+
+    <!-- Featured Gaming PC -->
+    <section class="bg-black py-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <!-- Product Image -->
+                <div class="relative">
+                    <div class="w-full h-[500px] bg-zinc-900 rounded-2xl flex items-center justify-center text-gray-600">
+                        [Gaming PC with RGB Image]
+                    </div>
+                </div>
+                
+                <!-- Product Info -->
+                <div>
+                    <h2 class="text-4xl font-bold mb-6">ENIGMATIC. CONTENDER. PROTECTOR.</h2>
+                    <p class="text-gray-400 mb-6 text-lg">Experience a New Speed of Gaming Desktop</p>
+                    
+                    <p class="text-cyan-400 mb-2 text-sm">STARTING AT $599</p>
+                    <p class="text-gray-400 text-sm mb-6">
+                        Or from $50.00/mo with credit or debit card.<br><br>
+                        Powered by Up to AMD Ryzen™ 5000 series, GeForce RTX™ 30 Series Graphics Options<br>
+                        • Up to Intel® i9-12900K / NVIDIA® GeForce RTX™ 3090<br>
+                        • Up to 128GB of Vengeance® RGB PRO DDR4 Memory<br>
+                        • Up to 3TB M.2 SSD (PCIe Gen 4) + 2TB 2.5" SSD for more storage<br>
+                        • VENGEANCE a5500 Series 850 Watt with 80+ Gold Efficiency
+                    </p>
+                    
+                    <div class="flex text-yellow-400 text-lg mb-6">★★★★★</div>
+                    
+                    <div class="mb-8">
+                        <span class="text-5xl font-bold">$599</span>
+                        <span class="text-sm align-top">00</span>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <button class="bg-red-600 hover:bg-red-700 text-white font-bold px-10 py-4 rounded text-sm transition flex-1">
+                            CUSTOMIZE
+                        </button>
+                        <button class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold px-10 py-4 rounded text-sm transition flex-1">
+                            LEARN MORE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <%-include("../../views/partials/footer.ejs")%>
+
+</body>
+</html>

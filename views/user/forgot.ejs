@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEARGRID - Recover Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-black min-h-screen flex items-center justify-center p-4">
+    <div class="absolute top-6 left-6">
+        <p class="text-gray-500 text-sm">forget password</p>
+    </div>
+
+    <div class="w-full max-w-6xl">
+        <h1 class="text-white text-4xl font-bold mb-12">GEARGRID</h1>
+        
+        <div class="bg-zinc-900 rounded-lg p-8 max-w-md mx-auto">
+            <h2 class="text-white text-xl font-semibold text-center mb-8">Recover Your Account</h2>
+            
+            <form action="/forgot-password" method="POST" class="space-y-3">
+                <div class="flex gap-2">
+                    <input 
+                        type="text" 
+                        name="emailOrPhone"
+                        placeholder="enter your email  or phone" 
+                        class="flex-1 bg-white border-0 rounded px-4 py-2 text-black text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        required
+                    >
+                    <button 
+                        type="button"
+                        onclick="sendOTP()"
+                        class="bg-zinc-700 hover:bg-zinc-600 text-white text-sm px-6 py-2 rounded transition whitespace-nowrap"
+                    >
+                        SEND OTP
+                    </button>
+                </div>
+                
+                <div class="flex gap-2">
+                    <input 
+                        type="text" 
+                        name="otp"
+                        placeholder="enter OTP" 
+                        class="flex-1 bg-white border-0 rounded px-4 py-2 text-black text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        required
+                    >
+                    <button 
+                        type="button"
+                        onclick="verifyOTP()"
+                        class="bg-zinc-700 hover:bg-zinc-600 text-white text-sm px-6 py-2 rounded transition whitespace-nowrap"
+                    >
+                        VERIFY
+                    </button>
+                </div>
+                
+                <div>
+                    <input 
+                        type="password" 
+                        name="newPassword"
+                        placeholder="enter your new password" 
+                        class="w-full bg-white border-0 rounded px-4 py-2 text-black text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        required
+                    >
+                </div>
+                
+                <div>
+                    <input 
+                        type="password" 
+                        name="confirmPassword"
+                        placeholder="re-enter your password" 
+                        class="w-full bg-white border-0 rounded px-4 py-2 text-black text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        required
+                    >
+                </div>
+                
+                <button 
+                    type="submit"
+                    class="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2.5 rounded transition mt-4"
+                >
+                    CONTINUE
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function sendOTP() {
+            const emailOrPhone = document.querySelector('input[name="emailOrPhone"]').value;
+            if (!emailOrPhone) {
+                alert('Please enter your email or phone number');
+                return;
+            }
+            // Add your OTP sending logic here
+            alert('OTP sent successfully!');
+        }
+
+        function verifyOTP() {
+            const otp = document.querySelector('input[name="otp"]').value;
+            if (!otp) {
+                alert('Please enter the OTP');
+                return;
+            }
+            // Add your OTP verification logic here
+            alert('OTP verified successfully!');
+        }
+    </script>
+</body>
+</html>

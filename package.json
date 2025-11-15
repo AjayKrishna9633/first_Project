@@ -1,0 +1,35 @@
+{
+  "name": "firstproject",
+  "version": "1.0.0",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon app"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
+    "ejs": "^3.1.10",
+    "engine": "^1.0.0",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "lodash": "^4.17.21",
+    "mongodb": "^6.20.0",
+    "mongoose": "^8.19.2",
+    "mongose": "^0.0.2-security",
+    "nodemailer": "^7.0.10",
+    "nodemon": "^3.1.10",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "path": "^0.12.7",
+    "sweetalert2": "^11.26.3",
+    "uuid": "^13.0.0",
+    "v4": "^0.0.1",
+    "view": "^0.6.1"
+  }
+}
