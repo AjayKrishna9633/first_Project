@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product - GEARGRID Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-black text-white px-6 py-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold tracking-wide">GEARGRID Admin</h1>
+        <div class="flex items-center gap-4">
+            <span class="text-sm"><%= admin.fullName %></span>
+            <a href="/admin/logout" class="text-sm hover:underline">Logout</a>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white min-h-screen shadow-lg">
+            <nav class="p-4">
+                <a href="/admin/dashboard" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">Dashboard</a>
+                <a href="/admin/customers" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">Customers</a>
+                <a href="/admin/products" class="block px-4 py-2 bg-gray-200 text-gray-900 rounded font-medium">Products</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <div class="mb-6">
+                <h2 class="text-3xl font-bold text-gray-800">Edit Product</h2>
+                <p class="text-gray-600">Update product information</p>
+            </div>
+
+            <!-- Error/Success Message -->
+            <% if (typeof message !== 'undefined' && message) { %>
+                <div class="mb-6 px-4 py-3 rounded <%= isError ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700' %>">
+                    <%= message %>
+                </div>
+            <% } %>
+
+            <!-- Edit Product Form -->
+            <form action="/admin/products/edit/<%= product._id %>" method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow p-6">
+                
+                <!-- Product Name -->
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2">Product Name *</label>
+                    <input 
+                        type="text" 
+                        name="productName" 
+                        value="<%= product.productName %>"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    >
+                </div>
+
+                <!-- Description -->
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2">Description *</label>
+                    <textarea 
+                        name="description" 
+                        required
+                        rows="4"
+                        class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    ><%= product.description %></textarea>
+                </div>
+
+                <!-- Category -->
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2">Category *</label>
+                    <select 
+                        name="category" 
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    >
+                        <% categories.forEach(category => { %>
+                            <option value="<%= category._id %>" <%= product.category._id.toString() === category._id.toString() ? 'selected' : '' %>>
+                                <%= category.name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <!-- Color -->
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Color *</label>
+                        <input 
+                            type="text" 
+                            name="color" 
+                            value="<%= product.color || '' %>"
+                            required
+                            class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        >
+                    </div>
+
+                    <!-- Quantity -->
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Quantity *</label>
+                        <input 
+                            type="number" 
+                            name="quantity" 
+                            value="<%= product.quantity || 0 %>"
+                            required
+                            min="0"
+                            class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        >
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <!-- Regular Price -->
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Regular Price *</label>
+                        <input 
+                            type="number" 
+                            name="regularPrice" 
+                            value="<%= product.regularPrice || 0 %>"
+                            required
+                            min="0"
+                            step="0.01"
+                            class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        >
+                    </div>
+
+                    <!-- Sale Price -->
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Sale Price *</label>
+                        <input 
+                            type="number" 
+                            name="salePrice" 
+                            value="<%= product.salePrice || 0 %>"
+                            required
+                            min="0"
+                            step="0.01"
+                            class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        >
+                    </div>
+                </div>
+
+                <!-- Current Images -->
+                <% if (product.productImage && product.productImage.length > 0) { %>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-2">Current Images</label>
+                        <div class="flex gap-4 flex-wrap">
+                            <% product.productImage.forEach(image => { %>
+                                <div class="relative">
+                                    <img 
+                                        src="<%= image %>" 
+                                        alt="Product" 
+                                        class="w-24 h-24 object-cover rounded border"
+                                        onerror="this.src='/images/placeholder.png'"
+                                    >
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- Add New Images -->
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-medium mb-2">Add New Images (Optional)</label>
+                    <input 
+                        type="file" 
+                        name="productImages" 
+                        multiple
+                        accept="image/*"
+                        class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    >
+                    <p class="text-sm text-gray-500 mt-1">Upload additional images (JPEG, PNG, Web

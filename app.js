@@ -6,7 +6,7 @@ import path from 'path';
 import {fileURLToPath}  from 'url';
 import db from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
-
+import adminRoutes from './routes/adminRoutes.js'
 const __filename  = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -15,7 +15,6 @@ const PORT = Number(process.env.PORT);
 // Import passport AFTER env vars are loaded
 const passportModule = await import('./config/passport.js');
 const passport = passportModule.default;
-// import adminRoutes from './routes/adminRoutes.js'
 db();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -33,6 +32,14 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Prevent caching
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
 app.set('views', path.join(__dirname, 'views'));
 
 app.set('view engine', 'ejs');
@@ -42,7 +49,7 @@ app.use('/public', express.static(path.join(__dirname, 'public')))
 
 
 app.use('/',userRoutes);
-//app.use('/admin',adminRoutes)
+app.use('/admin',adminRoutes)
 
 
 console.log('PORT value and type:', process.env.PORT, typeof process.env.PORT, PORT, typeof PORT);

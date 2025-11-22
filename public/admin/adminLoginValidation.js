@@ -1,14 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("loginPage");
+  const form = document.getElementById("adminLoginForm");
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const errorEmail = document.getElementById('emailError');
   const errorPassword = document.getElementById('passwordError');
-
-  if (!form || !emailInput || !passwordInput) {
-    console.error("Form elements not found");
-    return;
-  }
 
   // Helper function to show error
   function showError(errorElement, message) {
@@ -26,10 +21,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Clear errors on input
   emailInput.addEventListener('input', () => hideError(errorEmail));
   passwordInput.addEventListener('input', () => hideError(errorPassword));
 
-  
+  // Form validation
   form.addEventListener("submit", (e) => {
     const email = emailInput.value.trim();
     const password = passwordInput.value.trim();
@@ -55,15 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!password) {
       isValid = false;
       showError(errorPassword, "Please enter your password");
-    } else if (password.length < 8) {
-      isValid = false;
-      showError(errorPassword, "Password must be at least 8 characters");
-    } else if (password[0] !== password[0].toUpperCase()) {
-      isValid = false;
-      showError(errorPassword, "First letter must be uppercase");
-    } else if (!/[0-9]/.test(password)) {
-      isValid = false;
-      showError(errorPassword, "Password must contain a number");
     }
 
     // Prevent submission if invalid

@@ -3,6 +3,9 @@ import { comparePassword, hashPassword } from "../../utils/hashUtils.js";
 import nodemailer from 'nodemailer';
 import env from "dotenv";
 
+import user from "../../models/userModal.js";
+
+
 env.config();
 
 
@@ -73,9 +76,7 @@ function generateOtp() {
 
 export const getLogin = async (req, res) => {
     try {
-        if (req.session.user) {
-            return res.redirect('/');
-        }
+        
         res.render("user/login", {
             message: null,
             isError: false,
@@ -179,6 +180,7 @@ export const loginUser = async (req, res) => {
 //  SIGNUP FUNCTIONS 
 
 export const getSignup = (req, res) => {
+   
     res.render('user/signup', {
         message: null,
         isError: false,
@@ -758,9 +760,54 @@ export const pageNotFound = async (req, res) => {
     }
 };
 
+
+const updateProfile = async(req,res)=>{
+    try{
+        const userId = req.session.user.id;
+        const {fullName , phone} = req.body;
+
+        // Update user in database
+        await User.findByIdAndUpdate(userId,{
+            fullName:fullName,
+            phone:phone
+        });
+
+        // Fetch the updated user data
+        const updatedUser = await User.findById(userId);
+
+        // Update session
+        req.session.user.fullName = updatedUser.fullName;
+
+        return res.render('user/profile', {
+            user: {
+                fullName: updatedUser.fullName,
+                email: updatedUser.email,
+                phone: updatedUser.phone || ''
+            },
+            message: 'Profile updated successfully!',
+            isError: false
+        });
+
+    }catch(error){
+        console.log(error);
+        return res.status(500).render('user/profile',{
+            user:{
+                fullName:req.body.fullName || '',
+                email:req.session.user.email || '',
+                phone: req.body.phone||'',
+            },
+            message : "Error while updating the profile",
+            isError : true ,
+        });
+    }
+}
+
+
+
 //  EXPORTS 
 
 export default {
+    updateProfile,
     getLogin,
     loginUser,
     getSignup,

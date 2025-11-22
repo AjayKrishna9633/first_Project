@@ -5,11 +5,15 @@ const categorySchema = new Schema({
         type:String,
         required:true,
         unique:true
-
     },
-    isActive:{
+    description:{
+        type:String,
+        required:false,
+        default: ''
+    },
+    isListed:{
         type:Boolean,
-        default:false
+        default:true
     },
     offerId:{
         type: Schema.Types.ObjectId,
@@ -17,3 +21,6 @@ const categorySchema = new Schema({
     }
 
 },{timestamps:true})
+
+const Category = mongoose.model('Category',categorySchema);
+export default Category;

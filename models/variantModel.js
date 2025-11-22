@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
-import product from "./porductsModal";
 const {Schema}= mongoose;
-const variant = new Schema({
+const variantSchema = new Schema({
     productId:{
         type:Schema.Types.ObjectId,
-        ref:"product"
+        ref:"product",
+        required:true
     },
     color:{
         type:String,
@@ -20,6 +20,7 @@ const variant = new Schema({
     }],
     salePrice:{
         type:Number,
+        required:true
         
 
     },
@@ -29,4 +30,7 @@ const variant = new Schema({
     }
 
 
-})
+}, {timestamps:true});
+
+const variant = mongoose.model("variant",variantSchema);
+export default variant;

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import userCtrl from "../controllers/user/userController.js";
 import passport from "passport";
-import { isNotAuthenticated, isAuthenticated } from "../middlewares/authMiddleware.js";
+import { isNotAuthenticated, protectUser } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
@@ -53,15 +53,22 @@ router.get('/auth/google/callback',
 );
 
 //  PROTECTED ROUTES 
-router.get('/home', isAuthenticated, userCtrl.loadhomePage);
+router.get('/home', protectUser, userCtrl.loadhomePage);
 
 //  PROFILE ROUTES 
-router.get('/profile', isAuthenticated, userCtrl.getProfile);
-
+router.get('/profile', protectUser, userCtrl.getProfile);
+router.post('/profile', protectUser, userCtrl.updateProfile)
 //  LOGOUT ROUTE 
 router.get('/logout', userCtrl.logout);
 
 //  ERROR ROUTES 
 router.get('/pageNotFound', userCtrl.pageNotFound);
+
+
+//test
+router.get('/shop',(req,res)=>{
+    res.render('user/shop')
+})
+
 
 export default router;
