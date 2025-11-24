@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Product - GEARGRID Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
 </head>
@@ -188,7 +189,12 @@
         function handleImageSelect(event, variantIndex) {
             const files = event.target.files;
             if (files.length > 5) {
-                alert('Maximum 5 images allowed per variant');
+                Swal.fire({
+                    title: 'Too Many Images',
+                    text: 'Maximum 5 images allowed per variant',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
                 return;
             }
 

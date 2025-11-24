@@ -88,25 +88,48 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        function sendOTP() {
+        async function sendOTP() {
             const emailOrPhone = document.querySelector('input[name="emailOrPhone"]').value;
             if (!emailOrPhone) {
-                alert('Please enter your email or phone number');
+                Swal.fire({
+                    title: 'Missing Information',
+                    text: 'Please enter your email or phone number',
+                    icon: 'warning',
+                    confirmButtonColor: '#3f3f46'
+                });
                 return;
             }
             // Add your OTP sending logic here
-            alert('OTP sent successfully!');
+            Swal.fire({
+                title: 'OTP Sent!',
+                text: 'OTP sent successfully!',
+                icon: 'success',
+                confirmButtonColor: '#3f3f46',
+                timer: 2000
+            });
         }
 
-        function verifyOTP() {
+        async function verifyOTP() {
             const otp = document.querySelector('input[name="otp"]').value;
             if (!otp) {
-                alert('Please enter the OTP');
+                Swal.fire({
+                    title: 'Missing OTP',
+                    text: 'Please enter the OTP',
+                    icon: 'warning',
+                    confirmButtonColor: '#3f3f46'
+                });
                 return;
             }
             // Add your OTP verification logic here
-            alert('OTP verified successfully!');
+            Swal.fire({
+                title: 'Verified!',
+                text: 'OTP verified successfully!',
+                icon: 'success',
+                confirmButtonColor: '#3f3f46',
+                timer: 2000
+            });
         }
     </script>
 </body>

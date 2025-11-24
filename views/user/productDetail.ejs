@@ -6,6 +6,7 @@
     <title><%= product.productName %> - GEARGRID</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-black text-white">
     <!-- Header -->
@@ -296,16 +297,26 @@
             }
         }
 
-        function addToCart() {
+        async function addToCart() {
             const quantity = parseInt(document.getElementById('quantity').value);
             
             if (maxQuantity === 0) {
-                alert('This product is out of stock!');
+                Swal.fire({
+                    title: 'Out of Stock',
+                    text: 'This product is out of stock!',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
                 return;
             }
             
             if (quantity > maxQuantity) {
-                alert(`Only ${maxQuantity} items available!`);
+                Swal.fire({
+                    title: 'Insufficient Stock',
+                    text: `Only ${maxQuantity} items available!`,
+                    icon: 'warning',
+                    confirmButtonColor: '#1f2937'
+                });
                 return;
             }
 
@@ -316,17 +327,29 @@
                 quantity: quantity
             });
             
-            alert('Product added to cart! (Cart functionality coming soon)');
+            Swal.fire({
+                title: 'Added to Cart!',
+                text: 'Product added to cart! (Cart functionality coming soon)',
+                icon: 'success',
+                confirmButtonColor: '#1f2937',
+                timer: 2000
+            });
         }
 
-        function addToWishlist() {
+        async function addToWishlist() {
             // TODO: Implement wishlist functionality
             console.log('Add to wishlist:', {
                 productId: '<%= product._id %>',
                 variantId: selectedVariantId
             });
             
-            alert('Added to wishlist! (Wishlist functionality coming soon)');
+            Swal.fire({
+                title: 'Added to Wishlist!',
+                text: 'Added to wishlist! (Wishlist functionality coming soon)',
+                icon: 'success',
+                confirmButtonColor: '#1f2937',
+                timer: 2000
+            });
         }
 
         // Update quantity input max attribute

@@ -279,17 +279,30 @@ const updateProduct = async (req, res) => {
             }
         }
 
-        // Group uploaded files by variant index
+        // Group uploaded files by variant index and type (new variants vs existing variants)
         const variantFilesMap = {};
+        const existingVariantFilesMap = {};
+        
         if (req.files && req.files.length > 0) {
             req.files.forEach(file => {
-                const match = file.fieldname.match(/variants\[(\d+)\]\[images\]/);
-                if (match) {
-                    const variantIndex = match[1];
+                // Check for new variant images: variants[0][images]
+                const newVariantMatch = file.fieldname.match(/variants\[(\d+)\]\[images\]/);
+                if (newVariantMatch) {
+                    const variantIndex = newVariantMatch[1];
                     if (!variantFilesMap[variantIndex]) {
                         variantFilesMap[variantIndex] = [];
                     }
                     variantFilesMap[variantIndex].push(file.path);
+                }
+                
+                // Check for existing variant new images: existingVariants[variantId][newImages]
+                const existingVariantMatch = file.fieldname.match(/existingVariants\[([^\]]+)\]\[newImages\]/);
+                if (existingVariantMatch) {
+                    const variantId = existingVariantMatch[1];
+                    if (!existingVariantFilesMap[variantId]) {
+                        existingVariantFilesMap[variantId] = [];
+                    }
+                    existingVariantFilesMap[variantId].push(file.path);
                 }
             });
         }
@@ -300,7 +313,7 @@ const updateProduct = async (req, res) => {
         // Handle existing variants (updates)
         if (existingVariants) {
             for (const [variantId, variantData] of Object.entries(existingVariants)) {
-                const { color, quantity, regularPrice, salePrice } = variantData;
+                const { color, quantity, regularPrice, salePrice, removedImages } = variantData;
                 
                 const variant = await Variant.findById(variantId);
                 if (variant) {
@@ -308,6 +321,29 @@ const updateProduct = async (req, res) => {
                     variant.quantity = parseInt(quantity);
                     variant.regularPrice = parseFloat(regularPrice);
                     variant.salePrice = parseFloat(salePrice);
+                    
+                    // Handle removed images
+                    if (removedImages && removedImages.trim() !== '') {
+                        const imagesToRemove = removedImages.split(',').map(img => img.trim());
+                        variant.images = variant.images.filter(img => !imagesToRemove.includes(img));
+                    }
+                    
+                    // Handle new images added to existing variant
+                    if (existingVariantFilesMap[variantId] && existingVariantFilesMap[variantId].length > 0) {
+                        variant.images = [...variant.images, ...existingVariantFilesMap[variantId]];
+                    }
+                    
+                    // Validate that variant has at least one image
+                    if (variant.images.length === 0) {
+                        const categories = await Category.find({ isListed: true });
+                        return res.render('admin/editProduct', {
+                            product,
+                            categories,
+                            admin: req.session.admin,
+                            message: `Variant "${color}" must have at least one image`,
+                            isError: true
+                        });
+                    }
                     
                     await variant.save();
                     variantIds.push(variant._id);

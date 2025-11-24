@@ -1,29 +1,5 @@
-import { log } from "console";
 import user from "../../models/userModal.js";
 import { comparePassword } from "../../utils/hashUtils.js";
-
-
-const adminAuth = function (req, res, next) {
-  
-  if (req.session?.admin) {
-    console.log("Admin details:", {
-      id: req.session.admin.id,
-      email: req.session.admin.email,
-    });
-    return next();
-  }
-
-  
-  if (req.session) {
-    req.session.destroy((err) => {
-      if (err) console.error("Session destroy error:", err);
-      return res.redirect("/admin/login");
-    });
-  } else {
-    // No session at all
-    return res.redirect("/admin/login");
-  }
-};
 
 const getLogin =(req,res)=>{
     res.render('admin/login',{
@@ -101,21 +77,9 @@ const getDashboard = async (req,res)=>{
 
     try{
         const admin =req.session.admin;
-
-
-        const totalUsers =await user.countDocuments({isAdmin:false})
-       
-        const blockedUsers = await user.countDocuments({isAdmin:false,isBlocked:true})
         
         res.render('admin/dashboard',{
-            admin,
-            stats:{
-                totalUsers,
-                blockedUsers,
-                activeUsers:totalUsers-blockedUsers
-
-            }
-
+            admin
         })
     
     }catch(error){
@@ -230,12 +194,10 @@ const toggleBlockUser = async(req,res)=>{
 
 
 export default{
-    adminAuth,
     getLogin,
     logout,
     getDashboard,
     adminLogin,
     getCustomerPage,
     toggleBlockUser
-
 }
