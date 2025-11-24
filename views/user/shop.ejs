@@ -17,280 +17,357 @@
             <div class="flex items-center text-sm text-gray-400">
                 <a href="/" class="hover:text-white">Home</a>
                 <i class="fas fa-chevron-right mx-2 text-xs"></i>
-                <span class="text-white">Search</span>
+                <span class="text-white">Shop</span>
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-6 py-8">
-        <!-- Filter and Sort -->
-        <div class="flex items-center justify-between mb-8">
-            <button class="px-6 py-2 bg-white text-black rounded-full text-sm font-medium hover:bg-gray-200 transition">
-                <i class="fas fa-filter mr-2"></i>FILTER
-            </button>
-            <div class="flex items-center space-x-4">
-                <span class="text-sm text-gray-400">SORT BY:</span>
-                <select class="bg-black border border-gray-700 text-white px-4 py-2 rounded text-sm focus:outline-none focus:border-gray-500">
-                    <option>Featured</option>
-                    <option>Price: Low to High</option>
-                    <option>Price: High to Low</option>
-                    <option>Newest</option>
+    <div class="max-w-7xl mx-auto px-6 py-9">
+        <!-- Filter and Sort Bar -->
+        <div class="flex items-center justify-between mb-6">
+            <!-- Left: Search & Filter Button -->
+            <div class="flex items-center gap-3">
+                <form action="/shop" method="GET" class="flex items-center gap-3"></form>
+                    <input type="hidden" name="category" value="<%= selectedCategory %>">
+                    <input type="hidden" name="color" value="<%= selectedColor %>">
+                    <input type="hidden" name="sort" value="<%= sortBy %>">
+                    <div class="relative">
+                        <input type="text" name="search" value="<%= search %>" 
+                            placeholder="Search products..."
+                            class="bg-gray-900 border border-gray-700 text-white px-4 py-2 pr-10 rounded text-sm focus:outline-none w-64">
+                        <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white">
+                            <i class="fas fa-search text-xs"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <button onclick="openFilterModal()" type="button"
+                    class="px-6 py-2 bg-white text-black rounded font-medium hover:bg-gray-200 transition flex items-center gap-2">
+                    <i class="fas fa-filter"></i>
+                    FILTERS
+                    <% 
+                    const filterCount = (selectedCategory ? 1 : 0) + (selectedColor ? 1 : 0) + ((minPrice > 0 || maxPrice > 0) ? 1 : 0);
+                    if (filterCount > 0) { %>
+                        <span class="bg-cyan-400 text-black text-xs px-2 py-0.5 rounded-full ml-1">
+                            <%= filterCount %>
+                        </span>
+                    <% } %>
+                </button>
+            </div>
+
+            <!-- Right: Sort -->
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-gray-400 uppercase">SORT BY:</span>
+                <select onchange="window.location.href=this.value"
+                    class="bg-gray-900 border border-gray-700 text-white px-4 py-2 rounded text-sm focus:outline-none cursor-pointer">
+                    <option value="/shop?category=<%= selectedCategory %>&color=<%= selectedColor %>&minPrice=<%= minPrice %>&maxPrice=<%= maxPrice %>&search=<%= search %>&sort=featured" 
+                        <%= sortBy === 'featured' ? 'selected' : '' %>>Featured</option>
+                    <option value="/shop?category=<%= selectedCategory %>&color=<%= selectedColor %>&minPrice=<%= minPrice %>&maxPrice=<%= maxPrice %>&search=<%= search %>&sort=newest" 
+                        <%= sortBy === 'newest' ? 'selected' : '' %>>Newest</option>
+                    <option value="/shop?category=<%= selectedCategory %>&color=<%= selectedColor %>&minPrice=<%= minPrice %>&maxPrice=<%= maxPrice %>&search=<%= search %>&sort=price-low" 
+                        <%= sortBy === 'price-low' ? 'selected' : '' %>>Price: Low to High</option>
+                    <option value="/shop?category=<%= selectedCategory %>&color=<%= selectedColor %>&minPrice=<%= minPrice %>&maxPrice=<%= maxPrice %>&search=<%= search %>&sort=price-high" 
+                        <%= sortBy === 'price-high' ? 'selected' : '' %>>Price: High to Low</option>
                 </select>
-                <div class="flex items-center space-x-2 text-sm text-gray-400">
-                    <span>Search products</span>
-                    <i class="fas fa-search"></i>
-                </div>
             </div>
         </div>
+
+        <!-- Active Filters -->
+        <% if (selectedCategory || selectedColor || minPrice > 0 || maxPrice > 0) { %>
+        <div class="mb-6 flex items-center gap-3 flex-wrap">
+            <% if (selectedCategory) { %>
+                <% const selectedCat = categories.find(c => c._id.toString() === selectedCategory); %>
+                <% if (selectedCat) { %>
+                    <span class="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-full text-sm flex items-center gap-2">
+                        <%= selectedCat.name %>
+                        <a href="/shop?search=<%= search %>&sort=<%= sortBy %>&color=<%= selectedColor %>&minPrice=<%= minPrice %>&maxPrice=<%= maxPrice %>" 
+                            class="hover:text-red-400 text-lg leading-none">×</a>
+                    </span>
+                <% } %>
+            <% } %>
+            
+            <% if (selectedColor) { %>
+                <span class="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-full text-sm flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full border border-white" 
+                        style="background-color: <%= selectedColor.toLowerCase() %>;"></span>
+                    <%= selectedColor %>
+                    <a href="/shop?search=<%= search %>&sort=<%= sortBy %>&category=<%= selectedCategory %>&minPrice=<%= minPrice %>&maxPrice=<%= maxPrice %>" 
+                        class="hover:text-red-400 text-lg leading-none">×</a>
+                </span>
+            <% } %>
+
+            <% if (minPrice > 0 || maxPrice > 0) { %>
+                <span class="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-full text-sm flex items-center gap-2">
+                    ₹<%= minPrice || 0 %> - ₹<%= maxPrice || '∞' %>
+                    <a href="/shop?search=<%= search %>&sort=<%= sortBy %>&category=<%= selectedCategory %>&color=<%= selectedColor %>" 
+                        class="hover:text-red-400 text-lg leading-none">×</a>
+                </span>
+            <% } %>
+
+            <a href="/shop?search=<%= search %>&sort=<%= sortBy %>" 
+                class="text-sm text-gray-400 hover:text-white underline">
+                Clear all
+            </a>
+        </div>
+        <% } %>
 
         <!-- Products Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            <!-- Product Card 1 -->
-            <div class="bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition">
-                <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
-                    <img src="https://via.placeholder.com/200" alt="Product" class="max-w-full max-h-full object-contain">
-                    <div class="absolute top-2 right-2 flex flex-col space-y-2">
-                        <button class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800">
-                            <i class="far fa-heart text-xs"></i>
-                        </button>
-                    </div>
-                    <!-- Color Options -->
-                    <div class="absolute bottom-2 left-2 flex space-x-1">
-                        <span class="w-4 h-4 bg-black rounded-full border-2 border-white"></span>
-                        <span class="w-4 h-4 bg-white rounded-full border-2 border-gray-300"></span>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <div class="flex items-start justify-between mb-2">
-                        <div>
-                            <h3 class="text-sm font-medium mb-1">G502 X LIGHTSPEED</h3>
-                            <p class="text-xs text-gray-400">WIRELESS GAMING MOUSE</p>
+        <% if (products.length === 0) { %>
+            <div class="text-center py-20">
+                <svg class="w-24 h-24 mx-auto text-gray-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-400 mb-2">No products found</h3>
+                <p class="text-gray-500">Try adjusting your filters or search terms</p>
+            </div>
+        <% } else { %>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                <% products.forEach(product => { 
+                    let minPrice = Infinity;
+                    let maxPrice = -Infinity;
+                    let firstVariant = null;
+                    
+                    if (product.variants && product.variants.length > 0) {
+                        product.variants.forEach(variant => {
+                            if (variant.salePrice < minPrice) minPrice = variant.salePrice;
+                            if (variant.salePrice > maxPrice) maxPrice = variant.salePrice;
+                        });
+                        firstVariant = product.variants[0];
+                    }
+                    
+                    let imageUrl = null;
+                    if (firstVariant && firstVariant.images && firstVariant.images.length > 0) {
+                        imageUrl = firstVariant.images[0];
+                    } else if (product.productImage && product.productImage.length > 0) {
+                        imageUrl = product.productImage[0];
+                    }
+                %>
+                    <a href="/product/<%= product._id %>" class="block bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition-shadow duration-200">
+                        <!-- Product Image -->
+                        <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
+                            <% if (imageUrl) { %>
+                                <img src="<%= imageUrl %>" alt="<%= product.productName %>" 
+                                    class="max-w-full max-h-full object-contain">
+                            <% } else { %>
+                                <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                                    <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                            <% } %>
+                            
+                            <!-- Wishlist Button -->
+                            <div class="absolute top-2 right-2">
+                                <button onclick="event.preventDefault(); event.stopPropagation();" class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition">
+                                    <i class="far fa-heart text-xs"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Color Options -->
+                            <% if (product.variants && product.variants.length > 0) { %>
+                                <div class="absolute bottom-2 left-2 flex gap-1">
+                                    <% product.variants.slice(0, 3).forEach(variant => { %>
+                                        <span class="w-4 h-4 rounded-full border-2 border-white shadow" 
+                                            style="background-color: <%= variant.color.toLowerCase() %>;"
+                                            title="<%= variant.color %>"></span>
+                                    <% }); %>
+                                    <% if (product.variants.length > 3) { %>
+                                        <span class="text-xs bg-black text-white px-1.5 rounded-full">+<%= product.variants.length - 3 %></span>
+                                    <% } %>
+                                </div>
+                            <% } %>
                         </div>
-                    </div>
-                    <p class="text-lg font-bold">$129.99</p>
-                </div>
+                        
+                        <!-- Product Info -->
+                        <div class="p-4">
+                            <h3 class="text-sm font-medium mb-1 line-clamp-1">
+                                <%= product.productName %>
+                            </h3>
+                            <p class="text-xs text-gray-500 uppercase mb-2">
+                                <%= product.category ? product.category.name : 'Uncategorized' %>
+                            </p>
+                            
+                            <!-- Price -->
+                            <div>
+                                <% if (product.variants && product.variants.length > 0) { %>
+                                    <% if (minPrice === maxPrice) { %>
+                                        <p class="text-lg font-bold">₹<%= minPrice.toLocaleString() %></p>
+                                    <% } else { %>
+                                        <p class="text-base font-bold">₹<%= minPrice.toLocaleString() %> - ₹<%= maxPrice.toLocaleString() %></p>
+                                    <% } %>
+                                <% } else { %>
+                                    <p class="text-lg font-bold">₹<%= (product.salePrice || product.regularPrice || 0).toLocaleString() %></p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </a>
+                <% }); %>
             </div>
 
-            <!-- Product Card 2 -->
-            <div class="bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition">
-                <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
-                    <img src="https://via.placeholder.com/200" alt="Product" class="max-w-full max-h-full object-contain">
-                    <div class="absolute top-2 right-2">
-                        <button class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800">
-                            <i class="far fa-heart text-xs"></i>
-                        </button>
-                    </div>
-                    <div class="absolute bottom-2 left-2 flex space-x-1">
-                        <span class="w-4 h-4 bg-black rounded-full border-2 border-white"></span>
-                        <span class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white"></span>
-                    </div>
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <div class="mt-12 flex justify-center items-center gap-2">
+                    <% if (currentPage > 1) { %>
+                        <a href="/shop?page=<%= currentPage - 1 %>&category=<%= selectedCategory %>&color=<%= selectedColor %>&search=<%= search %>&sort=<%= sortBy %>" 
+                            class="px-4 py-2 bg-gray-900 border border-gray-700 text-white rounded hover:bg-gray-800 transition">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    <% } %>
+                    
+                    <% 
+                    let startPage = Math.max(1, currentPage - 2);
+                    let endPage = Math.min(totalPages, currentPage + 2);
+                    
+                    for (let i = startPage; i <= endPage; i++) { %>
+                        <a href="/shop?page=<%= i %>&category=<%= selectedCategory %>&color=<%= selectedColor %>&search=<%= search %>&sort=<%= sortBy %>"
+                            class="px-4 py-2 <%= i === currentPage ? 'bg-white text-black' : 'bg-gray-900 border border-gray-700 text-white hover:bg-gray-800' %> rounded transition font-medium">
+                            <%= i %>
+                        </a>
+                    <% } %>
+                    
+                    <% if (currentPage < totalPages) { %>
+                        <a href="/shop?page=<%= currentPage + 1 %>&category=<%= selectedCategory %>&color=<%= selectedColor %>&search=<%= search %>&sort=<%= sortBy %>" 
+                            class="px-4 py-2 bg-gray-900 border border-gray-700 text-white rounded hover:bg-gray-800 transition">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    <% } %>
                 </div>
-                <div class="p-4">
-                    <h3 class="text-sm font-medium mb-1">G502 HERO</h3>
-                    <p class="text-lg font-bold">$250.90</p>
-                </div>
+                
+                <p class="text-center text-gray-400 text-sm mt-4">
+                    Showing page <%= currentPage %> of <%= totalPages %> (<%= products.length %> products)
+                </p>
+            <% } %>
+        <% } %>
+    </div>
+
+    <!-- Filter Modal -->
+    <div id="filterModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-800">
+                <h2 class="text-xl font-bold">Filters</h2>
+                <button onclick="closeFilterModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
 
-            <!-- Product Card 3 -->
-            <div class="bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition">
-                <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
-                    <img src="https://via.placeholder.com/200" alt="Product" class="max-w-full max-h-full object-contain">
-                    <div class="absolute top-2 right-2">
-                        <button class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800">
-                            <i class="far fa-heart text-xs"></i>
-                        </button>
-                    </div>
-                    <div class="absolute bottom-2 left-2 flex space-x-1">
-                        <span class="w-4 h-4 bg-black rounded-full border-2 border-white"></span>
-                        <span class="w-4 h-4 bg-white rounded-full border-2 border-gray-300"></span>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <h3 class="text-sm font-medium mb-1">G515 LIGHTSPEED TKL</h3>
-                    <p class="text-lg font-bold">$259.99</p>
-                </div>
-            </div>
+            <!-- Filter Form -->
+            <form action="/shop" method="GET" class="p-6">
+                <!-- Preserve search and sort -->
+                <input type="hidden" name="search" value="<%= search %>">
+                <input type="hidden" name="sort" value="<%= sortBy %>">
 
-            <!-- Product Card 4 -->
-            <div class="bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition">
-                <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
-                    <img src="https://via.placeholder.com/200" alt="Product" class="max-w-full max-h-full object-contain">
-                    <div class="absolute top-2 right-2">
-                        <button class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800">
-                            <i class="far fa-heart text-xs"></i>
-                        </button>
-                    </div>
-                    <div class="absolute bottom-2 left-2 flex space-x-1">
-                        <span class="w-4 h-4 bg-black rounded-full border-2 border-white"></span>
-                        <span class="w-4 h-4 bg-white rounded-full border-2 border-gray-300"></span>
+                <!-- Category Filter -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-semibold mb-3 uppercase tracking-wide">Category</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <input type="radio" name="category" value="" 
+                                <%= !selectedCategory ? 'checked' : '' %>
+                                class="w-4 h-4 text-cyan-400 focus:ring-cyan-400">
+                            <span class="ml-3 text-sm">All Categories</span>
+                        </label>
+                        <% categories.forEach(category => { %>
+                            <label class="flex items-center cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                                <input type="radio" name="category" value="<%= category._id %>" 
+                                    <%= selectedCategory === category._id.toString() ? 'checked' : '' %>
+                                    class="w-4 h-4 text-cyan-400 focus:ring-cyan-400">
+                                <span class="ml-3 text-sm"><%= category.name %></span>
+                            </label>
+                        <% }); %>
                     </div>
                 </div>
-                <div class="p-4">
-                    <h3 class="text-sm font-medium mb-1">G502 X PLUS GAMING MOUSE</h3>
-                    <p class="text-lg font-bold">$259.99</p>
-                </div>
-            </div>
 
-            <!-- Product Card 5 -->
-            <div class="bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition">
-                <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
-                    <img src="https://via.placeholder.com/200" alt="Product" class="max-w-full max-h-full object-contain">
-                    <div class="absolute top-2 right-2">
-                        <button class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800">
-                            <i class="far fa-heart text-xs"></i>
-                        </button>
-                    </div>
-                    <div class="absolute bottom-2 left-2 flex space-x-1">
-                        <span class="w-4 h-4 bg-black rounded-full border-2 border-white"></span>
+                <!-- Color Filter -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-semibold mb-3 uppercase tracking-wide">Color</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                            <input type="radio" name="color" value="" 
+                                <%= !selectedColor ? 'checked' : '' %>
+                                class="w-4 h-4 text-cyan-400 focus:ring-cyan-400">
+                            <span class="ml-3 text-sm">All Colors</span>
+                        </label>
+                        <% availableColors.forEach(color => { %>
+                            <label class="flex items-center cursor-pointer hover:bg-gray-800 p-2 rounded transition">
+                                <input type="radio" name="color" value="<%= color %>" 
+                                    <%= selectedColor === color ? 'checked' : '' %>
+                                    class="w-4 h-4 text-cyan-400 focus:ring-cyan-400">
+                                <span class="w-5 h-5 rounded-full border-2 border-white ml-3" 
+                                    style="background-color: <%= color.toLowerCase() %>;"></span>
+                                <span class="ml-3 text-sm"><%= color %></span>
+                            </label>
+                        <% }); %>
                     </div>
                 </div>
-                <div class="p-4">
-                    <h3 class="text-sm font-medium mb-1">PRO</h3>
-                    <p class="text-lg font-bold">$55.99</p>
-                </div>
-            </div>
 
-            <!-- Add more product cards as needed (rows 2 and 3) -->
-            <!-- Row 2 -->
-            <div class="bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition">
-                <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
-                    <img src="https://via.placeholder.com/200" alt="Product" class="max-w-full max-h-full object-contain">
-                    <div class="absolute top-2 right-2">
-                        <button class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800">
-                            <i class="far fa-heart text-xs"></i>
-                        </button>
+                <!-- Price Range Filter -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-semibold mb-3 uppercase tracking-wide">Price Range</h3>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Min Price (₹)</label>
+                                <input type="number" name="minPrice" value="<%= minPrice || '' %>" 
+                                    placeholder="0"
+                                    min="0"
+                                    class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm focus:outline-none focus:border-cyan-400">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Max Price (₹)</label>
+                                <input type="number" name="maxPrice" value="<%= maxPrice || '' %>" 
+                                    placeholder="100000"
+                                    min="0"
+                                    class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm focus:outline-none focus:border-cyan-400">
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500">Enter price range to filter products</p>
                     </div>
                 </div>
-                <div class="p-4">
-                    <h3 class="text-sm font-medium mb-1">G915 X LIGHTSPEED</h3>
-                    <p class="text-lg font-bold">$259.99</p>
-                </div>
-            </div>
 
-            <div class="bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition">
-                <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
-                    <img src="https://via.placeholder.com/200" alt="Product" class="max-w-full max-h-full object-contain">
-                    <div class="absolute top-2 right-2">
-                        <button class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800">
-                            <i class="far fa-heart text-xs"></i>
-                        </button>
-                    </div>
+                <!-- Action Buttons -->
+                <div class="flex gap-3 pt-4 border-t border-gray-800">
+                    <button type="submit" 
+                        class="flex-1 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-200 transition">
+                        Apply Filters
+                    </button>
+                    <a href="/shop" 
+                        class="px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition font-semibold">
+                        Clear
+                    </a>
                 </div>
-                <div class="p-4">
-                    <h3 class="text-sm font-medium mb-1">G840</h3>
-                    <p class="text-lg font-bold">$57.55</p>
-                </div>
-            </div>
-
-            <div class="bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition">
-                <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
-                    <img src="https://via.placeholder.com/200" alt="Product" class="max-w-full max-h-full object-contain">
-                    <div class="absolute top-2 right-2">
-                        <button class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800">
-                            <i class="far fa-heart text-xs"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <h3 class="text-sm font-medium mb-1">G640</h3>
-                    <p class="text-lg font-bold">$25</p>
-                </div>
-            </div>
-
-            <div class="bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition">
-                <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
-                    <img src="https://via.placeholder.com/200" alt="Product" class="max-w-full max-h-full object-contain">
-                    <div class="absolute top-2 right-2">
-                        <button class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800">
-                            <i class="far fa-heart text-xs"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <h3 class="text-sm font-medium mb-1">G915 X LIGHTSPEED TKL</h3>
-                    <p class="text-lg font-bold">$259.99</p>
-                </div>
-            </div>
-
-            <div class="bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition">
-                <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
-                    <img src="https://via.placeholder.com/200" alt="Product" class="max-w-full max-h-full object-contain">
-                    <div class="absolute top-2 right-2">
-                        <button class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800">
-                            <i class="far fa-heart text-xs"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <h3 class="text-sm font-medium mb-1">G515 LIGHTSPEED TKL</h3>
-                    <p class="text-lg font-bold">$259.99</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pagination -->
-        <div class="flex items-center justify-center space-x-2 mt-12">
-            <button class="w-8 h-8 border border-gray-700 rounded flex items-center justify-center hover:bg-gray-800">
-                <i class="fas fa-chevron-left text-xs"></i>
-            </button>
-            <button class="w-8 h-8 bg-white text-black rounded font-medium">1</button>
-            <button class="w-8 h-8 border border-gray-700 rounded hover:bg-gray-800">2</button>
-            <button class="w-8 h-8 border border-gray-700 rounded hover:bg-gray-800">...</button>
-            <button class="w-8 h-8 border border-gray-700 rounded hover:bg-gray-800">10</button>
-            <button class="w-8 h-8 border border-gray-700 rounded hover:bg-gray-800">11</button>
-            <button class="w-8 h-8 border border-gray-700 rounded flex items-center justify-center hover:bg-gray-800">
-                <i class="fas fa-chevron-right text-xs"></i>
-            </button>
+            </form>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="bg-black border-t border-gray-800 mt-16 py-12">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
-                    <h3 class="text-xl font-bold mb-4">GEARGRID</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-white">Products</a></li>
-                        <li><a href="#" class="hover:text-white">Mouse</a></li>
-                        <li><a href="#" class="hover:text-white">Keyboard</a></li>
-                        <li><a href="#" class="hover:text-white">Desktops</a></li>
-                        <li><a href="#" class="hover:text-white">Accessories</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-semibold mb-4">Support</h4>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-white">Product Help</a></li>
-                        <li><a href="#" class="hover:text-white">Register</a></li>
-                        <li><a href="#" class="hover:text-white">Updates</a></li>
-                        <li><a href="#" class="hover:text-white">Provides</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-semibold mb-4">Account</h4>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-white">My Account</a></li>
-                        <li><a href="#" class="hover:text-white">Login / Register</a></li>
-                        <li><a href="#" class="hover:text-white">Cart</a></li>
-                        <li><a href="#" class="hover:text-white">About</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-semibold mb-4">Follow us</h4>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
-                © 2025 GEARGRID. All rights reserved.
-            </div>
-        </div>
-    </footer>
+    <%- include('../partials/footer') %>
+
+    <script>
+        function openFilterModal() {
+            document.getElementById('filterModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFilterModal() {
+            document.getElementById('filterModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('filterModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeFilterModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeFilterModal();
+            }
+        });
+    </script>
 </body>
 </html>

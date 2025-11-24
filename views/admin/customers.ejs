@@ -68,49 +68,8 @@
 
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-48 bg-white h-screen border-r border-gray-200">
-            <nav class="py-4">
-                <a href="/admin/dashboard" class="flex items-center px-6 py-3 text-gray-700 bg-gray-200 rounded-r-lg mr-4">
-                    <i class="fas fa-th-large mr-3"></i>
-                    <span class="text-sm">Dashboard</span>
-                </a>
-                <a href="/admin/products" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-box mr-3"></i>
-                    <span class="text-sm">Products</span>
-                </a>
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-shopping-cart mr-3"></i>
-                    <span class="text-sm">Orders</span>
-                </a>
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 bg-gray-200 rounded-r-lg mr-4">
-                    <i class="fas fa-users mr-3"></i>
-                    <span class="text-sm">Customers</span>
-                </a>
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-star mr-3"></i>
-                    <span class="text-sm">Reviews</span>
-                </a>
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-tag mr-3"></i>
-                    <span class="text-sm">Offers</span>
-                </a>
-                
-                <div class="border-t border-gray-200 my-4"></div>
-                
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-star mr-3"></i>
-                    <span class="text-sm">Coupon</span>
-                </a>
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-image mr-3"></i>
-                    <span class="text-sm">Banner management</span>
-                </a>
-                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-cog mr-3"></i>
-                    <span class="text-sm">Category</span>
-                </a>
-            </nav>
-        </aside>
+   
+        <%- include('../partials/adminSidebar', { currentPage: 'customers' }) %>
 
         <!-- Main Content -->
         <main class="flex-1 p-8">

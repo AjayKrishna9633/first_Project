@@ -29,11 +29,11 @@ router.get('/products',isAdminAuthenticated,productCntrl.getProduct)
 
 //product adding
 router.get('/product/add',isAdminAuthenticated,productCntrl.getAddProduct)
-router.post('/products/add',isAdminAuthenticated,upload.array('productImages',5),productCntrl.addProduct);
+router.post('/products/add',isAdminAuthenticated,upload.any(),productCntrl.addProduct);
 
 //product editing
 router.get('/product/edit/:id',isAdminAuthenticated,productCntrl.getEditProductPage);
-router.post('/products/edit/:id',isAdminAuthenticated,upload.array('productImages',5),productCntrl.updateProduct)
+router.post('/products/edit/:id',isAdminAuthenticated,upload.any(),productCntrl.updateProduct)
 
 //toggle button for product 
 router.post('/product/toggleBlock/:id',isAdminAuthenticated,productCntrl.toggleBlockProduct);

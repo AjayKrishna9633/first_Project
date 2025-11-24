@@ -5,167 +5,363 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Product - GEARGRID Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100">
-    <!-- Header -->
-    <header class="bg-black text-white px-6 py-4 flex justify-between items-center">
-        <h1 class="text-2xl font-bold tracking-wide">GEARGRID Admin</h1>
-        <div class="flex items-center gap-4">
-            <span class="text-sm"><%= admin.fullName %></span>
-            <a href="/admin/logout" class="text-sm hover:underline">Logout</a>
-        </div>
-    </header>
-
-    <div class="flex">
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white min-h-screen shadow-lg">
-            <nav class="p-4">
-                <a href="/admin/dashboard" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">Dashboard</a>
-                <a href="/admin/customers" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">Customers</a>
-                <a href="/admin/products" class="block px-4 py-2 bg-gray-200 text-gray-900 rounded font-medium">Products</a>
-            </nav>
-        </aside>
+        <%- include('../partials/adminSidebar', { currentPage: 'products' }) %>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-8">
-            <div class="mb-6">
-                <h2 class="text-3xl font-bold text-gray-800">Edit Product</h2>
-                <p class="text-gray-600">Update product information</p>
-            </div>
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <%- include('../partials/adminHeader', { admin: admin }) %>
 
-            <!-- Error/Success Message -->
-            <% if (typeof message !== 'undefined' && message) { %>
-                <div class="mb-6 px-4 py-3 rounded <%= isError ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700' %>">
-                    <%= message %>
-                </div>
-            <% } %>
-
-            <!-- Edit Product Form -->
-            <form action="/admin/products/edit/<%= product._id %>" method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow p-6">
-                
-                <!-- Product Name -->
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Product Name *</label>
-                    <input 
-                        type="text" 
-                        name="productName" 
-                        value="<%= product.productName %>"
-                        required
-                        class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    >
-                </div>
-
-                <!-- Description -->
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Description *</label>
-                    <textarea 
-                        name="description" 
-                        required
-                        rows="4"
-                        class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    ><%= product.description %></textarea>
-                </div>
-
-                <!-- Category -->
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Category *</label>
-                    <select 
-                        name="category" 
-                        required
-                        class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    >
-                        <% categories.forEach(category => { %>
-                            <option value="<%= category._id %>" <%= product.category._id.toString() === category._id.toString() ? 'selected' : '' %>>
-                                <%= category.name %>
-                            </option>
-                        <% }); %>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <!-- Color -->
-                    <div>
-                        <label class="block text-gray-700 font-medium mb-2">Color *</label>
-                        <input 
-                            type="text" 
-                            name="color" 
-                            value="<%= product.color || '' %>"
-                            required
-                            class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-                        >
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- Breadcrumb -->
+                <div class="mb-6">
+                    <div class="flex items-center text-sm text-gray-600 mb-4">
+                        <a href="/admin/products" class="hover:text-gray-900">Products</a>
+                        <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        <span class="text-gray-900 font-medium">Edit Product</span>
                     </div>
-
-                    <!-- Quantity -->
-                    <div>
-                        <label class="block text-gray-700 font-medium mb-2">Quantity *</label>
-                        <input 
-                            type="number" 
-                            name="quantity" 
-                            value="<%= product.quantity || 0 %>"
-                            required
-                            min="0"
-                            class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-                        >
-                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900">Edit Product</h2>
+                    <p class="text-sm text-gray-600 mt-1">Update product information and variants</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <!-- Regular Price -->
-                    <div>
-                        <label class="block text-gray-700 font-medium mb-2">Regular Price *</label>
-                        <input 
-                            type="number" 
-                            name="regularPrice" 
-                            value="<%= product.regularPrice || 0 %>"
-                            required
-                            min="0"
-                            step="0.01"
-                            class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-                        >
-                    </div>
-
-                    <!-- Sale Price -->
-                    <div>
-                        <label class="block text-gray-700 font-medium mb-2">Sale Price *</label>
-                        <input 
-                            type="number" 
-                            name="salePrice" 
-                            value="<%= product.salePrice || 0 %>"
-                            required
-                            min="0"
-                            step="0.01"
-                            class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-                        >
-                    </div>
-                </div>
-
-                <!-- Current Images -->
-                <% if (product.productImage && product.productImage.length > 0) { %>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 font-medium mb-2">Current Images</label>
-                        <div class="flex gap-4 flex-wrap">
-                            <% product.productImage.forEach(image => { %>
-                                <div class="relative">
-                                    <img 
-                                        src="<%= image %>" 
-                                        alt="Product" 
-                                        class="w-24 h-24 object-cover rounded border"
-                                        onerror="this.src='/images/placeholder.png'"
-                                    >
-                                </div>
-                            <% }); %>
-                        </div>
+                <!-- Error/Success Message -->
+                <% if (message) { %>
+                    <div class="mb-6 px-4 py-3 rounded-lg border flex items-center gap-3 <%= isError ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800' %>">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <% if (isError) { %>
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            <% } else { %>
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            <% } %>
+                        </svg>
+                        <span><%= message %></span>
                     </div>
                 <% } %>
 
-                <!-- Add New Images -->
-                <div class="mb-6">
-                    <label class="block text-gray-700 font-medium mb-2">Add New Images (Optional)</label>
-                    <input 
-                        type="file" 
-                        name="productImages" 
-                        multiple
-                        accept="image/*"
-                        class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    >
-                    <p class="text-sm text-gray-500 mt-1">Upload additional images (JPEG, PNG, Web
+                <!-- Edit Product Form -->
+                <form action="/admin/products/edit/<%= product._id %>" method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    
+                    <!-- Product Name -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Product Name *</label>
+                        <input 
+                            type="text" 
+                            name="productName" 
+                            value="<%= product.productName %>"
+                            required
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
+                        >
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
+                        <textarea 
+                            name="description" 
+                            required
+                            rows="4"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition resize-none"
+                        ><%= product.description %></textarea>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                        <select 
+                            name="category" 
+                            required
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
+                        >
+                            <% categories.forEach(category => { %>
+                                <option value="<%= category._id %>" <%= product.category._id.toString() === category._id.toString() ? 'selected' : '' %>>
+                                    <%= category.name %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <!-- Existing Variants Section -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Product Variants</label>
+                                <p class="text-xs text-gray-500 mt-1">Manage existing variants or add new ones</p>
+                            </div>
+                            <button 
+                                type="button"
+                                onclick="addNewVariant()"
+                                class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition text-sm font-medium flex items-center gap-2"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Add New Variant
+                            </button>
+                        </div>
+
+                        <!-- Existing Variants Container -->
+                        <div id="existingVariantsContainer" class="space-y-4 mb-4">
+                            <% if (product.variants && product.variants.length > 0) { %>
+                                <% product.variants.forEach((variant, index) => { %>
+                                    <div class="variant-item border border-gray-300 rounded-lg p-5 bg-gray-50" data-variant-id="<%= variant._id %>">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <h3 class="text-sm font-semibold text-gray-700">Existing Variant: <%= variant.color %></h3>
+                                            <button 
+                                                type="button"
+                                                onclick="deleteExistingVariant(this, '<%= variant._id %>')"
+                                                class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                                Delete
+                                            </button>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 mb-1">Color *</label>
+                                                <input 
+                                                    type="text" 
+                                                    name="existingVariants[<%= variant._id %>][color]" 
+                                                    value="<%= variant.color %>"
+                                                    required
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                                >
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 mb-1">Stock Quantity *</label>
+                                                <input 
+                                                    type="number" 
+                                                    name="existingVariants[<%= variant._id %>][quantity]" 
+                                                    value="<%= variant.quantity %>"
+                                                    required
+                                                    min="0"
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                                >
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 mb-1">Regular Price (₹) *</label>
+                                                <input 
+                                                    type="number" 
+                                                    name="existingVariants[<%= variant._id %>][regularPrice]" 
+                                                    value="<%= variant.regularPrice %>"
+                                                    required
+                                                    min="0"
+                                                    step="0.01"
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                                >
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 mb-1">Sale Price (₹) *</label>
+                                                <input 
+                                                    type="number" 
+                                                    name="existingVariants[<%= variant._id %>][salePrice]" 
+                                                    value="<%= variant.salePrice %>"
+                                                    required
+                                                    min="0"
+                                                    step="0.01"
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                                >
+                                            </div>
+                                        </div>
+
+                                        <!-- Current Images -->
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-2">Current Images</label>
+                                            <div class="flex gap-2 flex-wrap">
+                                                <% variant.images.forEach(image => { %>
+                                                    <img 
+                                                        src="<%= image %>" 
+                                                        alt="<%= variant.color %>"
+                                                        class="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                                                    >
+                                                <% }); %>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-2">To change images, delete this variant and add a new one</p>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <p class="text-sm text-gray-500 text-center py-4">No variants yet. Click "Add New Variant" to create one.</p>
+                            <% } %>
+                        </div>
+
+                        <!-- New Variants Container -->
+                        <div id="newVariantsContainer" class="space-y-4"></div>
+
+                        <!-- Hidden field for deleted variants -->
+                        <input type="hidden" name="deletedVariants" id="deletedVariants" value="">
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex gap-3 pt-4 border-t border-gray-200">
+                        <button 
+                            type="submit"
+                            class="flex-1 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium flex items-center justify-center gap-2"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>Update Product</span>
+                        </button>
+                        <a 
+                            href="/admin/products"
+                            class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                        >
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let newVariantCount = 0;
+        let deletedVariantIds = [];
+
+        function addNewVariant() {
+            const container = document.getElementById('newVariantsContainer');
+            const variantIndex = newVariantCount;
+            
+            const variantHTML = `
+                <div class="variant-item border border-green-300 rounded-lg p-5 bg-green-50" data-new-variant-index="${variantIndex}">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-gray-700">New Variant #${variantIndex + 1}</h3>
+                        <button 
+                            type="button"
+                            onclick="removeNewVariant(this)"
+                            class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Remove
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Color *</label>
+                            <input 
+                                type="text" 
+                                name="variants[${variantIndex}][color]" 
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                placeholder="e.g., Black, White, Red"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Stock Quantity *</label>
+                            <input 
+                                type="number" 
+                                name="variants[${variantIndex}][quantity]" 
+                                required
+                                min="0"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                placeholder="0"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Regular Price (₹) *</label>
+                            <input 
+                                type="number" 
+                                name="variants[${variantIndex}][regularPrice]" 
+                                required
+                                min="0"
+                                step="0.01"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                placeholder="0.00"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Sale Price (₹) *</label>
+                            <input 
+                                type="number" 
+                                name="variants[${variantIndex}][salePrice]" 
+                                required
+                                min="0"
+                                step="0.01"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                placeholder="0.00"
+                            >
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-2">Variant Images * (Max 5)</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition">
+                            <input 
+                                type="file" 
+                                name="variants[${variantIndex}][images]" 
+                                multiple
+                                accept="image/*"
+                                required
+                                class="hidden variant-images"
+                                id="newVariantImages${variantIndex}"
+                                onchange="updateNewVariantFileLabel(this, ${variantIndex})"
+                            >
+                            <label for="newVariantImages${variantIndex}" class="cursor-pointer">
+                                <svg class="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                                <p class="text-xs text-gray-600 mb-1">Click to upload images</p>
+                                <p class="text-xs text-gray-500">PNG, JPG, WEBP (Max 5)</p>
+                            </label>
+                            <div id="newVariantFileList${variantIndex}" class="mt-2 text-xs text-gray-600"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', variantHTML);
+            newVariantCount++;
+        }
+
+        function removeNewVariant(button) {
+            const variantItem = button.closest('.variant-item');
+            variantItem.remove();
+        }
+
+        function deleteExistingVariant(button, variantId) {
+            if (!confirm('Are you sure you want to delete this variant? This action cannot be undone.')) {
+                return;
+            }
+
+            deletedVariantIds.push(variantId);
+            document.getElementById('deletedVariants').value = deletedVariantIds.join(',');
+
+            const variantItem = button.closest('.variant-item');
+            variantItem.remove();
+        }
+
+        function updateNewVariantFileLabel(input, index) {
+            const fileList = document.getElementById(`newVariantFileList${index}`);
+            if (input.files.length > 0) {
+                fileList.textContent = `${input.files.length} file(s) selected`;
+            } else {
+                fileList.textContent = '';
+            }
+        }
+    </script>
+</body>
+</html>

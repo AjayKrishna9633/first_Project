@@ -9,15 +9,19 @@
                 <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
                     <a href="/" class="hover:text-cyan-400 transition">HOME</a>
                     <a href="#" class="hover:text-cyan-400 transition">BEST SELLERS</a>
-                    <a href="#" class="hover:text-cyan-400 transition">SHOP</a>
+                    <a href="/shop" class="hover:text-cyan-400 transition">SHOP</a>
                     <a href="#" class="hover:text-cyan-400 transition">CONTACT</a>
                 </div>
                 
                 <div class="flex items-center space-x-4">
-                    <div class="relative">
-                        <input type="text" placeholder="Search" class="bg-gray-800 text-white px-4 py-2 pr-10 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 w-48">
-                        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</button>
-                    </div>
+                    <% if (typeof hideHeaderSearch === 'undefined' || !hideHeaderSearch) { %>
+                        <div class="relative">
+                            <input type="text" placeholder="Search" class="bg-gray-800 text-white px-4 py-2 pr-10 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 w-48">
+                            <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</button>
+                        </div>
+                    <% } %>
+
+
                     <button class="hover:text-cyan-400 transition">♡</button>
                     <button class="hover:text-cyan-400 transition">🛒</button>
                     

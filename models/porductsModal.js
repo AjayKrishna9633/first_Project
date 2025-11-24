@@ -16,36 +16,7 @@ const ProductSchema = new Schema ({
         ref:"Category",
         required:true
     },
-    regularPrice:{
-        type:Number,
-        required:false
-    },
-    salePrice:{
-        type:Number,
-        required:false
-    },
-    quantity:{
-        type:Number,
-        required:false,
-        default:0
-    },
-    color:{
-        type:String,
-        required:false
-    },
-    productImage:[{
-        type:String,
-        required:false
-    }],
-    // Variants stored directly in product
-    productVariants:[{
-        color: String,
-        size: String,
-        regularPrice: Number,
-        salePrice: Number,
-        quantity: Number,
-        images: [String]
-    }],
+    
     status:{
         type:String,
         enum:['Available','Out of Stock'],

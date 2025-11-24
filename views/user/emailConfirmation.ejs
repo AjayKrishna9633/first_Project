@@ -143,6 +143,7 @@
     <script>
       // Timer functionality
       let timeLeft = 60;
+      let isExpired = false;
       const timerElement = document.getElementById("timer");
 
       const countdown = setInterval(() => {
@@ -152,8 +153,28 @@
         if (timeLeft <= 0) {
           clearInterval(countdown);
           timerElement.textContent = "00";
+          isExpired = true;
+          handleOTPExpiry();
         }
       }, 1000);
+
+      // Handle OTP expiry
+      function handleOTPExpiry() {
+        // Disable all OTP inputs
+        document.querySelectorAll(".otp-input").forEach(input => {
+          input.disabled = true;
+          input.classList.add('opacity-50', 'cursor-not-allowed');
+        });
+
+        // Show expiry message
+        Swal.fire({
+          icon: 'warning',
+          title: 'OTP Expired',
+          text: 'Your OTP has expired. Please click "Resend OTP" to get a new code.',
+          confirmButtonColor: '#000',
+          confirmButtonText: 'OK'
+        });
+      }
 
       // OTP input navigation
       function moveToNext(current, nextIndex) {
@@ -173,6 +194,17 @@
 
       // Confirm OTP
       async function confirmOTP() {
+        // Check if OTP is expired
+        if (isExpired) {
+          Swal.fire({
+            icon: 'error',
+            title: 'OTP Expired',
+            text: 'Your OTP has expired. Please click "Resend OTP" to get a new code.',
+            confirmButtonColor: '#000'
+          });
+          return;
+        }
+
         const otp = Array.from(document.querySelectorAll(".otp-input"))
           .map((input) => input.value)
           .join("");
@@ -235,7 +267,8 @@
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-            }
+            },
+            body: JSON.stringify({ email: '<%= email %>' })
           });
 
           const data = await response.json();
@@ -247,9 +280,19 @@
               text: 'OTP resent successfully! Check your email.',
               confirmButtonColor: '#000'
             });
+            
+            // Reset timer and expired state
             timeLeft = 60;
+            isExpired = false;
             timerElement.textContent = "60";
-            document.querySelectorAll(".otp-input").forEach(input => input.value = "");
+            
+            // Re-enable and clear OTP inputs
+            document.querySelectorAll(".otp-input").forEach(input => {
+              input.value = "";
+              input.disabled = false;
+              input.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
+            
             document.getElementById("otp-0").focus();
           } else {
             Swal.fire({

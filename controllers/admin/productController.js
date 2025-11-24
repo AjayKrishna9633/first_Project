@@ -1,5 +1,6 @@
 import Product from "../../models/porductsModal.js";
 import Category from '../../models/categoryModel.js';
+import Variant from '../../models/variantModel.js';
 
 
 const getProduct = async (req,res)=>{
@@ -24,6 +25,7 @@ try{
 
     const product =await Product.find(query)
     .populate('category','name')
+    .populate('variants') 
     .sort({createdAt:-1})
     .skip(skip)
     .limit(limit);
@@ -70,75 +72,149 @@ const getAddProduct = async(req,res)=>{
 
 
 }
-    const addProduct= async(req,res)=>{
+    const addProduct = async (req, res) => {
+        try {
+            const { productName, description, category, variants } = req.body;
 
-        try{
-           const{
-            productName,
-            description,
-            category,
-            regularPrice,
-            salePrice,
-            quantity,
-            color
-           }=req.body;
-
-
-           if(!productName || !description||!category || !regularPrice||!quantity){
-            const categories = await Category.find({isListed:true})
-
-                return res.render('admin/addProduct',{
+            // Validate basic fields
+            if (!productName || !description || !category) {
+                const categories = await Category.find({ isListed: true });
+                return res.render('admin/addProduct', {
                     categories,
-                    admin:req.session.admin,
-                    message:'All fields are required',
-                    isError:true
+                    admin: req.session.admin,
+                    message: 'Product name, description, and category are required',
+                    isError: true
                 });
-           }
+            }
 
-
-           // Get Cloudinary URLs from uploaded files
-           const productImages = req.files ? req.files.map(file => file.path) : [];
-
-           if(productImages.length === 0){
-            const categories = await Category.find({isListed:true})
-                return res.render('admin/addProduct',{
+            // Validate variants data
+            if (!variants || Object.keys(variants).length === 0) {
+                const categories = await Category.find({ isListed: true });
+                return res.render('admin/addProduct', {
                     categories,
-                    admin:req.session.admin,
-                    message:'At least one product image is required',
-                    isError:true
+                    admin: req.session.admin,
+                    message: 'At least one variant is required',
+                    isError: true
                 });
-           }
+            }
 
-           const product = new Product({
-            productName,
-            description,
-            category,
-            regularPrice,
-            salePrice,
-            quantity,
-            color,
-            productImage: productImages,
-            status:quantity>0?'Available':'Out Of Stock'
+            // Check if files are uploaded
+            if (!req.files || req.files.length === 0) {
+                const categories = await Category.find({ isListed: true });
+                return res.render('admin/addProduct', {
+                    categories,
+                    admin: req.session.admin,
+                    message: 'At least one image per variant is required',
+                    isError: true
+                });
+            }
 
-           });
-           await product.save();
+            // Step 1: Create the main product first (without variants)
+            const product = new Product({
+                productName,
+                description,
+                category,
+                status: 'Available',
+                variants: [] // Will be populated later
+            });
 
-           res.redirect('/admin/products');
+            await product.save();
 
-        }catch(error){
+            // Step 2: Process variants and create variant documents
+            const variantIds = [];
+            let totalQuantity = 0;
+
+            // Get all uploaded files
+            const uploadedFiles = req.files;
+            
+            // Group files by variant index (based on field name)
+            const variantFilesMap = {};
+            uploadedFiles.forEach(file => {
+                // Extract variant index from fieldname: variants[0][images]
+                const match = file.fieldname.match(/variants\[(\d+)\]\[images\]/);
+                if (match) {
+                    const variantIndex = match[1];
+                    if (!variantFilesMap[variantIndex]) {
+                        variantFilesMap[variantIndex] = [];
+                    }
+                    variantFilesMap[variantIndex].push(file.path);
+                }
+            });
+
+            // Loop through each variant
+            for (const [index, variantData] of Object.entries(variants)) {
+                const { color, quantity, regularPrice, salePrice } = variantData;
+
+                // Validate variant data
+                if (!color || !quantity || !regularPrice || !salePrice) {
+                    // Rollback: delete the created product
+                    await Product.findByIdAndDelete(product._id);
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/addProduct', {
+                        categories,
+                        admin: req.session.admin,
+                        message: `Variant ${parseInt(index) + 1}: All fields are required`,
+                        isError: true
+                    });
+                }
+
+               
+                const variantImages = variantFilesMap[index] || [];
+
+                if (variantImages.length === 0) {
+                  
+                    await Product.findByIdAndDelete(product._id);
+                    await Variant.deleteMany({ productId: product._id });
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/addProduct', {
+                        categories,
+                        admin: req.session.admin,
+                        message: `Variant ${parseInt(index) + 1}: At least one image is required`,
+                        isError: true
+                    });
+                }
+
+                // Step 3: Create variant document
+                const variant = new Variant({
+                    productId: product._id,
+                    color,
+                    quantity: parseInt(quantity),
+                    regularPrice: parseFloat(regularPrice),
+                    salePrice: parseFloat(salePrice),
+                    images: variantImages
+                });
+
+                await variant.save();
+
+                // Step 4: Push variant _id to array
+                variantIds.push(variant._id);
+                totalQuantity += parseInt(quantity);
+            }
+
+            // Step 5: Update product with variant references and total quantity
+            product.variants = variantIds;
+            product.quantity = totalQuantity;
+            product.status = totalQuantity > 0 ? 'Available' : 'Out of Stock';
+
+            await product.save();
+
+            res.redirect('/admin/products');
+
+        } catch (error) {
             console.log('Error in addProduct:', error);
             console.log('Error message:', error.message);
+            console.log('Request body:', req.body);
             console.log('Files received:', req.files);
-            const categories = await Category.find({isListed:true});
-
-            res.render('admin/addProduct',{
+            
+            const categories = await Category.find({ isListed: true });
+            res.render('admin/addProduct', {
                 categories,
-                admin:req.session.admin,
-               message:"Failed to add product: " + error.message,
-                isError:true
+                admin: req.session.admin,
+                message: "Failed to add product: " + error.message,
+                isError: true
             });
         }
-};
+    };
 
 
 
@@ -152,7 +228,9 @@ const getEditProductPage = async(req,res)=>{
     try {
 
         const productId =req.params.id;
-        const product = await Product.findById(productId);
+        const product = await Product.findById(productId)
+            .populate('category')
+            .populate('variants'); // Populate variants for editing
         const categories = await Category.find({isListed:true});
 
         if(!product){
@@ -176,50 +254,109 @@ const getEditProductPage = async(req,res)=>{
 };
 
 
-const updateProduct = async (req,res)=>{
-    try{
-        const productId= req.params.id;
-        const {
-            productName,
-            description,
-            category,
-            regularPrice,
-            salePrice,
-            quantity,
-            color
-        }=req.body;
+const updateProduct = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const { productName, description, category, variants, existingVariants, deletedVariants } = req.body;
 
-        const product = await Product.findById(productId);
+        const product = await Product.findById(productId).populate('variants');
 
-
-        if(!product){
-            return  res.redirect('/admin/products')
-
+        if (!product) {
+            return res.redirect('/admin/products');
         }
 
+        // Update basic product info
         product.productName = productName;
-        product.description= description;
-        product.category= category;
-        product.regularPrice = regularPrice;
-        product.salePrice= salePrice;
-        product.quantity= quantity;
-        product.color=color
-        product.status= quantity>0?'Available':'Out Of Stock'
+        product.description = description;
+        product.category = category;
 
-
-        // Add new Cloudinary images if uploaded
-        if(req.files && req.files.length >0){
-            const newImages = req.files.map(file=>file.path);
-            product.productImage = [...product.productImage,...newImages]
+        // Handle deleted variants
+        if (deletedVariants) {
+            const deletedIds = Array.isArray(deletedVariants) ? deletedVariants : [deletedVariants];
+            for (const variantId of deletedIds) {
+                await Variant.findByIdAndDelete(variantId);
+                product.variants = product.variants.filter(v => v.toString() !== variantId);
+            }
         }
 
+        // Group uploaded files by variant index
+        const variantFilesMap = {};
+        if (req.files && req.files.length > 0) {
+            req.files.forEach(file => {
+                const match = file.fieldname.match(/variants\[(\d+)\]\[images\]/);
+                if (match) {
+                    const variantIndex = match[1];
+                    if (!variantFilesMap[variantIndex]) {
+                        variantFilesMap[variantIndex] = [];
+                    }
+                    variantFilesMap[variantIndex].push(file.path);
+                }
+            });
+        }
+
+        let totalQuantity = 0;
+        const variantIds = [];
+
+        // Handle existing variants (updates)
+        if (existingVariants) {
+            for (const [variantId, variantData] of Object.entries(existingVariants)) {
+                const { color, quantity, regularPrice, salePrice } = variantData;
+                
+                const variant = await Variant.findById(variantId);
+                if (variant) {
+                    variant.color = color;
+                    variant.quantity = parseInt(quantity);
+                    variant.regularPrice = parseFloat(regularPrice);
+                    variant.salePrice = parseFloat(salePrice);
+                    
+                    await variant.save();
+                    variantIds.push(variant._id);
+                    totalQuantity += parseInt(quantity);
+                }
+            }
+        }
+
+        // Handle new variants
+        if (variants) {
+            for (const [index, variantData] of Object.entries(variants)) {
+                const { color, quantity, regularPrice, salePrice } = variantData;
+
+                if (!color || !quantity || !regularPrice || !salePrice) {
+                    continue; // Skip incomplete variants
+                }
+
+                const variantImages = variantFilesMap[index] || [];
+
+                if (variantImages.length === 0) {
+                    continue; // Skip variants without images
+                }
+
+                const variant = new Variant({
+                    productId: product._id,
+                    color,
+                    quantity: parseInt(quantity),
+                    regularPrice: parseFloat(regularPrice),
+                    salePrice: parseFloat(salePrice),
+                    images: variantImages
+                });
+
+                await variant.save();
+                variantIds.push(variant._id);
+                totalQuantity += parseInt(quantity);
+            }
+        }
+
+        // Update product with variant references and total quantity
+        product.variants = variantIds;
+        product.quantity = totalQuantity;
+        product.status = totalQuantity > 0 ? 'Available' : 'Out of Stock';
 
         await product.save();
 
         res.redirect('/admin/products');
 
-    }catch(error){
-        console.log('error in updating product',error)
+    } catch (error) {
+        console.log('error in updating product', error);
         res.redirect('/admin/products');
     }
 }

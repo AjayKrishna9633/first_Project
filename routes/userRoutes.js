@@ -2,6 +2,7 @@ import { Router } from "express";
 import userCtrl from "../controllers/user/userController.js";
 import passport from "passport";
 import { isNotAuthenticated, protectUser } from "../middlewares/authMiddleware.js";
+import productCtrl from '../controllers/user/productController.js';
 
 const router = Router();
 
@@ -65,10 +66,11 @@ router.get('/logout', userCtrl.logout);
 router.get('/pageNotFound', userCtrl.pageNotFound);
 
 
-//test
-router.get('/shop',(req,res)=>{
-    res.render('user/shop')
-})
+//shop page
+router.get('/shop', productCtrl.getShopPage)
+
+//product detail page
+router.get('/product/:id', productCtrl.getProductDetail)
 
 
 export default router;

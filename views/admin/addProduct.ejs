@@ -6,6 +6,8 @@
     <title>Add Product - GEARGRID Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
@@ -88,86 +90,125 @@
                         </select>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-5 mb-5">
-                        <!-- Color -->
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Color *</label>
-                            <input 
-                                type="text" 
-                                name="color" 
-                                required
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
-                                placeholder="e.g., Black, White, RGB"
-                            >
-                        </div>
-
-                        <!-- Quantity -->
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Stock Quantity *</label>
-                            <input 
-                                type="number" 
-                                name="quantity" 
-                                required
-                                min="0"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
-                                placeholder="0"
-                            >
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-5 mb-5">
-                        <!-- Regular Price -->
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Regular Price (₹) *</label>
-                            <input 
-                                type="number" 
-                                name="regularPrice" 
-                                required
-                                min="0"
-                                step="0.01"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
-                                placeholder="0.00"
-                            >
-                        </div>
-
-                        <!-- Sale Price -->
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Sale Price (₹) *</label>
-                            <input 
-                                type="number" 
-                                name="salePrice" 
-                                required
-                                min="0"
-                                step="0.01"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
-                                placeholder="0.00"
-                            >
-                            <p class="text-xs text-gray-500 mt-1">Set lower than regular price for discount</p>
-                        </div>
-                    </div>
-
-                    <!-- Product Images -->
+                    <!-- Product Variants Section -->
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Product Images * (Max 5)</label>
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition">
-                            <input 
-                                type="file" 
-                                name="productImages" 
-                                multiple
-                                accept="image/*"
-                                required
-                                id="productImages"
-                                class="hidden"
-                                onchange="updateFileLabel(this)"
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700">Product Variants *</label>
+                                <p class="text-xs text-gray-500 mt-1">Add different color variants with their own pricing and stock</p>
+                            </div>
+                            <button 
+                                type="button"
+                                onclick="addVariant()"
+                                class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition text-sm font-medium flex items-center gap-2"
                             >
-                            <label for="productImages" class="cursor-pointer">
-                                <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
-                                <p class="text-sm text-gray-600 mb-1">Click to upload or drag and drop</p>
-                                <p class="text-xs text-gray-500">PNG, JPG, WEBP up to 5MB (Max 5 images)</p>
-                            </label>
-                            <div id="fileList" class="mt-3 text-sm text-gray-600"></div>
+                                Add Variant
+                            </button>
+                        </div>
+
+                        <!-- Variants Container -->
+                        <div id="variantsContainer" class="space-y-4">
+                            <!-- Initial Variant -->
+                            <div class="variant-item border border-gray-300 rounded-lg p-5 bg-gray-50" data-variant-index="0">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-sm font-semibold text-gray-700">Variant #1</h3>
+                                    <button 
+                                        type="button"
+                                        onclick="removeVariant(this)"
+                                        class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Remove
+                                    </button>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <!-- Color -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Color *</label>
+                                        <input 
+                                            type="text" 
+                                            name="variants[0][color]" 
+                                            required
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                            placeholder="e.g., Black, White, Red"
+                                        >
+                                    </div>
+
+                                    <!-- Quantity -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Stock Quantity *</label>
+                                        <input 
+                                            type="number" 
+                                            name="variants[0][quantity]" 
+                                            required
+                                            min="0"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                            placeholder="0"
+                                        >
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <!-- Regular Price -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Regular Price (₹) *</label>
+                                        <input 
+                                            type="number" 
+                                            name="variants[0][regularPrice]" 
+                                            required
+                                            min="0"
+                                            step="0.01"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                            placeholder="0.00"
+                                        >
+                                    </div>
+
+                                    <!-- Sale Price -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Sale Price (₹) *</label>
+                                        <input 
+                                            type="number" 
+                                            name="variants[0][salePrice]" 
+                                            required
+                                            min="0"
+                                            step="0.01"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                            placeholder="0.00"
+                                        >
+                                    </div>
+                                </div>
+
+                                <!-- Variant Images -->
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-2">Variant Images * (Max 5)</label>
+                                    <input 
+                                        type="file" 
+                                        multiple
+                                        accept="image/*"
+                                        class="hidden variant-images-input"
+                                        id="variantImagesInput0"
+                                        onchange="handleImageSelect(event, 0)"
+                                    >
+                                    <button 
+                                        type="button"
+                                        onclick="document.getElementById('variantImagesInput0').click()"
+                                        class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition"
+                                    >
+                                        <svg class="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                        </svg>
+                                        <p class="text-xs text-gray-600 mb-1">Click to upload and crop images</p>
+                                        <p class="text-xs text-gray-500">PNG, JPG, WEBP (Max 5)</p>
+                                    </button>
+                                    <div id="imagePreview0" class="grid grid-cols-5 gap-2 mt-3"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -194,16 +235,357 @@
         </div>
     </div>
 
+    <!-- Image Crop Modal -->
+    <div id="cropModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Crop Image</h3>
+                <button onclick="closeCropModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="cropContainer" class="mb-4"></div>
+            <div class="flex gap-3">
+                <button onclick="cropImage()" class="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium">
+                    Crop & Save
+                </button>
+                <button onclick="closeCropModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function updateFileLabel(input) {
-            const fileList = document.getElementById('fileList');
-            if (input.files.length > 0) {
-                const fileNames = Array.from(input.files).map(file => file.name).join(', ');
-                fileList.textContent = `${input.files.length} file(s) selected: ${fileNames}`;
-            } else {
-                fileList.textContent = '';
+        let variantCount = 1;
+        let currentCroppie = null;
+        let currentVariantIndex = null;
+        let currentFileInput = null;
+        let currentFileIndex = 0;
+        let filesToProcess = [];
+        let croppedFiles = {
+            0: [] // Initialize for the first variant
+        };
+
+        function addVariant() {
+            const container = document.getElementById('variantsContainer');
+            const variantIndex = variantCount;
+            
+            const variantHTML = `
+                <div class="variant-item border border-gray-300 rounded-lg p-5 bg-gray-50" data-variant-index="${variantIndex}">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-gray-700">Variant #${variantIndex + 1}</h3>
+                        <button 
+                            type="button"
+                            onclick="removeVariant(this)"
+                            class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Remove
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Color *</label>
+                            <input 
+                                type="text" 
+                                name="variants[${variantIndex}][color]" 
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                placeholder="e.g., Black, White, Red"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Stock Quantity *</label>
+                            <input 
+                                type="number" 
+                                name="variants[${variantIndex}][quantity]" 
+                                required
+                                min="0"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                placeholder="0"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Regular Price (₹) *</label>
+                            <input 
+                                type="number" 
+                                name="variants[${variantIndex}][regularPrice]" 
+                                required
+                                min="0"
+                                step="0.01"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                placeholder="0.00"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Sale Price (₹) *</label>
+                            <input 
+                                type="number" 
+                                name="variants[${variantIndex}][salePrice]" 
+                                required
+                                min="0"
+                                step="0.01"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
+                                placeholder="0.00"
+                            >
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-2">Variant Images * (Max 5)</label>
+                        <input 
+                            type="file" 
+                            multiple
+                            accept="image/*"
+                            class="hidden variant-images-input"
+                            id="variantImagesInput${variantIndex}"
+                            onchange="handleImageSelect(event, ${variantIndex})"
+                        >
+                        <button 
+                            type="button"
+                            onclick="document.getElementById('variantImagesInput${variantIndex}').click()"
+                            class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition"
+                        >
+                            <svg class="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <p class="text-xs text-gray-600 mb-1">Click to upload and crop images</p>
+                            <p class="text-xs text-gray-500">PNG, JPG, WEBP (Max 5)</p>
+                        </button>
+                        <div id="imagePreview${variantIndex}" class="grid grid-cols-5 gap-2 mt-3"></div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', variantHTML);
+            croppedFiles[variantIndex] = [];
+            variantCount++;
+        }
+
+        function removeVariant(button) {
+            const variantsContainer = document.getElementById('variantsContainer');
+            const variantItems = variantsContainer.querySelectorAll('.variant-item');
+            
+            if (variantItems.length <= 1) {
+                alert('At least one variant is required!');
+                return;
+            }
+            
+            const variantItem = button.closest('.variant-item');
+            const variantIndex = variantItem.getAttribute('data-variant-index');
+            delete croppedFiles[variantIndex];
+            variantItem.remove();
+            
+            updateVariantNumbers();
+        }
+
+        function updateVariantNumbers() {
+            const variantItems = document.querySelectorAll('.variant-item');
+            variantItems.forEach((item, index) => {
+                const title = item.querySelector('h3');
+                title.textContent = `Variant #${index + 1}`;
+            });
+        }
+
+        function handleImageSelect(event, variantIndex) {
+            const files = event.target.files;
+            if (files.length > 5) {
+                alert('Maximum 5 images allowed per variant');
+                event.target.value = '';
+                return;
+            }
+
+            currentVariantIndex = variantIndex;
+            filesToProcess = Array.from(files);
+            currentFileIndex = 0;
+            croppedFiles[variantIndex] = [];
+
+            if (filesToProcess.length > 0) {
+                processNextImage();
             }
         }
+
+        function processNextImage() {
+            if (currentFileIndex >= filesToProcess.length) {
+                // All images processed, update preview and clear input
+                updateImagePreview();
+                const input = document.getElementById(`variantImagesInput${currentVariantIndex}`);
+                if (input) {
+                    input.value = ''; // Clear the file input
+                }
+                return;
+            }
+
+            const file = filesToProcess[currentFileIndex];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                showCropModal(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showCropModal(imageData) {
+            const modal = document.getElementById('cropModal');
+            const container = document.getElementById('cropContainer');
+            modal.classList.remove('hidden');
+            
+            container.innerHTML = '';
+            const cropDiv = document.createElement('div');
+            cropDiv.style.width = '100%';
+            cropDiv.style.height = '400px';
+            container.appendChild(cropDiv);
+
+            currentCroppie = new Croppie(cropDiv, {
+                viewport: { width: 300, height: 300, type: 'square' },
+                boundary: { width: 500, height: 400 },
+                enableOrientation: true,
+                enableResize: false
+            });
+
+            currentCroppie.bind({ url: imageData });
+        }
+
+        function cropImage() {
+            if (!currentCroppie) return;
+
+            currentCroppie.result({
+                type: 'blob',
+                size: { width: 800, height: 800 },
+                format: 'jpeg',
+                quality: 0.9
+            }).then(function(blob) {
+                // Convert blob to file
+                const fileName = `cropped_${currentVariantIndex}_${currentFileIndex}.jpg`;
+                const file = new File([blob], fileName, { type: 'image/jpeg' });
+                
+                croppedFiles[currentVariantIndex].push(file);
+                currentFileIndex++;
+                
+                closeCropModal();
+                processNextImage();
+            });
+        }
+
+        function closeCropModal() {
+            document.getElementById('cropModal').classList.add('hidden');
+            if (currentCroppie) {
+                currentCroppie.destroy();
+                currentCroppie = null;
+            }
+        }
+
+        function updateImagePreview() {
+            const preview = document.getElementById(`imagePreview${currentVariantIndex}`);
+            preview.innerHTML = '';
+
+            const files = croppedFiles[currentVariantIndex] || [];
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'relative group';
+                    imgDiv.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-20 object-cover rounded-lg border border-gray-200">
+                        <button 
+                            type="button" 
+                            onclick="removeImage(${currentVariantIndex}, ${index})" 
+                            class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+                        >×</button>
+                    `;
+                    preview.appendChild(imgDiv);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeImage(variantIndex, imageIndex) {
+            croppedFiles[variantIndex].splice(imageIndex, 1);
+            currentVariantIndex = variantIndex;
+            updateImagePreview();
+        }
+
+        // Form submission handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Validate that all variants have images
+                const variantItems = document.querySelectorAll('.variant-item');
+                let hasError = false;
+                
+                variantItems.forEach(item => {
+                    const variantIndex = item.getAttribute('data-variant-index');
+                    const files = croppedFiles[variantIndex] || [];
+                    
+                    if (files.length === 0) {
+                        alert(`Variant #${item.querySelector('h3').textContent.split('#')[1]} needs at least one image!`);
+                        hasError = true;
+                    }
+                });
+                
+                if (hasError) return;
+                
+                const formData = new FormData(this);
+                
+                // Remove old file inputs
+                const oldInputs = this.querySelectorAll('.variant-images-input');
+                oldInputs.forEach(input => {
+                    const fieldName = input.getAttribute('name');
+                    if (fieldName) {
+                        formData.delete(fieldName);
+                    }
+                });
+
+                // Add cropped images to form data
+                for (const variantIndex in croppedFiles) {
+                    const files = croppedFiles[variantIndex];
+                    files.forEach(file => {
+                        formData.append(`variants[${variantIndex}][images]`, file);
+                    });
+                }
+
+                // Show loading state
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+                // Submit form
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.href = '/admin/products';
+                    } else {
+                        return response.text().then(text => {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                            alert('Error: Failed to add product. Please try again.');
+                            console.error('Server response:', text);
+                        });
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    alert('An error occurred while submitting the form');
+                });
+            });
+        });
     </script>
 </body>
 </html>
