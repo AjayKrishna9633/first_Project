@@ -2,10 +2,10 @@ import User from "../../models/userModal.js";
 import { comparePassword, hashPassword } from "../../utils/hashUtils.js";
 import nodemailer from 'nodemailer';
 import env from "dotenv";
-import Product from "../../models/porductsModal.js";
-import Category from "../../models/categoryModel.js";
+// import Product from "../../models/porductsModal.js";
+// import Category from "../../models/categoryModel.js";
 
-import user from "../../models/userModal.js";
+// import user from "../../models/userModal.js";
 
 
 env.config();

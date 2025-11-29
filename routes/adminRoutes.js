@@ -38,8 +38,8 @@ router.post('/products/edit/:id',isAdminAuthenticated,upload.any(),productCntrl.
 //toggle button for product 
 router.post('/product/toggleBlock/:id',isAdminAuthenticated,productCntrl.toggleBlockProduct);
 
-//deleting product
-router.post('/products/delete/:id',isAdminAuthenticated,productCntrl.deleteProduct);
+// //deleting product
+// router.post('/products/delete/:id',isAdminAuthenticated,productCntrl.deleteProduct);
 
 //category routes
 router.get('/categories', isAdminAuthenticated, categoryCtrl.getCategories);
@@ -48,7 +48,7 @@ router.post('/category/add', isAdminAuthenticated, categoryCtrl.addCategory);
 router.get('/category/edit/:id', isAdminAuthenticated, categoryCtrl.getEditCategory);
 router.post('/category/edit/:id', isAdminAuthenticated, categoryCtrl.updateCategory);
 router.post('/category/toggle/:id', isAdminAuthenticated, categoryCtrl.toggleListCategory);
-router.post('/category/delete/:id', isAdminAuthenticated, categoryCtrl.deleteCategory);
+// router.post('/category/delete/:id', isAdminAuthenticated, categoryCtrl.deleteCategory);
 
 //logout route
 router.get('/logout', isAdminAuthenticated, adminCtrl.logout)

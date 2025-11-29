@@ -31,6 +31,7 @@ try{
     .limit(limit);
 
 
+
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts/limit);
 
@@ -109,13 +110,12 @@ const getAddProduct = async(req,res)=>{
                 });
             }
 
-            // Step 1: Create the main product first (without variants)
             const product = new Product({
                 productName,
                 description,
                 category,
                 status: 'Available',
-                variants: [] // Will be populated later
+                variants: []
             });
 
             await product.save();
@@ -154,6 +154,19 @@ const getAddProduct = async(req,res)=>{
                         categories,
                         admin: req.session.admin,
                         message: `Variant ${parseInt(index) + 1}: All fields are required`,
+                        isError: true
+                    });
+                }
+
+                // Validate sale price <= regular price
+                if (parseFloat(salePrice) > parseFloat(regularPrice)) {
+                    // Rollback: delete the created product
+                    await Product.findByIdAndDelete(product._id);
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/addProduct', {
+                        categories,
+                        admin: req.session.admin,
+                        message: `Variant ${parseInt(index) + 1}: Sale price (₹${salePrice}) cannot be greater than regular price (₹${regularPrice})`,
                         isError: true
                     });
                 }
@@ -317,6 +330,18 @@ const updateProduct = async (req, res) => {
                 
                 const variant = await Variant.findById(variantId);
                 if (variant) {
+                    // Validate sale price <= regular price
+                    if (parseFloat(salePrice) > parseFloat(regularPrice)) {
+                        const categories = await Category.find({ isListed: true });
+                        return res.render('admin/editProduct', {
+                            product,
+                            categories,
+                            admin: req.session.admin,
+                            message: `Variant "${color}": Sale price (₹${salePrice}) cannot be greater than regular price (₹${regularPrice})`,
+                            isError: true
+                        });
+                    }
+                    
                     variant.color = color;
                     variant.quantity = parseInt(quantity);
                     variant.regularPrice = parseFloat(regularPrice);
@@ -359,6 +384,18 @@ const updateProduct = async (req, res) => {
 
                 if (!color || !quantity || !regularPrice || !salePrice) {
                     continue; // Skip incomplete variants
+                }
+
+                // Validate sale price <= regular price
+                if (parseFloat(salePrice) > parseFloat(regularPrice)) {
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/editProduct', {
+                        product,
+                        categories,
+                        admin: req.session.admin,
+                        message: `New Variant "${color}": Sale price (₹${salePrice}) cannot be greater than regular price (₹${regularPrice})`,
+                        isError: true
+                    });
                 }
 
                 const variantImages = variantFilesMap[index] || [];
@@ -424,17 +461,17 @@ const updateProduct = async (req, res) => {
     }
 
 
-    const deleteProduct = async(req,res)=>{
-        try{
-            const productId =req.params.id;
-            await Product.findByIdAndDelete(productId);
+    // const deleteProduct = async(req,res)=>{
+    //     try{
+    //         const productId =req.params.id;
+    //         await Product.findByIdAndDelete(productId);
 
-            res.json({success:true, message:'product is deleted'})
-        }catch(error){
-            console.log('Error in deletePorduct:',error);
-            res.json({success:false, message:'failed to add product'})
-        }
-    }
+    //         res.json({success:true, message:'product is deleted'})
+    //     }catch(error){
+    //         console.log('Error in deletePorduct:',error);
+    //         res.json({success:false, message:'failed to add product'})
+    //     }
+    // }
 
 
 
@@ -444,7 +481,7 @@ const updateProduct = async (req, res) => {
         addProduct,
         getEditProductPage,
         updateProduct,
-        deleteProduct,
+        // deleteProduct,
         toggleBlockProduct,
 
     }

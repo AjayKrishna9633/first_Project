@@ -13,6 +13,7 @@ const getCategories = async (req, res) => {
         if (search) {
             query.name = { $regex: search, $options: 'i' };
         }
+      
 
         const categories = await Category.find(query)
             .sort({ createdAt: -1 })
@@ -200,24 +201,24 @@ const toggleListCategory = async (req, res) => {
 };
 
 // Delete category
-const deleteCategory = async (req, res) => {
-    try {
-        const categoryId = req.params.id;
-        await Category.findByIdAndDelete(categoryId);
+// const deleteCategory = async (req, res) => {
+//     try {
+//         const categoryId = req.params.id;
+//         await Category.findByIdAndDelete(categoryId);
 
-        res.json({
-            success: true,
-            message: 'Category deleted successfully'
-        });
+//         res.json({
+//             success: true,
+//             message: 'Category deleted successfully'
+//         });
 
-    } catch (error) {
-        console.log('Error in deleteCategory:', error);
-        res.json({
-            success: false,
-            message: 'Failed to delete category'
-        });
-    }
-};
+//     } catch (error) {
+//         console.log('Error in deleteCategory:', error);
+//         res.json({
+//             success: false,
+//             message: 'Failed to delete category'
+//         });
+//     }
+// };
 
 export default {
     getCategories,
@@ -226,5 +227,5 @@ export default {
     getEditCategory,
     updateCategory,
     toggleListCategory,
-    deleteCategory
+    // deleteCategory
 };
