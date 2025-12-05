@@ -2,10 +2,9 @@ import User from "../../models/userModal.js";
 import { comparePassword, hashPassword } from "../../utils/hashUtils.js";
 import nodemailer from 'nodemailer';
 import env from "dotenv";
-// import Product from "../../models/porductsModal.js";
-// import Category from "../../models/categoryModel.js";
+import user from "../../models/userModal.js";
 
-// import user from "../../models/userModal.js";
+
 
 
 env.config();
@@ -719,7 +718,8 @@ export const getProfile = async (req, res) => {
             user: {
                 fullName: user.fullName,
                 email: user.email,
-                phone: user.phone || ''
+                phone: user.phone || '',
+                 profileImage: user.avatar?.url || null  
             },
             message: null,
             isError: false
@@ -805,12 +805,304 @@ const updateProfile = async(req,res)=>{
 }
 
 
+const getChangePassword = async (req,res)=>{
+    try{
+        res.render('user/changePassword',{
+            hideHeadSearch:true,
+            user :req.session.user
+        })
+    }catch(error){
+        res.redirect('/profile')
+        console.log(error,'error from the getchangePassword')
+    }
+}
 
+const changePassword = async(req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.session.user.id;
+
+       
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+   
+        if (!user.password) {
+            return res.json({
+                success: false,
+                message: "Cannot change password for Google authenticated accounts"
+            });
+        }
+
+        const isMatch = await comparePassword(currentPassword, user.password);
+        
+        if (!isMatch) {
+            return res.json({
+                success: false,
+                message: "Current password is incorrect"
+            });
+        }
+
+      
+        const isSamePassword = await comparePassword(newPassword, user.password);
+        
+        if (isSamePassword) {
+            return res.json({
+                success: false,
+                message: "New password must be different from current password"
+            });
+        }
+
+        const hashedPassword = await hashPassword(newPassword);
+
+        // Update password
+        user.password = hashedPassword;
+        await user.save();
+
+        res.json({ 
+            success: true, 
+            message: "Password updated successfully"
+        });
+
+    } catch(error) {
+        console.log(error, "error changing password");
+        res.json({ 
+            success: false, 
+            message: "Failed to update password" 
+        });
+    }
+};
+
+const getChangeEmail = async (req,res)=>{
+    try{
+        res.render('user/changeEmail',{
+            hideHeadSearch:true,
+            user :req.session.user,
+            currentPage:"proflie"
+        });
+    }catch(error){
+
+        console.error('Error loading change')
+        res.redirect('/profile')
+    }
+}
+const requestEmailChange = async (req,res)=>{
+    try{
+        const userId = req.session.user.id;
+        const userData = await User.findById(userId)
+        const currentEmail = userData.email;
+        const newEmail=req.body.newEmail
+
+        if(!newEmail){
+            return res.json({
+                success:false,
+                message:"New email is Empty"
+            })
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if(!emailRegex.test(newEmail)){
+            return res.json({
+                success:false,
+                message:"Enter a valid email"
+            })
+        }
+if(newEmail.toLowerCase() === currentEmail.toLowerCase()){
+    return res.json({
+        success: false,
+        message: "New email is same as current email"
+    })
+}
+
+
+
+
+        const isEmailMatch = await User.findOne({email:newEmail,_id: { $ne: userId }})
+        if(isEmailMatch){
+            return res.json({
+                success:false,
+                message:"This Email already exist"
+            })
+        }
+
+         const otp = generateOtp();
+        const otpExpires = Date.now() + 5 * 60 * 1000;
+
+        const emailSent = await sendEmailVerification(newEmail, otp);
+
+        if (emailSent) {
+            req.session.emailChangeOtp = {
+                code: otp,
+                email: newEmail.toLowerCase(),
+                expires: otpExpires
+            };
+
+            req.session.save((err) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.json({
+                        success: false,
+                        message: 'Failed to send OTP. Please try again.'
+                    });
+                }
+
+                res.json({
+                    success: true,
+                    message: "OTP sent to your email"
+                });
+            });
+        } else {
+            res.json({
+                success: false,
+                message: "Failed to send OTP"
+            });
+        }
+
+
+
+
+
+    }catch(error){
+ console.error('Request email change error:', error);
+    res.json({
+        success: false,
+        message: 'Failed to send OTP'
+    });
+}
+}
+
+const verifyEmailChange = async(req,res)=>{
+    try{
+        const {otp,newEmail}= req.body;
+        const userId = req.session.user.id;
+        const sessionOtp = req.session.emailChangeOtp.code;
+
+        if(!otp||!newEmail){
+            return res.json({
+                success:false,
+                message:"Otp or Email is missing"
+            })
+        }
+
+        if(!req.session.emailChangeOtp){
+            return res.status(404).json({
+                success:false,
+                message:"The session expired"
+            })
+        }
+
+        if(!sessionOtp){
+            return res.json({
+                success:false,
+                message:"OTP is missing from session"
+            })
+
+        }
+
+        if(otp!==sessionOtp){
+            return res.json({
+                success:false,
+                message:"Otp is invalid"
+            })
+        }
+        if(req.session.emailChangeOtp.expires < Date.now()){
+            return res.json({
+                success:false,
+                message:"The Otp is expired"
+            })
+        }
+
+        if(req.session.emailChangeOtp.email!==newEmail.toLowerCase()){
+            return res.json({
+                success:false,
+                message:"There a email Mismatch"
+            })
+        }
+
+
+        const userData= await User.findById(userId);
+        userData.email= newEmail.toLowerCase()
+
+        await userData.save();
+
+// await User.findByIdAndUpdate(userId, {  // ✅ One line!
+//     email: newEmail.toLowerCase()
+// });
+
+        req.session.user.email= newEmail.toLowerCase();
+
+     delete req.session.emailChangeOtp;  
+
+
+         return res.json({
+            success:true,
+            message:"The Email is success fully changed"
+         })
+
+
+    }catch(error){
+        
+        console.error('Verify email change error:', error);
+    return res.json({
+        success: false,
+        message: "Something went wrong"
+    })
+    
+
+    }
+}
+
+const updateProfileImage =async (req,res)=>{
+    try{
+        const userId = req.session.user.id;
+
+        if(!req.file){
+            return res.json({
+                success:false,
+                message:'No image file provided'
+
+        });
+        }
+
+ const imageUrl = req.file.path;
+
+await User.findByIdAndUpdate(userId,{
+avatar:{
+    url:imageUrl,
+    publicId : req.file.filename
+}
+
+})
+        res.json({
+            success: true,
+            message: 'Profile image updated successfully',
+            imageUrl: imageUrl
+        });
+
+    }catch(error){
+ console.error('Upload profile image error:', error);
+        res.json({
+            success: false,
+            message: 'Failed to upload image'
+        });
+    }
+}
 
 //  EXPORTS 
 
 export default {
+    requestEmailChange,
+    verifyEmailChange,
+    getChangeEmail,
+    changePassword,
     updateProfile,
+    getChangePassword,
     getLogin,
     loginUser,
     getSignup,
@@ -826,5 +1118,6 @@ export default {
     logout,
     loadhomePage,
     pageNotFound,
+    updateProfileImage,
 
 };

@@ -14,6 +14,10 @@ const cartSchema = new Schema({
             ref:'product',
             required:true
         },
+        variantId:{  
+        type:Schema.Types.ObjectId,
+        ref:'variant'
+    },
         quantity:{
             type:Number,
             default:1

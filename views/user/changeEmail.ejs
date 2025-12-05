@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Email | GEARGRID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-black text-white">
+    <%- include('../partials/header') %>
+
+    <div class="bg-gray-100 py-8 mt-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <h1 class="text-3xl font-bold text-black mb-2">Change Email</h1>
+            <div class="flex items-center text-sm text-gray-600">
+                <a href="/" class="hover:text-black">GearGrid</a>
+                <i class="fas fa-chevron-right mx-2 text-xs"></i>
+                <a href="/profile" class="hover:text-black">My Account</a>
+                <i class="fas fa-chevron-right mx-2 text-xs"></i>
+                <span class="text-black">Change Email</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 py-12">
+        <div class="flex gap-8">
+            <%- include('../partials/sidebar', { currentPage: 'profile' }) %>
+
+            <div class="flex-1 max-w-2xl">
+                <!-- Step 1: Request Email Change -->
+                <div id="requestEmailSection" class="bg-gray-900 rounded-lg p-8 border border-gray-800">
+                    <h2 class="text-2xl font-bold mb-6">Change Your Email</h2>
+                    
+                    <form id="requestEmailForm" class="space-y-6">
+                        <!-- Current Email -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Current Email</label>
+                            <input type="email" value="<%= user.email %>" readonly
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white cursor-not-allowed opacity-75">
+                        </div>
+
+                        <!-- New Email -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">New Email *</label>
+                            <input type="email" id="newEmail" name="newEmail" required
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
+                                placeholder="Enter new email address">
+                            <p id="newEmail-error" class="text-red-500 text-sm mt-1 hidden"></p>
+                        </div>
+
+                        <!-- Confirm New Email -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Confirm New Email *</label>
+                            <input type="email" id="confirmEmail" name="confirmEmail" required
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
+                                placeholder="Confirm new email address">
+                            <p id="confirmEmail-error" class="text-red-500 text-sm mt-1 hidden"></p>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex gap-4 pt-4">
+                            <button type="submit" 
+                                class="flex-1 px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition font-medium">
+                                Send Verification Code
+                            </button>
+                            <a href="/profile" 
+                                class="flex-1 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition font-medium text-center">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Step 2: Verify OTP -->
+                <div id="verifyOtpSection" class="hidden bg-gray-900 rounded-lg p-8 border border-gray-800">
+                    <h2 class="text-2xl font-bold mb-6">Verify Your Email</h2>
+                    
+                    <p class="text-gray-400 mb-6">
+                        We've sent a 6-digit verification code to <span id="displayNewEmail" class="text-white font-semibold"></span>
+                    </p>
+
+                    <form id="verifyOtpForm" class="space-y-6">
+                        <!-- OTP Input -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Verification Code *</label>
+                            <input type="text" id="otp" name="otp" maxlength="6" required
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white text-center text-2xl tracking-widest"
+                                placeholder="000000">
+                            <p id="otp-error" class="text-red-500 text-sm mt-1 hidden"></p>
+                        </div>
+
+                        <!-- Resend OTP -->
+                        <div class="text-center">
+                            <button type="button" onclick="resendOtp()" class="text-cyan-400 hover:underline text-sm">
+                                Didn't receive code? Resend
+                            </button>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex gap-4 pt-4">
+                            <button type="submit" 
+                                class="flex-1 px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition font-medium">
+                                Verify & Update Email
+                            </button>
+                            <button type="button" onclick="backToEmailForm()"
+                                class="flex-1 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition font-medium">
+                                Back
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Info Box -->
+                <div class="mt-6 bg-gray-900 rounded-lg p-6 border border-gray-800">
+                    <h3 class="font-semibold mb-3 flex items-center gap-2">
+                        <i class="fas fa-info-circle text-cyan-400"></i>
+                        Important Information
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-green-500 mt-1"></i>
+                            <span>A verification code will be sent to your new email</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-green-500 mt-1"></i>
+                            <span>The code expires in 5 minutes</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-green-500 mt-1"></i>
+                            <span>You'll be logged out after email change</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-check text-green-500 mt-1"></i>
+                            <span>Use your new email to login next time</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script>
+        let newEmailValue = '';
+
+        // Request email change
+        document.getElementById('requestEmailForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Clear errors
+            document.querySelectorAll('[id$="-error"]').forEach(el => {
+                el.classList.add('hidden');
+                el.textContent = '';
+            });
+
+            const newEmail = document.getElementById('newEmail').value.trim();
+            const confirmEmail = document.getElementById('confirmEmail').value.trim();
+
+            // Validation
+            let hasError = false;
+
+            if (!newEmail) {
+                showError('newEmail', 'New email is required');
+                hasError = true;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (newEmail && !emailRegex.test(newEmail)) {
+                showError('newEmail', 'Please enter a valid email address');
+                hasError = true;
+            }
+
+            if (newEmail !== confirmEmail) {
+                showError('confirmEmail', 'Emails do not match');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            try {
+                const response = await fetch('/profile/EmailReset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newEmail })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    newEmailValue = newEmail;
+                    document.getElementById('displayNewEmail').textContent = newEmail;
+                    document.getElementById('requestEmailSection').classList.add('hidden');
+                    document.getElementById('verifyOtpSection').classList.remove('hidden');
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Code Sent!',
+                        text: 'Please check your new email for the verification code',
+                        confirmButtonColor: '#10b981'
+                    });
+                } else {
+                    showError('newEmail', result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to send verification code',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        });
+
+        // Verify OTP
+        document.getElementById('verifyOtpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            document.querySelectorAll('[id$="-error"]').forEach(el => {
+                el.classList.add('hidden');
+                el.textContent = '';
+            });
+
+            const otp = document.getElementById('otp').value.trim();
+
+            if (!otp || otp.length !== 6) {
+                showError('otp', 'Please enter a valid 6-digit code');
+                return;
+            }
+
+            try {
+                const response = await fetch('/profile/verifyEmailReset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp, newEmail: newEmailValue })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Email Updated!',
+                        text: 'Your email has been changed successfully. Please login with your new email.',
+                        confirmButtonColor: '#10b981'
+                    });
+                    window.location.href = '/logout';
+                } else {
+                    showError('otp', result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to verify code',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        });
+
+        // Resend OTP
+        async function resendOtp() {
+            try {
+                const response = await fetch('/profile/EmailReset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newEmail: newEmailValue })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Code Resent!',
+                        text: 'A new verification code has been sent',
+                        confirmButtonColor: '#10b981',
+                        timer: 2000
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.message,
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to resend code',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        }
+
+        // Back to email form
+        function backToEmailForm() {
+            document.getElementById('verifyOtpSection').classList.add('hidden');
+            document.getElementById('requestEmailSection').classList.remove('hidden');
+            document.getElementById('otp').value = '';
+        }
+
+        function showError(fieldId, message) {
+            const errorEl = document.getElementById(fieldId + '-error');
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

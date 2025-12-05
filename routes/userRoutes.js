@@ -3,6 +3,8 @@ import userCtrl from "../controllers/user/userController.js";
 import passport from "passport";
 import { isNotAuthenticated, protectUser } from "../middlewares/authMiddleware.js";
 import productCtrl from '../controllers/user/productController.js';
+import addressCtrl from '../controllers/user/addressController.js'
+import profileUpload from '../config/profileUpload.js';
 
 const router = Router();
 
@@ -58,12 +60,29 @@ router.get('/home', protectUser, userCtrl.loadhomePage);
 
 //  PROFILE ROUTES 
 router.get('/profile', protectUser, userCtrl.getProfile);
-router.post('/profile', protectUser, userCtrl.updateProfile)
+router.post('/profile', protectUser, userCtrl.updateProfile);
+//profile reset  password
+
+router.get('/changePassword', protectUser, userCtrl.getChangePassword)
+router.post('/changePassword', protectUser, userCtrl.changePassword)
+
+//profile reset Email
+
+router.get('/changeEmail', protectUser, userCtrl.getChangeEmail);
+
+ router.post('/profile/EmailReset',protectUser,userCtrl.requestEmailChange)
+ router.post('/profile/verifyEmailReset', protectUser, userCtrl.verifyEmailChange);
+
+//proflie photo
+router.post('/profile/uploadImage', protectUser, profileUpload.single('profileImage'), userCtrl.updateProfileImage);
+
+
 //  LOGOUT ROUTE 
 router.get('/logout', userCtrl.logout);
 
 //  ERROR ROUTES 
 router.get('/pageNotFound', userCtrl.pageNotFound);
+
 
 
 //shop page
@@ -73,4 +92,12 @@ router.get('/shop', productCtrl.getShopPage)
 router.get('/product/:id', productCtrl.getProductDetail)
 
 
+//
+
+// address
+router.get('/address',protectUser,addressCtrl.AddressPage)
+router.post('/address/add',protectUser,addressCtrl.addAddress)
+router.get('/address/edit/:id', protectUser, addressCtrl.getEditAddress);
+router.delete('/address/delete/:id', protectUser, addressCtrl.deleteAddress);
+router.patch('/address/update/:id', protectUser, addressCtrl.updateAddress);
 export default router;

@@ -1,8 +1,8 @@
-import { name } from "ejs";
-import mongoose from "mongoose";
-const Schema = mongoose;
 
-const {addressSchema} = new Schema({
+import mongoose from "mongoose";
+const Schema = mongoose.Schema;
+
+const addressSchema = new Schema({
 
     userId:{
         type:Schema.Types.ObjectId,
@@ -40,8 +40,12 @@ const {addressSchema} = new Schema({
         },
         altPhone:{
             type:Number,
-            required:true
-        }
+            required:false
+        },
+        isDefault: {
+        type: Boolean,
+        default: false
+    }
         
     }]
 
