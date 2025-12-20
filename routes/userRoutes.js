@@ -5,7 +5,10 @@ import { isNotAuthenticated, protectUser } from "../middlewares/authMiddleware.j
 import productCtrl from '../controllers/user/productController.js';
 import addressCtrl from '../controllers/user/addressController.js'
 import profileUpload from '../config/profileUpload.js';
-
+import wishlistCtrl from "../controllers/user/whislistcontroller.js";
+import cartCtrl from "../controllers/user/cartController.js";
+import checkoutCtrl from "../controllers/user/checkoutController.js";
+import orderCtrl from "../controllers/user/orderController.js";
 const router = Router();
 
 //  HOME ROUTE 
@@ -100,4 +103,36 @@ router.post('/address/add',protectUser,addressCtrl.addAddress)
 router.get('/address/edit/:id', protectUser, addressCtrl.getEditAddress);
 router.delete('/address/delete/:id', protectUser, addressCtrl.deleteAddress);
 router.patch('/address/update/:id', protectUser, addressCtrl.updateAddress);
+
+//whishlist
+router.post('/wishlist/add', protectUser, wishlistCtrl.addToWishlist);
+router.get('/wishlist', protectUser, wishlistCtrl.getWishlist);
+router.post('/wishlist/remove', protectUser, wishlistCtrl.removeFromWishlist);
+router.post('/wishlist/moveToCart', protectUser, wishlistCtrl.moveToCart);
+
+//cart
+router.get('/cart',protectUser,cartCtrl.getCart);
+router.put('/cart/add',protectUser,cartCtrl.addToCart);
+router.patch('/cart/update',protectUser,cartCtrl.updateCartItem);
+router.delete('/cart/remove',protectUser,cartCtrl.removeFromCart)
+
+
+//checkout
+router.get('/checkout', protectUser, checkoutCtrl.getCheckOut);
+router.post('/checkout/place-order', protectUser, checkoutCtrl.placeOrder);
+
+
+
+
+router.post('/buy-now', protectUser, checkoutCtrl.buyNow);
+router.get('/checkout/buy-now', protectUser, checkoutCtrl.getBuyNowCheckout);
+
+//order management routes
+router.get('/orders', protectUser, orderCtrl.getUserOrders);
+router.get('/orders/:id', protectUser, orderCtrl.getOrderDetails);
+router.post('/orders/:id/cancel', protectUser, orderCtrl.cancelOrder);
+router.get('/orders/:id/invoice', protectUser, orderCtrl.downloadInvoice);
+router.post('/orders/return/request', protectUser, orderCtrl.requestReturn);
+
+
 export default router;

@@ -47,15 +47,43 @@ const getShopPage = async (req, res) => {
                 sortOption = { createdAt: -1 };
         }
 
-        // Fetch products with variants
-        let products = await Product.find(query)
-            .populate('category', 'name')
-            .populate('variants')
-            .sort(sortOption)
-            .skip(skip)
-            .limit(limit);
+        const products = await Product.aggregate([
+            { $match: query },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'category',
+                    foreignField: '_id',
+                    as: 'category'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'variants',
+                    localField: 'variants',
+                    foreignField: '_id',
+                    as: 'variants'
+                }
+            },
+            {
+                $addFields: {
+                    category: { $arrayElemAt: ['$category', 0] },
+                    totalStock: { $sum: '$variants.quantity' },
+                    hasStock: { $gt: [{ $sum: '$variants.quantity' }, 0] }
+                }
+            },
+            {
+                $sort: {
+                    hasStock: -1, 
+                    ...sortOption
+                }
+            },
+            { $skip: skip },
+            { $limit: limit }
+        ]);
 
-        // Filter by color if specified
+
+      
         if (colorFilter) {
             products = products.filter(product => {
                 if (product.variants && product.variants.length > 0) {
@@ -106,10 +134,25 @@ const getShopPage = async (req, res) => {
             }
         });
 
+        // Check wishlist items for logged-in users
+        let wishlistProductIds = [];
+        if (req.session.user) {
+            try {
+                const Wishlist = (await import('../../models/wishlist.js')).default;
+                const wishlist = await Wishlist.findOne({ userId: req.session.user.id });
+                if (wishlist && wishlist.products) {
+                    wishlistProductIds = wishlist.products.map(item => item.productId.toString());
+                }
+            } catch (error) {
+                console.log('Error fetching wishlist:', error);
+            }
+        }
+
         res.render('user/shop', {
             products,
             categories,
             availableColors: Array.from(availableColors).sort(),
+            wishlistProductIds,
             currentPage: page,
             totalPages,
             search,
@@ -152,18 +195,53 @@ const getProductDetail = async (req, res) => {
             .populate('variants')
             .limit(4);
 
-        res.render('user/productDetail', {
-            product,
-            relatedProducts,
-            user: req.session.user || null,
-            hideHeaderSearch: false  // Show search on product detail page
-        });
+        // Check if product is in wishlist
+        let isInWishlist = false;
+        if (req.session.user) {
+            const Wishlist = (await import('../../models/wishlist.js')).default;
+            const wishlist = await Wishlist.findOne({ userId: req.session.user.id });
+            if (wishlist) {
+                isInWishlist = wishlist.products.some(
+                    item => item.productId.toString() === productId
+                );
+            }
+        }
+let totalStock = 0;
+let hasStock = false;
+
+if (product.variants && product.variants.length > 0) {
+    totalStock = product.variants.reduce((sum, variant) => sum + variant.quantity, 0);
+    hasStock = totalStock > 0;
+}
+
+console.log('Product stock info:', {
+    productName: product.productName,
+    totalStock,
+    hasStock,
+    variants: product.variants.map(v => ({ color: v.color, quantity: v.quantity }))
+});
+
+res.render('user/productDetail', {
+    product,
+    relatedProducts,
+    isInWishlist,
+    hasStock,
+    totalStock,
+    user: req.session.user || null,
+    hideHeaderSearch: false
+});
 
     } catch (error) {
         console.log('Error in getProductDetail:', error);
         res.redirect('/shop');
     }
 };
+
+
+
+
+
+
 
 export default {
     getShopPage,

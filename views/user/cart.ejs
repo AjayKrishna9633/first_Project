@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - GEARGRID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #000;
+        }
+        .cart-item {
+            transition: all 0.3s ease;
+        }
+        .cart-item:hover {
+            background-color: #1f2937;
+        }
+        .quantity-btn {
+            transition: all 0.2s ease;
+        }
+        .quantity-btn:hover {
+            transform: scale(1.1);
+        }
+        .checkout-btn {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            transition: all 0.3s ease;
+        }
+        .checkout-btn:hover {
+            background: linear-gradient(135deg, #0891b2, #2563eb);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+    <!-- Header -->
+    <%- include('../partials/header') %>
+
+    <!-- Breadcrumb -->
+    <div class="bg-gray-900 border-b border-gray-800 mt-20">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center text-sm">
+                <a href="/" class="text-gray-300 hover:text-white transition">Home</a>
+                <i class="fas fa-chevron-right mx-2 text-xs text-gray-500"></i>
+                <span class="text-white font-medium">Shopping Cart</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Title -->
+    <div class="bg-gray-900 py-8 px-6 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-4xl font-bold text-white mb-2">Shopping Cart</h1>
+            <p class="text-gray-400">
+                <% if (cart && cart.items.length > 0) { %>
+                    <i class="fas fa-shopping-cart text-cyan-400"></i> <%= cart.items.length %> <%= cart.items.length === 1 ? 'item' : 'items' %> in your cart
+                <% } else { %>
+                    <i class="fas fa-shopping-cart text-gray-500"></i> Your cart is empty
+                <% } %>
+            </p>
+        </div>
+    </div>
+
+    <!-- Cart Content -->
+    <div class="max-w-7xl mx-auto py-12 px-6">
+        <% if (cart && cart.items.length > 0) { %>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Cart Items -->
+                <div class="lg:col-span-2">
+                    <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                        <!-- Cart Header -->
+                        <div class="bg-gray-800 px-6 py-4 border-b border-gray-700">
+                            <h2 class="text-xl font-semibold text-white">Cart Items</h2>
+                        </div>
+
+                        <!-- Cart Items List -->
+                        <div class="divide-y divide-gray-800">
+                            <% cart.items.forEach((item, index) => { %>
+                                <% if (item.productId) { %>
+                                    <div class="cart-item p-6" 
+                                         data-item-id="<%= item._id %>"
+                                         data-product-id="<%= item.productId._id %>"
+                                         data-variant-id="<%= item.variantId._id %>">
+                                        <div class="flex flex-col md:flex-row gap-4">
+                                            <!-- Product Image -->
+                                            <div class="flex-shrink-0">
+                                                <div class="w-24 h-24 bg-white rounded-lg overflow-hidden">
+                                                    <% if (item.productId.variants && item.productId.variants.length > 0 && item.productId.variants[0].images && item.productId.variants[0].images.length > 0) { %>
+                                                        <img src="<%= item.productId.variants[0].images[0] %>" 
+                                                             alt="<%= item.productId.productName %>"
+                                                             class="w-full h-full object-cover">
+                                                    <% } else { %>
+                                                        <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                                            <i class="fas fa-image text-2xl"></i>
+                                                        </div>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+
+                                            <!-- Product Details -->
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                                    <!-- Left: Product Info -->
+                                                    <div class="flex-1 min-w-0">
+                                                        <!-- Product Name -->
+                                                        <h3 class="text-lg font-semibold text-white mb-1 truncate">
+                                                            <%= item.productId.productName %>
+                                                        </h3>
+                                                        
+                                                        <!-- Category -->
+                                                        <% if (item.productId.category) { %>
+                                                            <p class="text-sm text-gray-400 mb-2">
+                                                                <%= item.productId.category.name %>
+                                                            </p>
+                                                        <% } %>
+
+                                                        <!-- Variant Info -->
+                                                        <% if (item.variantId) { %>
+                                                            <% const variant = item.productId.variants.find(v => v._id.toString() === item.variantId.toString()); %>
+                                                            <% if (variant) { %>
+                                                                <p class="text-sm text-gray-400 mb-2">
+                                                                    Color: <span class="text-white"><%= variant.color %></span>
+                                                                </p>
+                                                            <% } %>
+                                                        <% } %>
+
+                                                        <!-- Price -->
+                                                        <div class="flex items-center gap-2 mb-3">
+                                                            <span class="text-xl font-bold text-white">₹<%= item.price.toLocaleString() %></span>
+                                                            <span class="text-sm text-gray-400">each</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Right: Quantity Controls and Total -->
+                                                    <div class="flex flex-col items-end gap-3">
+                                                        <!-- Quantity Controls -->
+                                                        <div class="flex items-center gap-2">
+                                                            <button onclick="updateQuantity('<%= item._id %>', <%= item.quantity - 1 %>)" 
+                                                                class="quantity-btn w-8 h-8 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 transition flex items-center justify-center"
+                                                                <%= item.quantity <= 1 ? 'disabled' : '' %>>
+                                                                <i class="fas fa-minus text-xs"></i>
+                                                            </button>
+                                                            
+                                                            <input type="number" value="<%= item.quantity %>" min="1" max="3"
+                                                                onchange="updateQuantity('<%= item._id %>', this.value)"
+                                                                class="w-16 text-center bg-gray-800 border border-gray-700 rounded-lg py-1 text-white focus:outline-none focus:border-gray-500">
+                                                            
+                                                            <button onclick="updateQuantity('<%= item._id %>', <%= item.quantity + 1 %>)" 
+                                                                class="quantity-btn w-8 h-8 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 transition flex items-center justify-center"
+                                                                <%= item.quantity >= 3 ? 'disabled' : '' %>>
+                                                                <i class="fas fa-plus text-xs"></i>
+                                                            </button>
+
+                                                            <!-- Remove Button -->
+                                                            <button onclick="removeFromCart('<%= item._id %>')" 
+                                                                class="text-red-400 hover:text-red-300 transition ml-2">
+                                                                <i class="fas fa-trash text-sm"></i>
+                                                            </button>
+                                                        </div>
+
+                                                        <!-- Total Price -->
+                                                        <div class="text-right">
+                                                            <p class="text-lg font-bold text-cyan-400">
+                                                                ₹<%= item.totalPrice.toLocaleString() %>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="lg:col-span-1">
+                    <div class="bg-gray-900 rounded-lg border border-gray-800 p-6 sticky top-6">
+                        <h2 class="text-xl font-semibold text-white mb-6">Order Summary</h2>
+                        
+                        <!-- Summary Details -->
+                        <div class="space-y-4 mb-6">
+                            <div class="flex justify-between text-gray-400">
+                                <span>Subtotal (<%= cart.items.length %> items)</span>
+                                <span>₹<%= cart.items.reduce((total, item) => total + item.totalPrice, 0).toLocaleString() %></span>
+                            </div>
+                            
+                            <div class="flex justify-between text-gray-400">
+                                <span>Shipping</span>
+                                <span class="text-green-400">Free</span>
+                            </div>
+                            
+                            <div class="flex justify-between text-gray-400">
+                                <span>Tax</span>
+                                <span>₹0</span>
+                            </div>
+                            
+                            <div class="border-t border-gray-700 pt-4">
+                                <div class="flex justify-between text-xl font-bold text-white">
+                                    <span>Total</span>
+                                    <span class="text-cyan-400">₹<%= cart.items.reduce((total, item) => total + item.totalPrice, 0).toLocaleString() %></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Checkout Button -->
+                        <button onclick="proceedToCheckout()" 
+                            class="checkout-btn w-full py-4 text-white font-semibold rounded-lg mb-4">
+                            <i class="fas fa-lock mr-2"></i>
+                            Proceed to Checkout
+                        </button>
+
+                        <!-- Continue Shopping -->
+                        <a href="/shop" 
+                            class="block w-full py-3 text-center border-2 border-gray-700 text-gray-300 rounded-lg hover:border-gray-500 hover:text-white transition">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Continue Shopping
+                        </a>
+
+                        <!-- Security Badge -->
+                        <div class="mt-6 text-center">
+                            <div class="flex items-center justify-center gap-2 text-sm text-gray-400">
+                                <i class="fas fa-shield-alt text-green-400"></i>
+                                <span>Secure Checkout</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <% } else { %>
+            <!-- Empty Cart -->
+            <div class="text-center py-20">
+                <div class="mb-6">
+                    <i class="fas fa-shopping-cart text-8xl text-gray-700"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">Your Cart is Empty</h2>
+                <p class="text-gray-400 mb-8 max-w-md mx-auto">
+                    Looks like you haven't added any items to your cart yet. Start shopping to fill it up!
+                </p>
+                <a href="/shop" 
+                    class="inline-block px-8 py-3 bg-cyan-400 text-black rounded-lg hover:bg-cyan-500 transition font-semibold">
+                    <i class="fas fa-shopping-bag mr-2"></i> Start Shopping
+                </a>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Footer -->
+    <%- include('../partials/footer') %>
+
+    <script>
+        // Remove item from cart
+        async function removeFromCart(itemId) {
+            const result = await Swal.fire({
+                title: 'Remove Item?',
+                text: 'Are you sure you want to remove this item from your cart?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, remove it',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch('/cart/remove', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ itemId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Removed!',
+                        text: 'Item removed from cart',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Failed to remove item', 'error');
+            }
+        }
+
+        // Update item quantity
+        async function updateQuantity(itemId, newQuantity) {
+            newQuantity = parseInt(newQuantity);
+            
+            if (newQuantity < 1) {
+                Swal.fire('Error', 'Quantity must be at least 1', 'error');
+                return;
+            }
+            
+            if (newQuantity > 3) {
+                Swal.fire('Error', 'Maximum 3 units allowed per product', 'error');
+                return;
+            }
+
+            try {
+                // Find the item in the cart to get productId and variantId
+                const cartItem = document.querySelector(`[data-item-id="${itemId}"]`);
+                if (!cartItem) {
+                    Swal.fire('Error', 'Item not found', 'error');
+                    return;
+                }
+
+                // Get productId and variantId from data attributes
+                const productId = cartItem.dataset.productId;
+                const variantId = cartItem.dataset.variantId;
+
+                const response = await fetch('/cart/update', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        productId: productId,
+                        variantId: variantId,
+                        quantity: newQuantity 
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    location.reload();
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Failed to update cart', 'error');
+            }
+        }
+
+
+        // Proceed to checkout
+        function proceedToCheckout() {
+    window.location.href = '/checkout';
+
+        }
+    </script>
+</body>
+</html>

@@ -1,72 +1,118 @@
+// models/orderModel.js
 import mongoose from "mongoose";
-import { v4 as uuidv4 } from "uuid";
-import product from "./porductsModal";
-const {Schema}= mongoose;
+const { Schema } = mongoose;
 
 const orderSchema = new Schema({
-  
-        orderedItems:[{
-            product:{
-                type:Schema.Types.ObjectId,
-                ref:"product",
-                required:true
-                
-            },
-            quantity:{
-                type:Number,
-                required: true
-            },
-            price:{
-                type:String,
-                default:0
-            }
-        }],
-        orderId:{
-            type:String,
-            default:()=>uuidv4(),
-            unique:true
-        },
-        totalPrice:{
-            type:Number,
-            required:true
-        },
-        discount:{
-            type:Number,
-            required:true
-        },
-        finalAmount:{
-            type:Number,
-            required:true
-        },
-
-
-    
-    address:{
-        type:Schema.Types.ObjectId,
-        ref:'user',
-        required:true
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'user',
+        required: true
     },
-    invoiceDate:{
-        type:Date,
-
+    orderNumber: {
+        type: String,
+        unique: true,
+        required: true
     },
-    status:{
-        type:String,
-        required:true,
-        enum:["Pending",'Processing','Shipped','Delivered','Cancelled','Return Request','Returned']
-    },
-    createdOn:{
-        type:Date,
-        default:Date.now,
-        required:true
-    },
-    coupenApplied:{
-        type:Boolean,
-        default:false
-    }, cancellationReason:{
-            type:String,
-            default:"none"
+    items: [{
+        productId: {
+            type: Schema.Types.ObjectId,
+            ref: 'product',
+            required: true
+        },
+        variantId: {
+            type: Schema.Types.ObjectId,
+            ref: 'variant',
+            required: true
+        },
+        quantity: {
+            type: Number,
+            required: true
+        },
+        price: {
+            type: Number,
+            required: true
+        },
+        totalPrice: {
+            type: Number,
+            required: true
         }
-})
-const order = mongoose.model('order',orderSchema);
-export default order
+    }],
+    shippingAddress: {
+        fullName: String,
+        phone: String,
+        streetAddress: String,
+        city: String,
+        state: String,
+        pinCode: String,
+        country: String,
+        addressType: String
+    },
+    paymentMethod: {
+        type: String,
+        enum: ['cod', 'card', 'upi', 'netbanking'],
+        required: true
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['pending', 'paid', 'failed'],
+        default: 'pending'
+    },
+    orderStatus: {
+        type: String,
+        enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'],
+        default: 'pending'
+    },
+    subtotal: {
+        type: Number,
+        required: true
+    },
+    shippingCost: {
+        type: Number,
+        default: 0
+    },
+    tax: {
+        type: Number,
+        default: 0
+    },
+    totalAmount: {
+        type: Number,
+        required: true
+    },
+    orderNotes: String,
+    adminNotes: String,
+    cancellationReason: String,
+    cancelledAt: Date,
+    trackingNumber: String,
+    estimatedDelivery: Date,
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    },
+    returnStatus: {
+        type: String,
+        enum: ['none', 'requested', 'approved', 'rejected', 'completed'],
+        default: 'none'
+    },
+    returnReason: String,
+    returnRequestDate: Date,
+    returnApprovedDate: Date,
+    returnCompletedDate: Date,
+    returnNotes: String,
+    adminReturnNotes: String,
+    refundAmount: {
+        type: Number,
+        default: 0
+    },
+    refundStatus: {
+        type: String,
+        enum: ['none', 'pending', 'processed'],
+        default: 'none'
+    }
+});
+
+const Order = mongoose.model('order', orderSchema);
+export default Order;

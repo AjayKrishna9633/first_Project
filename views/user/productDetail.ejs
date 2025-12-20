@@ -7,6 +7,70 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>.product-card.out-of-stock {
+    opacity: 0.5;
+    position: relative;
+}
+/* Add this to your existing style section */
+.swal-wide {
+    width: 500px !important;
+}
+
+.swal-confirm-btn {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6) !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    margin: 0 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.swal-confirm-btn:hover {
+    background: linear-gradient(135deg, #0891b2, #2563eb) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3) !important;
+}
+
+.swal-cancel-btn {
+    background: #6b7280 !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    margin: 0 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.swal-cancel-btn:hover {
+    background: #4b5563 !important;
+    transform: translateY(-2px) !important;
+}
+
+
+.product-card.out-of-stock::after {
+    content: 'OUT OF STOCK';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+    z-index: 10;
+}
+
+.product-card.out-of-stock .add-to-cart-btn {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+</style>
 </head>
 <body class="bg-black text-white">
     <!-- Header -->
@@ -80,19 +144,24 @@
                 </div>
 
                 <!-- Stock Status -->
-                <div id="stockStatus" class="mb-6">
-                    <% if (product.variants && product.variants.length > 0) { %>
-                        <% if (product.variants[0].quantity > 0) { %>
-                            <p class="text-green-500 text-sm">
-                                <i class="fas fa-check-circle"></i> In Stock (<span id="stockQuantity"><%= product.variants[0].quantity %></span> available)
-                            </p>
-                        <% } else { %>
-                            <p class="text-red-500 text-sm">
-                                <i class="fas fa-times-circle"></i> Out of Stock
-                            </p>
-                        <% } %>
-                    <% } %>
-                </div>
+                        <div id="stockStatus" class="mb-6">
+            <% if (product.variants && product.variants.length > 0) { %>
+                <% 
+                    const totalStock = product.variants.reduce((sum, variant) => sum + variant.quantity, 0);
+                    const hasStock = totalStock > 0;
+                %>
+                <% if (hasStock) { %>
+                    <p class="text-green-500 text-sm">
+                        <i class="fas fa-check-circle"></i> In Stock (<span id="stockQuantity"><%= product.variants[0].quantity %></span> available)
+                    </p>
+                <% } else { %>
+                    <p class="text-red-500 text-sm">
+                        <i class="fas fa-times-circle"></i> Out of Stock
+                    </p>
+                <% } %>
+            <% } %>
+        </div>
+
 
                 <!-- Color Selector -->
                 <% if (product.variants && product.variants.length > 0) { %>
@@ -121,33 +190,36 @@
 
                 <!-- Quantity Selector -->
                 <div class="mb-6">
-                    <label class="block text-sm font-semibold mb-3">Quantity</label>
+                    <label class="block text-sm font-semibold mb-3">Quantity (Max 3)</label>
                     <div class="flex items-center gap-3">
                         <button onclick="decreaseQuantity()" 
                             class="w-10 h-10 bg-gray-900 border border-gray-700 rounded-lg hover:bg-gray-800 transition">
                             <i class="fas fa-minus"></i>
                         </button>
-                        <input type="number" id="quantity" value="1" min="1" 
+                        <input type="number" id="quantity" value="1" min="1" max="3"
                             class="w-20 text-center bg-gray-900 border border-gray-700 rounded-lg py-2 focus:outline-none focus:border-gray-500">
                         <button onclick="increaseQuantity()" 
                             class="w-10 h-10 bg-gray-900 border border-gray-700 rounded-lg hover:bg-gray-800 transition">
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
+                    <p class="text-xs text-gray-400 mt-1">Maximum 3 units per product</p>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="mb-8">
                     <div class="flex gap-3 mb-3">
                         <button id="addToCartBtn" onclick="addToCart()" 
-                            class="flex-1 bg-white text-black py-4 rounded-lg font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2">
-                            <i class="fas fa-shopping-cart"></i>
-                            ADD TO CART
-                        </button>
-                        <button onclick="addToWishlist()" 
-                            class="w-14 h-14 bg-gray-900 border border-gray-700 rounded-lg hover:bg-gray-800 transition flex items-center justify-center">
-                            <i class="far fa-heart text-xl"></i>
-                        </button>
+                        class="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200">
+                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                    </button>
+
+                    <!-- Add to Wishlist Button -->
+                    <button id="wishlistBtn" onclick="toggleWishlist('<%= product._id %>')" 
+                        class="border-2 <%= isInWishlist ? 'bg-red-500 border-red-500 text-white' : 'border-white text-white' %> px-6 py-3 rounded-lg hover:bg-red-500 hover:border-red-500 hover:text-white transition">
+                        <i class="<%= isInWishlist ? 'fas' : 'far' %> fa-heart"></i> 
+                        <%= isInWishlist ? 'In Wishlist' : 'Add to Wishlist' %>
+                    </button>
                     </div>
                     <button onclick="buyNow()" 
                         class="w-full bg-cyan-400 text-black py-4 rounded-lg font-semibold hover:bg-cyan-500 transition flex items-center justify-center gap-2">
@@ -288,14 +360,17 @@
             button.classList.remove('border-gray-700');
             button.classList.add('border-white', 'bg-gray-900');
             
-            // Reset quantity
-            document.getElementById('quantity').value = 1;
+            // Reset quantity and update max attribute
+            const quantityInput = document.getElementById('quantity');
+            quantityInput.value = 1;
+            quantityInput.max = Math.min(maxQuantity, 3);
         }
 
         function increaseQuantity() {
             const input = document.getElementById('quantity');
             const currentValue = parseInt(input.value);
-            if (currentValue < maxQuantity) {
+            const maxAllowed = Math.min(maxQuantity, 3); // Enforce 3-unit limit
+            if (currentValue < maxAllowed) {
                 input.value = currentValue + 1;
             }
         }
@@ -331,20 +406,105 @@
                 return;
             }
 
-            // TODO: Implement add to cart functionality
-            console.log('Add to cart:', {
-                productId: '<%= product._id %>',
-                variantId: selectedVariantId,
-                quantity: quantity
-            });
+            try {
+                const response = await fetch('/cart/add', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        productId: '<%= product._id %>',
+                        variantId: selectedVariantId,
+                        quantity: quantity
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire({
+                        title: 'Added to Cart!',
+                        text: 'Product added to your cart',
+                        icon: 'success',
+                        confirmButtonColor: '#1f2937',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: result.message,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to add to cart',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+            }
+        }
+
+        let isInWishlist = <%= isInWishlist ? 'true' : 'false' %>;
+
+        async function toggleWishlist(productId) {
+            try {
+                const endpoint = isInWishlist ? '/wishlist/remove' : '/wishlist/add';
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    isInWishlist = !isInWishlist;
+                    updateWishlistButton();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: isInWishlist ? 'Added to Wishlist!' : 'Removed from Wishlist',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Info',
+                        text: result.message,
+                        icon: 'info',
+                        confirmButtonColor: '#1f2937'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to update wishlist',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+            }
+        }
+
+        function updateWishlistButton() {
+            const btn = document.getElementById('wishlistBtn');
+            const icon = btn.querySelector('i');
             
-            Swal.fire({
-                title: 'Added to Cart!',
-                text: 'Product added to cart! (Cart functionality coming soon)',
-                icon: 'success',
-                confirmButtonColor: '#1f2937',
-                timer: 2000
-            });
+            if (isInWishlist) {
+                btn.className = 'border-2 bg-red-500 border-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 hover:border-red-600 transition';
+                icon.className = 'fas fa-heart';
+                btn.innerHTML = '<i class="fas fa-heart"></i> In Wishlist';
+            } else {
+                btn.className = 'border-2 border-white text-white px-6 py-3 rounded-lg hover:bg-red-500 hover:border-red-500 hover:text-white transition';
+                icon.className = 'far fa-heart';
+                btn.innerHTML = '<i class="far fa-heart"></i> Add to Wishlist';
+            }
         }
 
         async function addToWishlist() {
@@ -363,47 +523,132 @@
             });
         }
 
-        async function buyNow() {
-            const quantity = parseInt(document.getElementById('quantity').value);
-            
-            if (maxQuantity === 0) {
+       async function buyNow() {
+    const quantity = parseInt(document.getElementById('quantity').value);
+    
+    if (maxQuantity === 0) {
+        Swal.fire({
+            title: 'Out of Stock',
+            text: 'This product is out of stock!',
+            icon: 'error',
+            confirmButtonColor: '#1f2937'
+        });
+        return;
+    }
+    
+    if (quantity > maxQuantity) {
+        Swal.fire({
+            title: 'Insufficient Stock',
+            text: `Only ${maxQuantity} items available!`,
+            icon: 'warning',
+            confirmButtonColor: '#1f2937'
+        });
+        return;
+    }
+
+    // Get selected variant details for the modal
+    const selectedColorElement = document.getElementById('selectedColorName');
+    const selectedColor = selectedColorElement ? selectedColorElement.textContent : 'Default';
+    const priceElement = document.getElementById('productPrice');
+    const price = priceElement ? priceElement.textContent : '₹0';
+    
+    // Calculate total price
+    const unitPrice = parseFloat(price.replace('₹', '').replace(',', ''));
+    const totalPrice = unitPrice * quantity;
+
+    // Show confirmation modal with product details
+    const result = await Swal.fire({
+        title: 'Confirm Purchase',
+        html: `
+            <div class="text-left bg-gray-100 p-4 rounded-lg mb-4">
+                <h3 class="font-semibold text-gray-800 mb-2">Product Details:</h3>
+                <div class="space-y-1 text-sm text-gray-600">
+                    <p><strong>Product:</strong> <%= product.productName %></p>
+                    <p><strong>Color:</strong> ${selectedColor}</p>
+                    <p><strong>Quantity:</strong> ${quantity}</p>
+                    <p><strong>Unit Price:</strong> ${price}</p>
+                    <p class="text-lg font-semibold text-gray-800 border-t pt-2 mt-2">
+                        <strong>Total: ₹${totalPrice.toLocaleString()}</strong>
+                    </p>
+                </div>
+            </div>
+            <p class="text-gray-600">Do you want to proceed to checkout with this item?</p>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#06b6d4',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: '<i class="fas fa-shopping-cart mr-2"></i>Yes, Buy Now',
+        cancelButtonText: '<i class="fas fa-times mr-2"></i>Cancel',
+        customClass: {
+            popup: 'swal-wide',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        },
+        buttonsStyling: false
+    });
+
+    // If user confirms, proceed with buy now
+    if (result.isConfirmed) {
+        try {
+            // Show processing modal
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Preparing your order',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const response = await fetch('/buy-now', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId: '<%= product._id %>',
+                    variantId: selectedVariantId,
+                    quantity: quantity
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Show success message briefly before redirect
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Order Prepared!',
+                    text: 'Redirecting to checkout...',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                
+                // Redirect to buy now checkout
+                window.location.href = result.redirectUrl;
+            } else {
                 Swal.fire({
-                    title: 'Out of Stock',
-                    text: 'This product is out of stock!',
+                    title: 'Error',
+                    text: result.message,
                     icon: 'error',
                     confirmButtonColor: '#1f2937'
                 });
-                return;
             }
-            
-            if (quantity > maxQuantity) {
-                Swal.fire({
-                    title: 'Insufficient Stock',
-                    text: `Only ${maxQuantity} items available!`,
-                    icon: 'warning',
-                    confirmButtonColor: '#1f2937'
-                });
-                return;
-            }
-
-            // TODO: Implement buy now functionality (add to cart + redirect to checkout)
-            console.log('Buy now:', {
-                productId: '<%= product._id %>',
-                variantId: selectedVariantId,
-                quantity: quantity
-            });
-            
+        } catch (error) {
+            console.error('Error:', error);
             Swal.fire({
-                title: 'Processing...',
-                text: 'Redirecting to checkout (Checkout functionality coming soon)',
-                icon: 'info',
-                confirmButtonColor: '#1f2937',
-                timer: 2000
+                title: 'Error',
+                text: 'Failed to process buy now',
+                icon: 'error',
+                confirmButtonColor: '#1f2937'
             });
         }
+    }
+}
 
-        // Update quantity input max attribute
-        document.getElementById('quantity').max = maxQuantity;
+
+        // Update quantity input max attribute (enforce 3-unit limit)
+        document.getElementById('quantity').max = Math.min(maxQuantity, 3);
 
         // ===== IMAGE MAGNIFIER (Lens with Zoom Inside) =====
         const imageContainer = document.getElementById('imageContainer');
@@ -472,6 +717,35 @@
             magnifierLens.classList.add('hidden');
             setTimeout(initMagnifier, 100);
         };
+
+        
+
+async function addToWishlist(productId) {
+    try {
+        const response = await fetch('/wishlist/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Added to Wishlist!',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        } else {
+            Swal.fire('Error', result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
     </script>
 </body>
 </html>

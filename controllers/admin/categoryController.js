@@ -1,4 +1,5 @@
 import Category from "../../models/categoryModel.js";
+import product from "../../models/porductsModal.js";
 
 // Get all categories
 const getCategories = async (req, res) => {
@@ -185,6 +186,9 @@ const toggleListCategory = async (req, res) => {
         category.isListed = !category.isListed;
         await category.save();
 
+        if(!category.isListed){
+            const productId = await product.f
+        }
         res.json({
             success: true,
             isListed: category.isListed,

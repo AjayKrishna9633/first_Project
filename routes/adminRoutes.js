@@ -4,6 +4,7 @@ import categoryCtrl from "../controllers/admin/categoryController.js";
 import { isAdminAuthenticated ,isAdminNotAuthenticated } from "../middlewares/authMiddleware.js";
 import adminCtrl from '../controllers/admin/adminController.js'
 import { upload } from "../config/cloudinary.js";
+import orderCtrl from '../controllers/admin/orderController.js';
 const router = Router();
 
 //login routes
@@ -49,6 +50,13 @@ router.get('/category/edit/:id', isAdminAuthenticated, categoryCtrl.getEditCateg
 router.post('/category/edit/:id', isAdminAuthenticated, categoryCtrl.updateCategory);
 router.post('/category/toggle/:id', isAdminAuthenticated, categoryCtrl.toggleListCategory);
 // router.post('/category/delete/:id', isAdminAuthenticated, categoryCtrl.deleteCategory);
+
+//order management routes
+router.get('/orders', isAdminAuthenticated, orderCtrl.getOrders);
+router.get('/orders/:id', isAdminAuthenticated, orderCtrl.getOrderDetails);
+router.post('/orders/:id/update', isAdminAuthenticated, orderCtrl.updateOrderStatus);
+router.get('/orders/export', isAdminAuthenticated, orderCtrl.exportOrders);
+router.post('/returns/update', isAdminAuthenticated, orderCtrl.updateReturnStatus);
 
 //logout route
 router.get('/logout', isAdminAuthenticated, adminCtrl.logout)

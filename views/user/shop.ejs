@@ -4,8 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop - GEARGRID</title>
+     <style>.product-card.out-of-stock {
+    opacity: 0.5;
+    position: relative;
+}
+
+.product-card.out-of-stock::after {
+    content: 'OUT OF STOCK';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+    z-index: 10;
+}
+
+.product-card.out-of-stock .add-to-cart-btn {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+</style>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-black text-white">
     <!-- Header -->
@@ -151,8 +178,17 @@
                         imageUrl = product.productImage[0];
                     }
                 %>
-                    <a href="/product/<%= product._id %>" class="block bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition-shadow duration-200">
-                        <!-- Product Image -->
+                            <%
+                // Calculate if product has stock
+                let productHasStock = false;
+                let productTotalStock = 0;
+                if (product.variants && product.variants.length > 0) {
+                    productTotalStock = product.variants.reduce((sum, variant) => sum + variant.quantity, 0);
+                    productHasStock = productTotalStock > 0;
+                }
+            %>
+            <a href="/product/<%= product._id %>" class="block bg-gray-900 rounded-lg overflow-hidden group hover:shadow-xl transition-shadow duration-200 <%= !productHasStock ? 'out-of-stock' : '' %>">
+                    <!-- Product Image -->
                         <div class="relative bg-white p-6 aspect-square flex items-center justify-center">
                             <% if (imageUrl) { %>
                                 <img src="<%= imageUrl %>" alt="<%= product.productName %>" 
@@ -167,8 +203,13 @@
                             
                             <!-- Wishlist Button -->
                             <div class="absolute top-2 right-2">
-                                <button onclick="event.preventDefault(); event.stopPropagation();" class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition">
-                                    <i class="far fa-heart text-xs"></i>
+                                <% 
+                                const isInWishlist = wishlistProductIds && wishlistProductIds.includes(product._id.toString());
+                                %>
+                                <button onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist('<%= product._id %>')" 
+                                    class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition"
+                                    data-product-id="<%= product._id %>">
+                                    <i class="<%= isInWishlist ? 'fas' : 'far' %> fa-heart text-xs <%= isInWishlist ? 'text-red-500' : '' %>"></i>
                                 </button>
                             </div>
                             
@@ -187,30 +228,36 @@
                             <% } %>
                         </div>
                         
-                        <!-- Product Info -->
-                        <div class="p-4">
-                            <h3 class="text-sm font-medium mb-1 line-clamp-1">
-                                <%= product.productName %>
-                            </h3>
-                            <p class="text-xs text-gray-500 uppercase mb-2">
-                                <%= product.category ? product.category.name : 'Uncategorized' %>
-                            </p>
-                            
-                            <!-- Price -->
-                            <div>
-                                <% if (product.variants && product.variants.length > 0) { %>
-                                    <% if (minPrice === maxPrice) { %>
-                                        <p class="text-lg font-bold">₹<%= minPrice.toLocaleString() %></p>
-                                    <% } else { %>
-                                        <p class="text-base font-bold">₹<%= minPrice.toLocaleString() %> - ₹<%= maxPrice.toLocaleString() %></p>
-                                    <% } %>
-                                <% } else { %>
-                                    <p class="text-lg font-bold">₹<%= (product.salePrice || product.regularPrice || 0).toLocaleString() %></p>
-                                <% } %>
-                            </div>
-                        </div>
-                    </a>
-                <% }); %>
+                      <!-- Product Info -->
+<div class="p-4">
+    <h3 class="text-sm font-medium mb-1 line-clamp-1">
+        <%= product.productName %>
+    </h3>
+    <p class="text-xs text-gray-500 uppercase mb-2">
+        <%= product.category ? product.category.name : 'Uncategorized' %>
+    </p>
+    
+    <!-- Stock Status -->
+    <% if (!productHasStock) { %>
+        <p class="text-xs text-red-400 mb-1">
+            <i class="fas fa-times-circle"></i> Out of Stock
+        </p>
+    <% } %>
+    
+    <!-- Price -->
+    <div>
+        <% if (product.variants && product.variants.length > 0) { %>
+            <% if (minPrice === maxPrice) { %>
+                <p class="text-lg font-bold <%= !productHasStock ? 'text-gray-500' : '' %>">₹<%= minPrice.toLocaleString() %></p>
+            <% } else { %>
+                <p class="text-base font-bold <%= !productHasStock ? 'text-gray-500' : '' %>">₹<%= minPrice.toLocaleString() %> - ₹<%= maxPrice.toLocaleString() %></p>
+            <% } %>
+        <% } else { %>
+            <p class="text-lg font-bold <%= !productHasStock ? 'text-gray-500' : '' %>">₹<%= (product.salePrice || product.regularPrice || 0).toLocaleString() %></p>
+        <% } %>
+    </div>
+</div>
+   <% }); %>
             </div>
 
             <!-- Pagination -->
@@ -376,6 +423,63 @@
                 closeFilterModal();
             }
         });
+
+
+        async function toggleWishlist(productId) {
+            try {
+                const response = await fetch('/wishlist/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Find the wishlist button for this product
+                    const button = document.querySelector(`button[data-product-id="${productId}"]`);
+                    const icon = button.querySelector('i');
+                    
+                    if (result.action === 'added') {
+                        icon.className = 'fas fa-heart text-xs text-red-500';
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Added to Wishlist!',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    } else {
+                        icon.className = 'far fa-heart text-xs';
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Removed from Wishlist',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    }
+                } else {
+                    Swal.fire({
+                        title: 'Info',
+                        text: result.message,
+                        icon: 'info',
+                        confirmButtonColor: '#1f2937'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to update wishlist',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+            }
+        }
+
     </script>
 </body>
 </html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist - GEARGRID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #000;
+        }
+        .product-card {
+            transition: all 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+        }
+        .heart-icon {
+            transition: all 0.3s ease;
+        }
+        .heart-icon:hover {
+            transform: scale(1.2);
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+    <!-- Header -->
+    <%- include('../partials/header') %>
+
+    <!-- Breadcrumb -->
+    <div class="bg-gray-900 border-b border-gray-800 mt-20">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center text-sm">
+                <a href="/" class="text-gray-300 hover:text-white transition">Home</a>
+                <i class="fas fa-chevron-right mx-2 text-xs text-gray-500"></i>
+                <span class="text-white font-medium">Wishlist</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Title -->
+    <div class="bg-gray-900 py-8 px-6 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-4xl font-bold text-white mb-2">My Wishlist</h1>
+            <p class="text-gray-400">
+                <% if (wishlist && wishlist.products.length > 0) { %>
+                    <i class="fas fa-heart text-red-500"></i> <%= wishlist.products.length %> <%= wishlist.products.length === 1 ? 'item' : 'items' %> in your wishlist
+                <% } else { %>
+                    <i class="far fa-heart text-gray-500"></i> Your wishlist is empty
+                <% } %>
+            </p>
+        </div>
+    </div>
+
+    <!-- Wishlist Content -->
+    <div class="max-w-7xl mx-auto py-12 px-6">
+        <% if (wishlist && wishlist.products.length > 0) { %>
+            <!-- Wishlist Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <% wishlist.products.forEach(item => { %>
+                    <% if (item.productId) { %>
+                        <div class="product-card bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
+                            <!-- Product Image -->
+                            <div class="relative aspect-square bg-gray-800">
+                                <% if (item.productId.variants && item.productId.variants.length > 0 && item.productId.variants[0].images && item.productId.variants[0].images.length > 0) { %>
+                                    <img src="<%= item.productId.variants[0].images[0] %>" 
+                                         alt="<%= item.productId.productName %>"
+                                         class="w-full h-full object-cover">
+                                <% } else { %>
+                                    <div class="w-full h-full flex items-center justify-center text-gray-600">
+                                        <i class="fas fa-image text-6xl"></i>
+                                    </div>
+                                <% } %>
+                                
+                                <!-- Remove Button -->
+                                <button onclick="removeFromWishlist('<%= item.productId._id %>')" 
+                                    class="absolute top-3 right-3 bg-white text-red-500 w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition shadow-lg">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+
+                                <!-- Stock Status -->
+                                <% if (item.productId.status === 'Out of Stock') { %>
+                                    <div class="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                                        Out of Stock
+                                    </div>
+                                <% } %>
+                            </div>
+
+                            <!-- Product Info -->
+                            <div class="p-4">
+                                <!-- Category -->
+                                <% if (item.productId.category) { %>
+                                    <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                                        <%= item.productId.category.name %>
+                                    </p>
+                                <% } %>
+
+                                <!-- Product Name -->
+                                <h3 class="text-lg font-semibold text-white mb-2 line-clamp-2">
+                                    <%= item.productId.productName %>
+                                </h3>
+
+                                <!-- Price -->
+                                <% if (item.productId.variants && item.productId.variants.length > 0) { %>
+                                    <div class="mb-3">
+                                        <% const variant = item.productId.variants[0]; %>
+                                        <% if (variant.regularPrice > variant.salePrice) { %>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-xl font-bold text-white">₹<%= variant.salePrice.toLocaleString() %></span>
+                                                <span class="text-sm text-gray-400 line-through">₹<%= variant.regularPrice.toLocaleString() %></span>
+                                                <span class="text-xs bg-green-500 text-white px-2 py-1 rounded">
+                                                    <%= Math.round(((variant.regularPrice - variant.salePrice) / variant.regularPrice) * 100) %>% OFF
+                                                </span>
+                                            </div>
+                                        <% } else { %>
+                                            <span class="text-xl font-bold text-white">₹<%= variant.salePrice.toLocaleString() %></span>
+                                        <% } %>
+                                    </div>
+                                <% } %>
+
+                                <!-- Added Date -->
+                                <p class="text-xs text-gray-500 mb-3">
+                                    Added <%= new Date(item.addedOn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                </p>
+
+                                <!-- Action Buttons -->
+                                <div class="flex gap-2">
+                                    <% if (item.productId.status === 'Available') { %>
+                                        <button onclick="moveToCart('<%= item.productId._id %>', '<%= item.productId.variants[0]._id %>')"
+                                            class="flex-1 bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition font-medium text-sm">
+                                            <i class="fas fa-shopping-cart mr-1"></i> Add to Cart
+                                        </button>
+                                    <% } else { %>
+                                        <button disabled
+                                            class="flex-1 bg-gray-700 text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed font-medium text-sm">
+                                            Out of Stock
+                                        </button>
+                                    <% } %>
+                                    
+                                    <a href="/product/<%= item.productId._id %>"
+                                        class="px-4 py-2 border-2 border-white text-white rounded-lg hover:bg-white hover:text-black transition text-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                <% }); %>
+            </div>
+
+            <!-- Continue Shopping -->
+            <div class="mt-12 text-center">
+                <a href="/shop" 
+                    class="inline-block px-8 py-3 border-2 border-white text-white rounded-lg hover:bg-white hover:text-black transition font-semibold">
+                    <i class="fas fa-arrow-left mr-2"></i> Continue Shopping
+                </a>
+            </div>
+
+        <% } else { %>
+            <!-- Empty Wishlist -->
+            <div class="text-center py-20">
+                <div class="mb-6">
+                    <i class="far fa-heart text-8xl text-gray-700"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-4">Your Wishlist is Empty</h2>
+                <p class="text-gray-400 mb-8 max-w-md mx-auto">
+                    Save your favorite items here so you can easily find them later!
+                </p>
+                <a href="/shop" 
+                    class="inline-block px-8 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition font-semibold">
+                    <i class="fas fa-shopping-bag mr-2"></i> Start Shopping
+                </a>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Footer -->
+    <%- include('../partials/footer') %>
+
+    <script>
+        // Remove from Wishlist
+        async function removeFromWishlist(productId) {
+            const result = await Swal.fire({
+                title: 'Remove from Wishlist?',
+                text: 'Are you sure you want to remove this item?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, remove it',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch('/wishlist/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Removed!',
+                        text: 'Item removed from wishlist',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Failed to remove item', 'error');
+            }
+        }
+
+        // Move to Cart
+        async function moveToCart(productId, variantId) {
+            try {
+                const response = await fetch('/wishlist/moveToCart', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId, variantId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Moved to Cart!',
+                        text: 'Item moved to cart successfully',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Failed to move to cart', 'error');
+            }
+        }
+       
+    </script>
+</body>
+</html>

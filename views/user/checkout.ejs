@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - GEARGRID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #000;
+        }
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            border-color: #06b6d4;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+        .checkout-btn {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            transition: all 0.3s ease;
+        }
+        .checkout-btn:hover {
+            background: linear-gradient(135deg, #0891b2, #2563eb);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3);
+        }
+        .order-item {
+            transition: all 0.3s ease;
+        }
+        .order-item:hover {
+            background-color: #1f2937;
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+    <!-- Header -->
+    <%- include('../partials/header') %>
+
+    <!-- Breadcrumb -->
+    <div class="bg-gray-900 border-b border-gray-800 mt-20">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center text-sm">
+                <a href="/" class="text-gray-300 hover:text-white transition">Home</a>
+                <i class="fas fa-chevron-right mx-2 text-xs text-gray-500"></i>
+                <a href="/cart" class="text-gray-300 hover:text-white transition">Cart</a>
+                <i class="fas fa-chevron-right mx-2 text-xs text-gray-500"></i>
+                <span class="text-white font-medium">Checkout</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Title -->
+    <div class="bg-gray-900 py-8 px-6 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-4xl font-bold text-white mb-2">Checkout</h1>
+            <p class="text-gray-400">
+                <i class="fas fa-lock text-cyan-400"></i> Secure checkout process
+            </p>
+        </div>
+    </div>
+
+    <!-- Debug Info (remove in production) -->
+    <div class="max-w-7xl mx-auto px-6 py-4">
+        <div class="bg-red-900 border border-red-700 rounded-lg p-4 mb-4">
+            <h3 class="text-white font-semibold mb-2">Debug Info:</h3>
+            <p class="text-gray-300 text-sm">
+                Addresses found: <%= typeof addresses !== 'undefined' ? addresses.length : 'undefined' %>
+            </p>
+            <% if (typeof addresses !== 'undefined' && addresses) { %>
+                <pre class="text-xs text-gray-400 mt-2 overflow-auto"><%- JSON.stringify(addresses, null, 2) %></pre>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Checkout Content -->
+    <div class="max-w-7xl mx-auto py-12 px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Side - Shipping & Payment -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Shipping Address -->
+                <div class="bg-gray-900 rounded-lg border border-gray-800 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-white">Shipping Address</h2>
+                        <i class="fas fa-shipping-fast text-cyan-400"></i>
+                    </div>
+
+                    <!-- Address Selection -->
+                    <% if (typeof addresses !== 'undefined' && addresses && addresses.length > 0) { %>
+                        <div class="space-y-4 mb-6">
+                            <% addresses.forEach((address, index) => { %>
+                                <div class="border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition cursor-pointer address-option" 
+                                     data-address-id="<%= address._id %>">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-start gap-3">
+                                            <input type="radio" name="selectedAddress" value="<%= address._id %>" 
+                                                   class="mt-1 text-cyan-400 focus:ring-cyan-400" <%= index === 0 ? 'checked' : '' %>>
+                                            <div>
+                                                <h3 class="font-semibold text-white"><%= address.name %></h3>
+                                                <p class="text-gray-400 text-sm mt-1">
+                                                    <%= address.streetAddress %><br>
+                                                    <%= address.city %>, <%= address.state %> <%= address.pinCode %><br>
+                                                    India
+                                                </p>
+                                                <p class="text-gray-400 text-sm mt-1">
+                                                    <i class="fas fa-phone text-xs"></i> <%= address.phone %>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs bg-gray-800 px-2 py-1 rounded text-gray-300">
+                                            <%= address.addressType %>
+                                        </span>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    <% } else { %>
+                        <!-- New Address Form -->
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+                                    <input type="text" id="fullName" 
+                                           class="form-input w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
+                                    <input type="tel" id="phone" 
+                                           class="form-input w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Street Address</label>
+                                <input type="text" id="streetAddress" 
+                                       class="form-input w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none">
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">City</label>
+                                    <input type="text" id="city" 
+                                           class="form-input w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">State</label>
+                                    <input type="text" id="state" 
+                                           class="form-input w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Pin Code</label>
+                                    <input type="text" id="pinCode" 
+                                           class="form-input w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Country</label>
+                                <select id="country" 
+                                        class="form-input w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none">
+                                    <option value="India">India</option>
+                                    <option value="United States">United States</option>
+                                    <option value="United Kingdom">United Kingdom</option>
+                                    <option value="Canada">Canada</option>
+                                </select>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <!-- Add New Address Button -->
+                    <% if (typeof addresses !== 'undefined' && addresses && addresses.length > 0) { %>
+                        <button onclick="toggleNewAddressForm()" 
+                                class="w-full py-3 border-2 border-dashed border-gray-700 text-gray-400 rounded-lg hover:border-gray-600 hover:text-gray-300 transition">
+                            <i class="fas fa-plus mr-2"></i> Add New Address
+                        </button>
+                    <% } %>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="bg-gray-900 rounded-lg border border-gray-800 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-white">Payment Method</h2>
+                        <i class="fas fa-credit-card text-cyan-400"></i>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Cash on Delivery -->
+                        <div class="border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition cursor-pointer payment-option" 
+                             data-payment="cod">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="paymentMethod" value="cod" class="text-cyan-400 focus:ring-cyan-400" checked>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-money-bill-wave text-green-400"></i>
+                                    <div>
+                                        <h3 class="font-semibold text-white">Cash on Delivery</h3>
+                                        <p class="text-gray-400 text-sm">Pay when you receive your order</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Credit/Debit Card -->
+                        <div class="border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition cursor-pointer payment-option" 
+                             data-payment="card">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="paymentMethod" value="card" class="text-cyan-400 focus:ring-cyan-400">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-credit-card text-blue-400"></i>
+                                    <div>
+                                        <h3 class="font-semibold text-white">Credit/Debit Card</h3>
+                                        <p class="text-gray-400 text-sm">Visa, Mastercard, American Express</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UPI -->
+                        <div class="border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition cursor-pointer payment-option" 
+                             data-payment="upi">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="paymentMethod" value="upi" class="text-cyan-400 focus:ring-cyan-400">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-mobile-alt text-purple-400"></i>
+                                    <div>
+                                        <h3 class="font-semibold text-white">UPI Payment</h3>
+                                        <p class="text-gray-400 text-sm">Pay using UPI apps like GPay, PhonePe</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Net Banking -->
+                        <div class="border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition cursor-pointer payment-option" 
+                             data-payment="netbanking">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="paymentMethod" value="netbanking" class="text-cyan-400 focus:ring-cyan-400">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-university text-yellow-400"></i>
+                                    <div>
+                                        <h3 class="font-semibold text-white">Net Banking</h3>
+                                        <p class="text-gray-400 text-sm">Pay directly from your bank account</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Notes -->
+                <div class="bg-gray-900 rounded-lg border border-gray-800 p-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">Order Notes (Optional)</h2>
+                    <textarea id="orderNotes" rows="3" 
+                              class="form-input w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none resize-none"
+                              placeholder="Any special instructions for your order..."></textarea>
+                </div>
+            </div>
+
+            <!-- Right Side - Order Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-gray-900 rounded-lg border border-gray-800 p-6 sticky top-6">
+                    <h2 class="text-xl font-semibold text-white mb-6">Your Order</h2>
+                    
+                    <!-- Order Items -->
+                    <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
+                        <% if (typeof cart !== 'undefined' && cart && cart.items.length > 0) { %>
+                            <% cart.items.forEach(item => { %>
+                                <% if (item.productId) { %>
+                                    <div class="order-item flex gap-3 p-3 rounded-lg border border-gray-800">
+                                        <!-- Product Image -->
+                                        <div class="w-16 h-16 bg-white rounded-lg overflow-hidden flex-shrink-0">
+                                            <% if (item.productId.variants && item.productId.variants.length > 0 && item.productId.variants[0].images && item.productId.variants[0].images.length > 0) { %>
+                                                <img src="<%= item.productId.variants[0].images[0] %>" 
+                                                     alt="<%= item.productId.productName %>"
+                                                     class="w-full h-full object-cover">
+                                            <% } else { %>
+                                                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                                    <i class="fas fa-image"></i>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                        
+                                        <!-- Product Details -->
+                                        <div class="flex-1 min-w-0">
+                                            <h3 class="text-sm font-medium text-white truncate">
+                                                <%= item.productId.productName %>
+                                            </h3>
+                                            <p class="text-xs text-gray-400 mt-1">
+                                                Qty: <%= item.quantity %>
+                                            </p>
+                                            <p class="text-sm font-semibold text-cyan-400 mt-1">
+                                                ₹<%= item.totalPrice.toLocaleString() %>
+                                            </p>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-center py-8">
+                                <i class="fas fa-shopping-cart text-4xl text-gray-700 mb-4"></i>
+                                <p class="text-gray-400">No items in cart</p>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="space-y-3 mb-6 border-t border-gray-800 pt-4">
+                        <div class="flex justify-between text-gray-400">
+                            <span>Subtotal</span>
+                            <span>₹<%= typeof cart !== 'undefined' && cart ? cart.items.reduce((total, item) => total + item.totalPrice, 0).toLocaleString() : '0' %></span>
+                        </div>
+                        
+                        <div class="flex justify-between text-gray-400">
+                            <span>Shipping</span>
+                            <span class="text-green-400">Free</span>
+                        </div>
+                        
+                        <div class="flex justify-between text-gray-400">
+                            <span>Tax</span>
+                            <span>₹0</span>
+                        </div>
+                        
+                        <div class="border-t border-gray-700 pt-3">
+                            <div class="flex justify-between text-xl font-bold text-white">
+                                <span>Total</span>
+                                <span class="text-cyan-400">₹<%= typeof cart !== 'undefined' && cart ? cart.items.reduce((total, item) => total + item.totalPrice, 0).toLocaleString() : '0' %></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Place Order Button -->
+                    <button onclick="placeOrder()" 
+                            class="checkout-btn w-full py-4 text-white font-semibold rounded-lg mb-4">
+                        <i class="fas fa-lock mr-2"></i>
+                        Place Order
+                    </button>
+
+                    <!-- Security Info -->
+                    <div class="text-center">
+                        <div class="flex items-center justify-center gap-2 text-sm text-gray-400 mb-2">
+                            <i class="fas fa-shield-alt text-green-400"></i>
+                            <span>256-bit SSL Encryption</span>
+                        </div>
+                        <div class="flex items-center justify-center gap-4 text-xs text-gray-500">
+                            <i class="fab fa-cc-visa text-lg"></i>
+                            <i class="fab fa-cc-mastercard text-lg"></i>
+                            <i class="fab fa-cc-amex text-lg"></i>
+                            <i class="fab fa-paypal text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <%- include('../partials/footer') %>
+
+    <script>
+        // Toggle new address form
+        function toggleNewAddressForm() {
+            // Implementation for showing/hiding new address form
+            Swal.fire({
+                title: 'Add New Address',
+                text: 'This feature will be implemented soon!',
+                icon: 'info',
+                confirmButtonColor: '#06b6d4'
+            });
+        }
+
+        // Handle payment method selection
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                
+                // Update visual selection
+                document.querySelectorAll('.payment-option').forEach(opt => {
+                    opt.classList.remove('border-cyan-400', 'bg-gray-800');
+                    opt.classList.add('border-gray-700');
+                });
+                
+                this.classList.remove('border-gray-700');
+                this.classList.add('border-cyan-400', 'bg-gray-800');
+            });
+        });
+
+        // Handle address selection
+        document.querySelectorAll('.address-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                
+                // Update visual selection
+                document.querySelectorAll('.address-option').forEach(opt => {
+                    opt.classList.remove('border-cyan-400', 'bg-gray-800');
+                    opt.classList.add('border-gray-700');
+                });
+                
+                this.classList.remove('border-gray-700');
+                this.classList.add('border-cyan-400', 'bg-gray-800');
+            });
+        });
+
+    
+async function placeOrder() {
+    
+    const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
+    const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
+
+    if (!selectedAddress && !document.getElementById('fullName')) {
+        Swal.fire('Error', 'Please select or add a shipping address', 'error');
+        return;
+    }
+    
+    if (!selectedPayment) {
+        Swal.fire('Error', 'Please select a payment method', 'error');
+        return;
+    }
+
+  
+    let orderData = {
+        paymentMethod: selectedPayment.value,
+        orderNotes: document.getElementById('orderNotes').value
+    };
+
+
+    if (selectedAddress) {
+        orderData.addressId = selectedAddress.value;
+    } else {
+      
+        orderData.newAddress = {
+            fullName: document.getElementById('fullName').value,
+            phone: document.getElementById('phone').value,
+            streetAddress: document.getElementById('streetAddress').value,
+            city: document.getElementById('city').value,
+            state: document.getElementById('state').value,
+            pinCode: document.getElementById('pinCode').value,
+            country: document.getElementById('country').value,
+            addressType: 'Home'
+        };
+
+        if (!orderData.newAddress.fullName || !orderData.newAddress.phone || 
+            !orderData.newAddress.streetAddress || !orderData.newAddress.city) {
+            Swal.fire('Error', 'Please fill all required address fields', 'error');
+            return;
+        }
+    }
+
+  
+    const result = await Swal.fire({
+        title: 'Confirm Order',
+        text: 'Are you sure you want to place this order?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#06b6d4',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, place order',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        
+        Swal.fire({
+            title: 'Processing Order...',
+            text: 'Please wait while we process your order',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const response = await fetch('/checkout/place-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+    
+            await Swal.fire({
+                icon: 'success',
+                title: 'Order Placed Successfully!',
+                text: `Your order #${result.orderNumber} has been placed successfully.`,
+                confirmButtonColor: '#06b6d4'
+            });
+
+           
+            window.location.href = '/';
+        } else {
+            Swal.fire('Error', result.message, 'error');
+        }
+
+    } catch (error) {
+        console.error('Error placing order:', error);
+        Swal.fire('Error', 'Failed to place order. Please try again.', 'error');
+    }
+}
+
+      
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const firstAddress = document.querySelector('input[name="selectedAddress"]');
+            const firstPayment = document.querySelector('input[name="paymentMethod"]');
+            
+            if (firstAddress && firstAddress.checked) {
+                firstAddress.closest('.address-option').classList.add('border-cyan-400', 'bg-gray-800');
+            }
+            
+            if (firstPayment && firstPayment.checked) {
+                firstPayment.closest('.payment-option').classList.add('border-cyan-400', 'bg-gray-800');
+            }
+        });
+    </script>
+</body>
+</html>
