@@ -54,6 +54,7 @@ router.post('/category/toggle/:id', isAdminAuthenticated, categoryCtrl.toggleLis
 //order management routes
 router.get('/orders', isAdminAuthenticated, orderCtrl.getOrders);
 router.get('/orders/:id', isAdminAuthenticated, orderCtrl.getOrderDetails);
+router.get('/orders/:id/invoice', isAdminAuthenticated, orderCtrl.downloadInvoice);
 router.post('/orders/:id/update', isAdminAuthenticated, orderCtrl.updateOrderStatus);
 router.get('/orders/export', isAdminAuthenticated, orderCtrl.exportOrders);
 router.post('/returns/update', isAdminAuthenticated, orderCtrl.updateReturnStatus);

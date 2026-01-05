@@ -1,6 +1,7 @@
 import Order from '../../models/orderModel.js';
 import Product from '../../models/porductsModal.js';
 import InvoiceService from '../../config/invoiceService.js';
+import { ObjectId } from 'mongodb';
 
 const getUserOrders = async (req, res) => {
     try {
@@ -9,23 +10,26 @@ const getUserOrders = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
         
-        // Get filter parameters
+      
         const { status, search } = req.query;
         
-        // Build filter object
+
         let filter = { userId };
         if (status && status !== 'all') {
             filter.orderStatus = status;
         }
-        
-        // Search functionality
+       
+
+console.log('Search filter:', filter);
+
+       
         if (search) {
             filter.$or = [
                 { orderNumber: { $regex: search, $options: 'i' } }
             ];
         }
         
-        // Get orders with pagination
+       
         const orders = await Order.find(filter)
             .populate({
                 path: 'items.productId',
@@ -153,7 +157,7 @@ const cancelOrder = async (req, res) => {
 const getUserOrderStats = async (userId) => {
     try {
         const stats = await Order.aggregate([
-            { $match: { userId: userId } },
+            { $match: { userId: new ObjectId(userId) } },
             {
                 $group: {
                     _id: null,
@@ -177,6 +181,7 @@ const getUserOrderStats = async (userId) => {
                 }
             }
         ]);
+      
         
         return stats[0] || {
             totalOrders: 0,
@@ -264,11 +269,11 @@ const downloadInvoice = async (req, res) => {
             });
         }
         
-        // Only allow invoice download for confirmed, processing, shipped, or delivered orders
-        if (!['confirmed', 'processing', 'shipped', 'delivered'].includes(order.orderStatus)) {
+        // Only allow invoice download for delivered orders
+        if (order.orderStatus !== 'delivered') {
             return res.status(400).json({ 
                 success: false, 
-                message: 'Invoice is not available for this order status' 
+                message: 'Invoice is only available for delivered orders' 
             });
         }
         

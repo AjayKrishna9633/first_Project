@@ -20,6 +20,11 @@
                 <a href="/admin/orders" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Orders
                 </a>
+                <% if (order.orderStatus === 'confirmed' || order.orderStatus === 'processing' || order.orderStatus === 'shipped' || order.orderStatus === 'delivered') { %>
+                    <a href="/admin/orders/<%= order._id %>/invoice" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                        <i class="fas fa-download mr-2"></i>Download Invoice
+                    </a>
+                <% } %>
                 <button onclick="updateOrderStatus('<%= order._id %>')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                     <i class="fas fa-edit mr-2"></i>Update Status
                 </button>
@@ -251,6 +256,16 @@
                             <span>₹<%= order.totalAmount.toLocaleString() %></span>
                         </div>
                     </div>
+                    
+                    <!-- Invoice Download Button -->
+                    <% if (order.orderStatus === 'confirmed' || order.orderStatus === 'processing' || order.orderStatus === 'shipped' || order.orderStatus === 'delivered') { %>
+                        <div class="mt-4 pt-4 border-t">
+                            <a href="/admin/orders/<%= order._id %>/invoice" target="_blank" 
+                               class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center">
+                                <i class="fas fa-file-pdf mr-2"></i>Download Invoice PDF
+                            </a>
+                        </div>
+                    <% } %>
                 </div>
 
                 <!-- Order Timeline -->

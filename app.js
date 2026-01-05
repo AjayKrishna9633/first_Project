@@ -52,7 +52,27 @@ app.use('/',userRoutes);
 app.use('/admin',adminRoutes)
 
 
-console.log('PORT value and type:', process.env.PORT, typeof process.env.PORT, PORT, typeof PORT);
+app.use((req, res, next) => {
+    res.status(404).render('error/error', {
+        title: '404 - Page Not Found',
+        message: 'The page you are looking for does not exist.',
+        user: req.session.user || null,
+        errorCode: 404,
+        errorType: 'Page Not Found'
+    });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('Global Error Handler:', err);
+    res.status(500).render('error/error', {
+        title: '500 - Internal Server Error',
+        message: 'Something went wrong on our end. Please try again later.',
+        user: req.session.user || null,
+        errorCode: 500,
+        errorType: 'Server Error'
+    });
+});
 
 app.listen(PORT, () => {
   console.log(`Server has started: http://localhost:${PORT}`);

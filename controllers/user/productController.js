@@ -1,6 +1,7 @@
 import Product from "../../models/porductsModal.js";
 import Category from "../../models/categoryModel.js";
-
+import mongoose from "mongoose";
+import { ObjectId } from "mongodb";
 
 // Shop Page
 const getShopPage = async (req, res) => {
@@ -28,7 +29,7 @@ const getShopPage = async (req, res) => {
 
         // Category filter
         if (categoryFilter && categoryFilter !== 'all') {
-            query.category = categoryFilter;
+            query.category = new ObjectId(categoryFilter);
         }
 
         // Sort options
@@ -47,7 +48,7 @@ const getShopPage = async (req, res) => {
                 sortOption = { createdAt: -1 };
         }
 
-        const products = await Product.aggregate([
+        let products = await Product.aggregate([
             { $match: query },
             {
                 $lookup: {
@@ -83,12 +84,15 @@ const getShopPage = async (req, res) => {
         ]);
 
 
+     
       
         if (colorFilter) {
             products = products.filter(product => {
                 if (product.variants && product.variants.length > 0) {
-                    return product.variants.some(variant => 
-                        variant.color.toLowerCase() === colorFilter.toLowerCase()
+                    return product.variants.some(variant => {
+                       
+                       return variant && typeof(variant.color) == "string" && variant?.color.toLowerCase() === colorFilter.toLowerCase()
+                    }    
                     );
                 }
                 return false;
@@ -96,24 +100,26 @@ const getShopPage = async (req, res) => {
         }
 
         // Filter by price range if specified
-        if (minPrice > 0 || maxPrice > 0) {
-            products = products.filter(product => {
-                if (product.variants && product.variants.length > 0) {
-                    return product.variants.some(variant => {
-                        const price = variant.salePrice;
-                        if (minPrice > 0 && maxPrice > 0) {
-                            return price >= minPrice && price <= maxPrice;
-                        } else if (minPrice > 0) {
-                            return price >= minPrice;
-                        } else if (maxPrice > 0) {
-                            return price <= maxPrice;
-                        }
-                        return true;
-                    });
-                }
-                return false;
+      if (minPrice > 0 || maxPrice > 0) {
+    products = products.filter(product => {
+        if (product.variants && product.variants.length > 0) {
+            return product.variants.some(variant => {
+               
+                const price = Number(variant.salePrice);
+
+               
+                if (isNaN(price)) return false;
+
+               
+                if (minPrice > 0 && price < minPrice) return false;
+                if (maxPrice > 0 && price > maxPrice) return false;
+
+                return true;
             });
         }
+        return false;
+    });
+}
 
         const totalProducts = await Product.countDocuments(query);
         const totalPages = Math.ceil(totalProducts / limit);
@@ -144,7 +150,7 @@ const getShopPage = async (req, res) => {
                     wishlistProductIds = wishlist.products.map(item => item.productId.toString());
                 }
             } catch (error) {
-                console.log('Error fetching wishlist:', error);
+                // Silently handle wishlist fetch errors
             }
         }
 
@@ -166,7 +172,7 @@ const getShopPage = async (req, res) => {
         });
 
     } catch (error) {
-        console.log('Error in getShopPage:', error);
+        console.error('Error in getShopPage:', error);
         res.redirect('/');
     }
 };
@@ -214,13 +220,6 @@ if (product.variants && product.variants.length > 0) {
     hasStock = totalStock > 0;
 }
 
-console.log('Product stock info:', {
-    productName: product.productName,
-    totalStock,
-    hasStock,
-    variants: product.variants.map(v => ({ color: v.color, quantity: v.quantity }))
-});
-
 res.render('user/productDetail', {
     product,
     relatedProducts,
@@ -232,7 +231,7 @@ res.render('user/productDetail', {
 });
 
     } catch (error) {
-        console.log('Error in getProductDetail:', error);
+        console.error('Error in getProductDetail:', error);
         res.redirect('/shop');
     }
 };

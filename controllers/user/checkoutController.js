@@ -25,8 +25,6 @@ const getCheckOut = async(req,res)=>{
         const addressDoc = await Address.findOne({ userId });
         const addresses = addressDoc ? addressDoc.address : [];
 
-        console.log('Found addresses:', addresses); // Debug log
-
         res.render('user/checkout', {
             cart,
             addresses,
@@ -100,13 +98,6 @@ for (const item of cart.items) {
      for (let item of cart.items) {
     // Use the populated variantId directly
     const variant = item.variantId;
-    
-    console.log('Stock check:', {
-        productName: item.productId.productName,
-        variantColor: variant.color,
-        availableStock: variant.quantity,
-        requestedQuantity: item.quantity
-    });
     
     if (!variant || variant.quantity < item.quantity) {
         return res.json({
@@ -192,7 +183,6 @@ for (const item of cart.items) {
         for (let item of cart.items) {
             try {
                 const variantId = item.variantId._id;
-                console.log(`Updating stock for variant ${variantId}, quantity: -${item.quantity}`);
                 
                 const updateResult = await Variant.findByIdAndUpdate(
                     variantId,
@@ -200,9 +190,7 @@ for (const item of cart.items) {
                     { new: true }
                 );
                 
-                if (updateResult) {
-                    console.log(`Stock updated successfully: ${updateResult.quantity} remaining`);
-                } else {
+                if (!updateResult) {
                     console.error(`Failed to update stock for variant ${variantId}`);
                 }
             } catch (error) {
@@ -241,8 +229,6 @@ const buyNow = async(req,res)=>{
 try{
        const userId = req.session.user.id;
     const {productId, variantId, quantity } = req.body;
-    
-    console.log('Buy now request:', { userId, productId, variantId, quantity });
 
     if(!productId||!variantId||!quantity){
         return res.json({

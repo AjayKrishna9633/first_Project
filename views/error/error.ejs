@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found | GEARGRID</title>
+    <title><%= title || '404 - Page Not Found' %> | GEARGRID</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -117,14 +117,14 @@
         <div class="error-icon"></div>
         
         <!-- Error Code -->
-        <h1 class="error-code">404</h1>
+        <h1 class="error-code"><%= errorCode || '404' %></h1>
         
         <!-- Error Title -->
-        <h2 class="text-2xl md:text-3xl font-bold mb-4">Page Not Found</h2>
+        <h2 class="text-2xl md:text-3xl font-bold mb-4"><%= errorType || 'Page Not Found' %></h2>
         
         <!-- Error Description -->
         <p class="text-gray-400 mb-8 text-base md:text-lg max-w-md mx-auto">
-            The page you're looking for doesn't exist or has been moved. Don't worry, let's get you back on track.
+            <%= message || "The page you're looking for doesn't exist or has been moved. Don't worry, let's get you back on track." %>
         </p>
         
         <!-- Primary Actions -->

@@ -5,15 +5,8 @@ import Wishlist from "../../models/wishlist.js";
 
 const addToCart = async (req, res) => {
     try {
-        console.log('=== ADD TO CART DEBUG ===');
         const userId = req.session.user.id;
         const { productId, variantId, quantity } = req.body;
-
-        console.log('Received data:');
-        console.log('userId:', userId);
-        console.log('productId:', productId);
-        console.log('variantId:', variantId);
-        console.log('quantity:', quantity);
 
         if (!productId || !variantId || !quantity) {
             return res.json({
@@ -30,7 +23,6 @@ const addToCart = async (req, res) => {
             });
         }
 
-        console.log('Finding product...');
         const product = await Product.findById(productId).populate('variants');
 
         if (!product || product.IsBlocked) {
@@ -39,9 +31,6 @@ const addToCart = async (req, res) => {
                 message: 'Product not available'
             });
         }
-
-        console.log('Product found:', product.productName);
-        console.log('Product variants:', product.variants.map(v => ({ id: v._id, color: v.color, quantity: v.quantity })));
 
         const variant = product.variants.find(v => v._id.toString() === variantId);
 
@@ -52,8 +41,6 @@ const addToCart = async (req, res) => {
             });
         }
 
-        console.log('Variant found:', { color: variant.color, quantity: variant.quantity, price: variant.salePrice });
-
         if (variant.quantity < quantity) {
             return res.json({
                 success: false,
@@ -61,7 +48,6 @@ const addToCart = async (req, res) => {
             });
         }
 
-        console.log('Adding to cart...');
         let cart = await Cart.findOne({ userId });
 
         if (!cart) {
@@ -117,9 +103,7 @@ const addToCart = async (req, res) => {
         }
 
         await cart.save();
-        console.log('Cart saved successfully');
 
-        console.log('SUCCESS: Product added to cart');
         res.json({
             success: true,
             message: 'Product added to cart'

@@ -64,19 +64,6 @@
         </div>
     </div>
 
-    <!-- Debug Info (remove in production) -->
-    <div class="max-w-7xl mx-auto px-6 py-4">
-        <div class="bg-red-900 border border-red-700 rounded-lg p-4 mb-4">
-            <h3 class="text-white font-semibold mb-2">Debug Info:</h3>
-            <p class="text-gray-300 text-sm">
-                Addresses found: <%= typeof addresses !== 'undefined' ? addresses.length : 'undefined' %>
-            </p>
-            <% if (typeof addresses !== 'undefined' && addresses) { %>
-                <pre class="text-xs text-gray-400 mt-2 overflow-auto"><%- JSON.stringify(addresses, null, 2) %></pre>
-            <% } %>
-        </div>
-    </div>
-
     <!-- Checkout Content -->
     <div class="max-w-7xl mx-auto py-12 px-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -363,13 +350,147 @@
     <script>
         // Toggle new address form
         function toggleNewAddressForm() {
-            // Implementation for showing/hiding new address form
             Swal.fire({
                 title: 'Add New Address',
-                text: 'This feature will be implemented soon!',
-                icon: 'info',
-                confirmButtonColor: '#06b6d4'
+                html: `
+                    <div class="text-left space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <input type="text" id="swal-fullName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <input type="tel" id="swal-phone" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
+                            <input type="text" id="swal-streetAddress" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                <input type="text" id="swal-city" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                                <input type="text" id="swal-state" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Pin Code</label>
+                                <input type="text" id="swal-pinCode" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Address Type</label>
+                            <select id="swal-addressType" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                                <option value="Home">Home</option>
+                                <option value="Work">Work</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Add Address',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#06b6d4',
+                cancelButtonColor: '#6b7280',
+                width: '600px',
+                preConfirm: () => {
+                    const name = document.getElementById('swal-fullName').value;
+                    const phone = document.getElementById('swal-phone').value;
+                    const streetAddress = document.getElementById('swal-streetAddress').value;
+                    const city = document.getElementById('swal-city').value;
+                    const state = document.getElementById('swal-state').value;
+                    const pinCode = document.getElementById('swal-pinCode').value;
+                    const addressType = document.getElementById('swal-addressType').value;
+
+                    // Validation
+                    if (!name || !phone || !streetAddress || !city || !state || !pinCode) {
+                        Swal.showValidationMessage('Please fill all required fields');
+                        return false;
+                    }
+
+                    const phoneRegex = /^[6-9]\d{9}$/;
+                    if (!phoneRegex.test(phone)) {
+                        Swal.showValidationMessage('Please enter a valid 10-digit phone number');
+                        return false;
+                    }
+
+                    const pincodeRegex = /^[1-9][0-9]{5}$/;
+                    if (!pincodeRegex.test(pinCode)) {
+                        Swal.showValidationMessage('Please enter a valid 6-digit pincode');
+                        return false;
+                    }
+
+                    return {
+                        name: name.trim(),
+                        phone: phone.trim(),
+                        streetAddress: streetAddress.trim(),
+                        city: city.trim(),
+                        state: state.trim(),
+                        pinCode: pinCode.trim(),
+                        addressType: addressType
+                    };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await addNewAddress(result.value);
+                }
             });
+        }
+
+        // Add new address function
+        async function addNewAddress(addressData) {
+            try {
+                Swal.fire({
+                    title: 'Adding Address...',
+                    text: 'Please wait',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch('/address/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(addressData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Address Added!',
+                        text: result.message,
+                        confirmButtonColor: '#10b981',
+                        confirmButtonText: 'OK'
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.message,
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to add address',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
         }
 
         // Handle payment method selection

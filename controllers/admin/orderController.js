@@ -7,9 +7,9 @@ const getOrders = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
-        
+       
         // Get filter parameters
-        const { status, paymentStatus, search, sortBy, sortOrder } = req.query;
+        const { status, paymentStatus, returnStatus, search, sortBy, sortOrder } = req.query;
         
         // Build filter object
         let filter = {};
@@ -18,6 +18,16 @@ const getOrders = async (req, res) => {
         }
         if (paymentStatus && paymentStatus !== 'all') {
             filter.paymentStatus = paymentStatus;
+        }
+        if (returnStatus && returnStatus !== 'all') {
+            if (returnStatus === 'none') {
+                filter.$or = [
+                    { returnStatus: { $exists: false } },
+                    { returnStatus: 'none' }
+                ];
+            } else {
+                filter.returnStatus = returnStatus;
+            }
         }
         
         // Build sort object
@@ -65,7 +75,7 @@ const getOrders = async (req, res) => {
             totalOrders,
             limit,
             stats,
-            filters: { status, paymentStatus, search, sortBy, sortOrder },
+            filters: { status, paymentStatus, returnStatus, search, sortBy, sortOrder },
             admin: req.session.admin || { fullName: 'Admin' }  // ADD THIS LINE
         });
         
@@ -100,10 +110,6 @@ const getOrders = async (req, res) => {
              if(!order){
                 return res.status(404).render('admin/error',{message:'order not found'})
              }
-             
-             // Debug log to check userId population
-             console.log('Order userId:', order.userId);
-             console.log('User createdOn:', order.userId?.createdOn);
              
               res.render('admin/orderDetails', { order });
 
@@ -202,6 +208,9 @@ const getOrderStats = async () => {
                     },
                     cancelledOrders: {
                         $sum: { $cond: [{ $eq: ['$orderStatus', 'cancelled'] }, 1, 0] }
+                    },
+                    returnRequests: {
+                        $sum: { $cond: [{ $eq: ['$returnStatus', 'requested'] }, 1, 0] }
                     }
                 }
             }
@@ -214,7 +223,8 @@ const getOrderStats = async () => {
             processingOrders: 0,
             shippedOrders: 0,
             deliveredOrders: 0,
-            cancelledOrders: 0
+            cancelledOrders: 0,
+            returnRequests: 0
         };
         
     } catch (error) {
@@ -226,7 +236,8 @@ const getOrderStats = async () => {
             processingOrders: 0,
             shippedOrders: 0,
             deliveredOrders: 0,
-            cancelledOrders: 0
+            cancelledOrders: 0,
+            returnRequests: 0
         };
     }
 };
@@ -374,10 +385,70 @@ const updateReturnStatus = async (req, res) => {
     }
 };
 
+// Admin invoice download function
+const downloadInvoice = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Get the order with populated data (admin can access any order)
+        const order = await Order.findById(id)
+            .populate({
+                path: 'userId',
+                select: 'fullName email phone'
+            })
+            .populate({
+                path: 'items.productId',
+                select: 'productName'
+            })
+            .populate({
+                path: 'items.variantId',
+                select: 'color'
+            });
+        
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Order not found' 
+            });
+        }
+        
+        // Only allow invoice download for confirmed, processing, shipped, or delivered orders
+        if (!['confirmed', 'processing', 'shipped', 'delivered'].includes(order.orderStatus)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invoice is not available for this order status' 
+            });
+        }
+        
+        // Import invoice service
+        const { default: InvoiceService } = await import('../../config/invoiceService.js');
+        
+        // Generate invoice
+        const invoiceService = new InvoiceService();
+        const pdfBuffer = await invoiceService.generateInvoice(order, order.userId);
+        
+        // Set response headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderNumber}.pdf`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        
+        // Send the PDF
+        res.send(pdfBuffer);
+        
+    } catch (error) {
+        console.error('Admin download invoice error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to generate invoice' 
+        });
+    }
+};
+
 export default {
     getOrders,
     getOrderDetails,
     updateOrderStatus,
     exportOrders,
-    updateReturnStatus
+    updateReturnStatus,
+    downloadInvoice
 };

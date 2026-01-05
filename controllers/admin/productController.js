@@ -29,13 +29,13 @@ try{
     .sort({createdAt:-1})
     .skip(skip)
     .limit(limit);
-
-
+console.log(product)
+// const products = product.filter(v=>)
 
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts/limit);
 
-    const categories = await Category.find({isListed:true})
+    const categories = await Category.find({isListed:true},{name:"keyboard"})
 
      res.render('admin/products',{
         product,

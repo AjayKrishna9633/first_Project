@@ -300,10 +300,12 @@
             </div>
         <% } %>
         
-        <button onclick="downloadInvoice('<%= order._id %>')" 
-                class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
-            <i class="fas fa-download mr-2"></i>Download Invoice
-        </button>
+        <% if (order.orderStatus === 'delivered') { %>
+            <button onclick="downloadInvoice('<%= order._id %>')" 
+                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
+                <i class="fas fa-download mr-2"></i>Download Invoice
+            </button>
+        <% } %>
         
         <button onclick="contactSupport()" 
                 class="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition">
