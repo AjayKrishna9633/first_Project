@@ -198,7 +198,7 @@
 
             try {
                 const response = await fetch(`/admin/category/toggle/${categoryId}`, {
-                    method: 'POST',
+                    method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -206,15 +206,22 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    await Swal.fire({
-                        title: 'Success!',
-                        text: data.message,
-                        icon: 'success',
-                        confirmButtonColor: '#1f2937'
-                    });
-                    location.reload();
-                } else {
+              if (data.success) {
+    Swal.fire({
+        title: 'Success!',
+        text: data.message,
+        icon: 'success',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
+  
+    setTimeout(() => {
+        window.location.href = '/admin/categories';
+    }, 1500);
+} else {
                     await Swal.fire({
                         title: 'Error!',
                         text: data.message || 'Failed to update category status',

@@ -19,7 +19,7 @@ router.get('/dashboard',isAdminAuthenticated,adminCtrl.getDashboard);
 router.get('/customers',isAdminAuthenticated,adminCtrl.getCustomerPage)
 
 //toggle block of customer
-router.post('/customers/toggle-block/:id', isAdminAuthenticated, adminCtrl.toggleBlockUser);
+router.patch('/customers/toggle-block/:id', isAdminAuthenticated, adminCtrl.toggleBlockUser);
 
 
 
@@ -37,7 +37,7 @@ router.get('/product/edit/:id',isAdminAuthenticated,productCntrl.getEditProductP
 router.post('/products/edit/:id',isAdminAuthenticated,upload.any(),productCntrl.updateProduct)
 
 //toggle button for product 
-router.post('/product/toggleBlock/:id',isAdminAuthenticated,productCntrl.toggleBlockProduct);
+router.patch('/product/toggleBlock/:id',isAdminAuthenticated,productCntrl.toggleBlockProduct);
 
 // //deleting product
 // router.post('/products/delete/:id',isAdminAuthenticated,productCntrl.deleteProduct);
@@ -47,17 +47,17 @@ router.get('/categories', isAdminAuthenticated, categoryCtrl.getCategories);
 router.get('/category/add', isAdminAuthenticated, categoryCtrl.getAddCategory);
 router.post('/category/add', isAdminAuthenticated, categoryCtrl.addCategory);
 router.get('/category/edit/:id', isAdminAuthenticated, categoryCtrl.getEditCategory);
-router.post('/category/edit/:id', isAdminAuthenticated, categoryCtrl.updateCategory);
-router.post('/category/toggle/:id', isAdminAuthenticated, categoryCtrl.toggleListCategory);
+router.put('/category/edit/:id', isAdminAuthenticated, categoryCtrl.updateCategory);
+router.patch('/category/toggle/:id', isAdminAuthenticated, categoryCtrl.toggleListCategory);
 // router.post('/category/delete/:id', isAdminAuthenticated, categoryCtrl.deleteCategory);
 
 //order management routes
 router.get('/orders', isAdminAuthenticated, orderCtrl.getOrders);
 router.get('/orders/:id', isAdminAuthenticated, orderCtrl.getOrderDetails);
 router.get('/orders/:id/invoice', isAdminAuthenticated, orderCtrl.downloadInvoice);
-router.post('/orders/:id/update', isAdminAuthenticated, orderCtrl.updateOrderStatus);
+router.patch('/orders/:id/update', isAdminAuthenticated, orderCtrl.updateOrderStatus);
 router.get('/orders/export', isAdminAuthenticated, orderCtrl.exportOrders);
-router.post('/returns/update', isAdminAuthenticated, orderCtrl.updateReturnStatus);
+router.patch('/returns/update', isAdminAuthenticated, orderCtrl.updateReturnStatus);
 
 //logout route
 router.get('/logout', isAdminAuthenticated, adminCtrl.logout)

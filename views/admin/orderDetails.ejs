@@ -338,7 +338,7 @@
             if (formValues) {
                 try {
                     const response = await fetch(`/admin/orders/${orderId}/update`, {
-                        method: 'POST',
+                        method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(formValues)
                     });
@@ -388,7 +388,7 @@
             if (notes !== undefined) {
                 try {
                     const response = await fetch('/admin/returns/update', {
-                        method: 'POST',
+                        method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             orderId: orderId,

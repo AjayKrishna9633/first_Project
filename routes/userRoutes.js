@@ -40,7 +40,7 @@ router.post('/resend-otp', isNotAuthenticated, userCtrl.resendOtp);
 router.get('/forgot-password', isNotAuthenticated, userCtrl.getForgotPassword);
 router.post('/send-reset-otp', isNotAuthenticated, userCtrl.sendPasswordResetOTP);
 router.post('/verify-reset-otp', isNotAuthenticated, userCtrl.verifyResetOTP);
-router.post('/reset-password', isNotAuthenticated, userCtrl.resetPassword);
+router.patch('/reset-password', isNotAuthenticated, userCtrl.resetPassword);
 
 // GOOGLE OAUTH ROUTES
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
@@ -63,11 +63,11 @@ router.get('/home', protectUser, userCtrl.loadhomePage);
 
 //  PROFILE ROUTES 
 router.get('/profile', protectUser, userCtrl.getProfile);
-router.post('/profile', protectUser, userCtrl.updateProfile);
+router.patch('/profile', protectUser, userCtrl.updateProfile);
 //profile reset  password
 
 router.get('/changePassword', protectUser, userCtrl.getChangePassword)
-router.post('/changePassword', protectUser, userCtrl.changePassword)
+router.patch('/changePassword', protectUser, userCtrl.changePassword)
 
 //profile reset Email
 
@@ -130,7 +130,7 @@ router.get('/checkout/buy-now', protectUser, checkoutCtrl.getBuyNowCheckout);
 //order management routes
 router.get('/orders', protectUser, orderCtrl.getUserOrders);
 router.get('/orders/:id', protectUser, orderCtrl.getOrderDetails);
-router.post('/orders/:id/cancel', protectUser, orderCtrl.cancelOrder);
+router.patch('/orders/:id/cancel', protectUser, orderCtrl.cancelOrder);
 router.get('/orders/:id/invoice', protectUser, orderCtrl.downloadInvoice);
 router.post('/orders/return/request', protectUser, orderCtrl.requestReturn);
 

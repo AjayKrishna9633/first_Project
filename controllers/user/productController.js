@@ -2,6 +2,7 @@ import Product from "../../models/porductsModal.js";
 import Category from "../../models/categoryModel.js";
 import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
+import { StatusCodes } from 'http-status-codes';
 
 // Shop Page
 const getShopPage = async (req, res) => {
@@ -173,7 +174,7 @@ const getShopPage = async (req, res) => {
 
     } catch (error) {
         console.error('Error in getShopPage:', error);
-        res.redirect('/');
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).redirect('/');
     }
 };
 
@@ -188,7 +189,7 @@ const getProductDetail = async (req, res) => {
             .populate('variants');
 
         if (!product || product.IsBlocked) {
-            return res.redirect('/shop');
+            return res.status(StatusCodes.NOT_FOUND).redirect('/shop');
         }
 
         // Fetch related products (same category, exclude current)
@@ -232,7 +233,7 @@ res.render('user/productDetail', {
 
     } catch (error) {
         console.error('Error in getProductDetail:', error);
-        res.redirect('/shop');
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).redirect('/shop');
     }
 };
 

@@ -2,6 +2,7 @@
 import Cart from '../../models/cartSchema.js';
 import Product from "../../models/porductsModal.js";
 import Wishlist from "../../models/wishlist.js";
+import { StatusCodes } from 'http-status-codes';
 
 const addToCart = async (req, res) => {
     try {
@@ -9,7 +10,7 @@ const addToCart = async (req, res) => {
         const { productId, variantId, quantity } = req.body;
 
         if (!productId || !variantId || !quantity) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Missing fields'
             });
@@ -17,7 +18,7 @@ const addToCart = async (req, res) => {
 
         // Validate quantity limit
         if (quantity > 3) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Maximum 3 units allowed per product'
             });
@@ -26,7 +27,7 @@ const addToCart = async (req, res) => {
         const product = await Product.findById(productId).populate('variants');
 
         if (!product || product.IsBlocked) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: 'Product not available'
             });
@@ -35,14 +36,14 @@ const addToCart = async (req, res) => {
         const variant = product.variants.find(v => v._id.toString() === variantId);
 
         if (!variant) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: 'Variant not found'
             });
         }
 
         if (variant.quantity < quantity) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: `Only ${variant.quantity} items available`
             });
@@ -65,7 +66,7 @@ const addToCart = async (req, res) => {
         if (existingItemIndex === -1) {
             // New product - check if cart already has 3 different products
             if (cart.items.length >= 3) {
-                return res.json({
+                return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
                     message: 'Maximum 3 different products allowed in cart'
                 });
@@ -85,14 +86,14 @@ const addToCart = async (req, res) => {
             
             // Check quantity limit
             if (newQuantity > 3) {
-                return res.json({
+                return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
                     message: 'Maximum 3 units allowed per product. You already have some in cart.'
                 });
             }
 
             if (newQuantity > variant.quantity) {
-                return res.json({
+                return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
                     message: `Only ${variant.quantity} items available`
                 });
@@ -104,14 +105,14 @@ const addToCart = async (req, res) => {
 
         await cart.save();
 
-        res.json({
+        res.status(StatusCodes.CREATED).json({
             success: true,
             message: 'Product added to cart'
         });
 
     } catch (error) {
         console.error('Add to cart error:', error);
-        res.json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Failed to add to cart'
         });
@@ -144,7 +145,7 @@ const getCart =async(req,res)=>{
 
     }catch(error){
 console.error('Get cart error:', error);
-        res.redirect('/');
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).redirect('/');
     }
 }
 
@@ -154,7 +155,7 @@ const updateCartItem = async (req, res) => {
         const { productId, variantId, quantity } = req.body;
 
         if (!productId || !variantId || !quantity) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Missing required fields'
             });
@@ -162,14 +163,14 @@ const updateCartItem = async (req, res) => {
 
         // Validate quantity limit
         if (quantity > 3) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Maximum 3 units allowed per product'
             });
         }
 
         if (quantity < 1) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Quantity must be at least 1'
             });
@@ -178,7 +179,7 @@ const updateCartItem = async (req, res) => {
         // Get product to check stock
         const product = await Product.findById(productId).populate('variants');
         if (!product) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: 'Product not found'
             });
@@ -186,14 +187,14 @@ const updateCartItem = async (req, res) => {
 
         const variant = product.variants.find(v => v._id.toString() === variantId);
         if (!variant) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: 'Variant not found'
             });
         }
 
         if (variant.quantity < quantity) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: `Only ${variant.quantity} items available`
             });
@@ -202,7 +203,7 @@ const updateCartItem = async (req, res) => {
         // Update cart
         const cart = await Cart.findOne({ userId });
         if (!cart) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: 'Cart not found'
             });
@@ -213,7 +214,7 @@ const updateCartItem = async (req, res) => {
         );
 
         if (itemIndex === -1) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: 'Item not found in cart'
             });
@@ -224,14 +225,14 @@ const updateCartItem = async (req, res) => {
 
         await cart.save();
 
-        res.json({
+        res.status(StatusCodes.OK).json({
             success: true,
             message: 'Cart updated successfully'
         });
 
     } catch (error) {
         console.error('Update cart error:', error);
-        res.json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Failed to update cart'
         });
@@ -251,13 +252,13 @@ const removeFromCart = async (req, res) => {
         );
 
         if (!result) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: 'Cart not found'
             });
         }
 
-        res.json({ 
+        res.status(StatusCodes.OK).json({ 
             success: true, 
             message: 'Item removed successfully',
             remainingItems: result.items.length
@@ -265,7 +266,7 @@ const removeFromCart = async (req, res) => {
 
     } catch (error) {
         console.error('Remove from cart error:', error);
-        res.json({ success: false, message: 'Failed to remove item' });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to remove item' });
     }
 };
 

@@ -127,16 +127,14 @@ const getEditCategory = async (req, res) => {
 const updateCategory = async (req, res) => {
     try {
         const categoryId = req.params.id;
+        console.log(req.body)
         const { name, description } = req.body;
 
         // Validation
         if (!name || !description) {
-            const category = await Category.findById(categoryId);
-            return res.render('admin/editCategory', {
-                category,
-                admin: req.session.admin,
-                message: 'All fields are required',
-                isError: true
+            return res.status(400).json({
+                success: false,
+                message: 'All fields are required'
             });
         }
 
@@ -148,7 +146,7 @@ const updateCategory = async (req, res) => {
 
         if (existingCategory) {
             const category = await Category.findById(categoryId);
-            return res.render('admin/editCategory', {
+            return res.json('admin/editCategory', {
                 category,
                 admin: req.session.admin,
                 message: 'Category name already exists',
@@ -162,7 +160,10 @@ const updateCategory = async (req, res) => {
             description: description.trim()
         });
 
-        res.redirect('/admin/categories');
+        res.json({
+            success:true,
+            message:"The Category is updated"
+        })
 
     } catch (error) {
         console.log('Error in updateCategory:', error);

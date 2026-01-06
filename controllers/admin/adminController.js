@@ -1,5 +1,6 @@
 import user from "../../models/userModal.js";
 import { comparePassword } from "../../utils/hashUtils.js";
+import { StatusCodes } from 'http-status-codes';
 
 const getLogin =(req,res)=>{
     res.render('admin/login',{
@@ -148,7 +149,7 @@ const  totalPages = Math.ceil(totalCustomers / limitForUser)
 
 
     }catch(error){
-        res.redirect('/admin/dashboard')
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).redirect('/admin/dashboard')
         console.log(error);
     }
 }
@@ -161,7 +162,7 @@ const toggleBlockUser = async(req,res)=>{
     
         if(!customer){
             console.log('User not found:', userId);
-            return res.status(404).json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success:false,
                 message:'User not found'
             });
@@ -172,7 +173,7 @@ const toggleBlockUser = async(req,res)=>{
         await customer.save();
         console.log('New blocked status:', customer.isBlocked);
 
-        return res.json({ 
+        return res.status(StatusCodes.OK).json({ 
             success: true, 
             isBlocked: customer.isBlocked,
             message: customer.isBlocked ? 'User blocked successfully' : 'User unblocked successfully'
@@ -181,7 +182,7 @@ const toggleBlockUser = async(req,res)=>{
     }catch(error){
         console.log('Error in toggleBlockUser:', error);
         console.log('Error message:', error.message);
-        return res.status(500).json({ 
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
             success: false, 
             message: 'Server error: ' + error.message
         });

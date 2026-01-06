@@ -289,7 +289,7 @@
             if (reason !== undefined) {
                 try {
                     const response = await fetch(`/orders/${orderId}/cancel`, {
-                        method: 'POST',
+                        method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ reason })
                     });

@@ -28,7 +28,7 @@
 
         try {
             const response = await fetch(`/admin/customers/toggle-block/${userId}`, {
-                method: 'POST',
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'
                 }

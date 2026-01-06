@@ -65,7 +65,7 @@ document.getElementById('changePasswordForm').addEventListener('submit', async (
     // Submit form
     try {
         const response = await fetch('/changePassword', {
-            method: 'POST',
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ currentPassword, newPassword })
         });

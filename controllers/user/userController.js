@@ -3,6 +3,7 @@ import { comparePassword, hashPassword } from "../../utils/hashUtils.js";
 import nodemailer from 'nodemailer';
 import env from "dotenv";
 import user from "../../models/userModal.js";
+import { StatusCodes } from 'http-status-codes';
 
 
 
@@ -85,7 +86,7 @@ export const getLogin = async (req, res) => {
         });
     } catch (error) {
         console.error("Error in getLogin:", error);
-        res.redirect('/pageNotFound');
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).redirect('/pageNotFound');
     }
 };
 
@@ -296,7 +297,7 @@ export const registerUser = async (req, res) => {
 
     } catch (error) {
         console.error("Error in registerUser:", error);
-        res.status(500).render("user/signup", {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).render("user/signup", {
             message: "Server error. Please try again later.",
             isError: true,
             oldInput: { 
@@ -331,7 +332,7 @@ export const verifyOtp = async (req, res) => {
 
         // Validate inputs
         if (!otp) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Please enter OTP.'
             });
@@ -339,21 +340,21 @@ export const verifyOtp = async (req, res) => {
 
         // Validate OTP session data
         if (!req.session.userOtp) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'OTP session expired. Please sign up again.'
             });
         }
 
         if (req.session.userOtp.code !== otp) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Invalid OTP. Please try again.'
             });
         }
 
         if (req.session.userOtp.expires < Date.now()) {
-            return res.json({
+            return res.status(StatusCodes.GONE).json({
                 success: false,
                 message: 'OTP has expired. Please request a new one.'
             });
@@ -361,7 +362,7 @@ export const verifyOtp = async (req, res) => {
 
         // Validate signup data exists
         if (!req.session.userData) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Session expired. Please sign up again.'
             });
@@ -374,7 +375,7 @@ export const verifyOtp = async (req, res) => {
         if (existingUser) {
             delete req.session.userOtp;
             delete req.session.userData;
-            return res.json({
+            return res.status(StatusCodes.CONFLICT).json({
                 success: false,
                 message: 'An account with this email already exists.'
             });
@@ -407,12 +408,12 @@ export const verifyOtp = async (req, res) => {
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
-                return res.json({
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                     success: false,
                     message: 'Account created but login failed. Please try logging in manually.'
                 });
             }
-            res.json({
+            res.status(StatusCodes.CREATED).json({
                 success: true,
                 redirectUrl: '/'
             });
@@ -420,7 +421,7 @@ export const verifyOtp = async (req, res) => {
 
     } catch (error) {
         console.error("Error in verifyOtp:", error);
-        res.status(500).json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Server error occurred. Please try again.'
         });
@@ -432,21 +433,21 @@ export const resendOtp = async (req, res) => {
         const { email } = req.body;
 
         if (!email) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Email is required.'
             });
         }
 
         if (!req.session.userData) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Session expired. Please sign up again.'
             });
         }
 
         if (req.session.userData.email !== email) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Invalid session. Please sign up again.'
             });
@@ -460,7 +461,7 @@ export const resendOtp = async (req, res) => {
         const emailSent = await sendEmailVerification(email, otp);
 
         if (!emailSent) {
-            return res.json({
+            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 success: false,
                 message: 'Failed to resend OTP. Please try again.'
             });
@@ -477,13 +478,13 @@ export const resendOtp = async (req, res) => {
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
-                return res.json({
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                     success: false,
                     message: 'Failed to resend OTP. Please try again.'
                 });
             }
 
-            res.json({
+            res.status(StatusCodes.OK).json({
                 success: true,
                 message: 'OTP resent successfully!',
                 otpExpires: otpExpires
@@ -492,7 +493,7 @@ export const resendOtp = async (req, res) => {
 
     } catch (error) {
         console.error('Error in resendOtp:', error);
-        res.json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Failed to resend OTP. Please try again.'
         });
@@ -514,7 +515,7 @@ export const sendPasswordResetOTP = async (req, res) => {
         const { email } = req.body;
 
         if (!email) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Email is required.'
             });
@@ -525,7 +526,7 @@ export const sendPasswordResetOTP = async (req, res) => {
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(normalizedEmail)) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Please enter a valid email address.'
             });
@@ -534,14 +535,14 @@ export const sendPasswordResetOTP = async (req, res) => {
         const user = await User.findOne({ email: normalizedEmail });
 
         if (!user) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: "Email not found"
             });
         }
 
         if (user.googleId && !user.password) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: "This account uses Google sign-in. Please use Google to login."
             });
@@ -562,26 +563,26 @@ export const sendPasswordResetOTP = async (req, res) => {
             req.session.save((err) => {
                 if (err) {
                     console.error('Session save error:', err);
-                    return res.json({
+                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                         success: false,
                         message: 'Failed to send OTP. Please try again.'
                     });
                 }
 
-                res.json({
+                res.status(StatusCodes.OK).json({
                     success: true,
                     message: "OTP sent to your email"
                 });
             });
         } else {
-            res.json({
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 success: false,
                 message: "Failed to send OTP"
             });
         }
     } catch (error) {
         console.error("Error sending reset OTP:", error);
-        res.status(500).json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: "An error occurred"
         });
@@ -596,41 +597,41 @@ export const verifyResetOTP = async (req, res) => {
         otp = Array.isArray(otp) ? otp.join('') : otp;
 
         if (!otp) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Please enter OTP.'
             });
         }
 
         if (!req.session.resetOtp) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'OTP session expired. Please try again.'
             });
         }
 
         if (req.session.resetOtp.code !== otp) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: "Invalid OTP"
             });
         }
 
         if (req.session.resetOtp.expires < Date.now()) {
-            return res.json({
+            return res.status(StatusCodes.GONE).json({
                 success: false,
                 message: 'OTP has expired. Please request a new one.'
             });
         }
 
-        res.json({
+        res.status(StatusCodes.OK).json({
             success: true,
             message: "OTP verified"
         });
 
     } catch (error) {
         console.error("Error verifying OTP:", error);
-        res.status(500).json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: "An error occurred"
         });
@@ -642,28 +643,28 @@ export const resetPassword = async (req, res) => {
         const { newPassword, confirmPassword } = req.body;
 
         if (!newPassword || !confirmPassword) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'All fields are required.'
             });
         }
 
         if (newPassword.length < 8) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Password must be at least 8 characters long.'
             });
         }
 
         if (newPassword !== confirmPassword) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: "Passwords do not match"
             });
         }
 
         if (!req.session.resetOtp || !req.session.resetOtp.email) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: "Session expired. Please try again"
             });
@@ -681,13 +682,13 @@ export const resetPassword = async (req, res) => {
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
-                return res.json({
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                     success: false,
                     message: 'Password updated but session error occurred.'
                 });
             }
 
-            res.json({
+            res.status(StatusCodes.OK).json({
                 success: true,
                 message: "Password reset successful",
                 redirectUrl: "/login"
@@ -696,7 +697,7 @@ export const resetPassword = async (req, res) => {
 
     } catch (error) {
         console.error("Error resetting password:", error);
-        res.status(500).json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: "An error occurred"
         });
@@ -711,7 +712,7 @@ export const getProfile = async (req, res) => {
         const user = await User.findById(userId);
 
         if (!user) {
-            return res.redirect('/login');
+            return res.status(StatusCodes.UNAUTHORIZED).redirect('/login');
         }
 
         res.render('user/profile', {
@@ -726,7 +727,7 @@ export const getProfile = async (req, res) => {
         });
     } catch (error) {
         console.error('Error in getProfile:', error);
-        res.redirect('/');
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).redirect('/');
     }
 };
 
@@ -826,7 +827,7 @@ const changePassword = async(req, res) => {
         const user = await User.findById(userId);
 
         if (!user) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: "User not found"
             });
@@ -834,7 +835,7 @@ const changePassword = async(req, res) => {
 
    
         if (!user.password) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: "Cannot change password for Google authenticated accounts"
             });
@@ -843,7 +844,7 @@ const changePassword = async(req, res) => {
         const isMatch = await comparePassword(currentPassword, user.password);
         
         if (!isMatch) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: "Current password is incorrect"
             });
@@ -853,7 +854,7 @@ const changePassword = async(req, res) => {
         const isSamePassword = await comparePassword(newPassword, user.password);
         
         if (isSamePassword) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: "New password must be different from current password"
             });
@@ -865,14 +866,14 @@ const changePassword = async(req, res) => {
         user.password = hashedPassword;
         await user.save();
 
-        res.json({ 
+        res.status(StatusCodes.OK).json({ 
             success: true, 
             message: "Password updated successfully"
         });
 
     } catch(error) {
         console.log(error, "error changing password");
-        res.json({ 
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
             success: false, 
             message: "Failed to update password" 
         });
@@ -900,7 +901,7 @@ const requestEmailChange = async (req,res)=>{
         const newEmail=req.body.newEmail
 
         if(!newEmail){
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success:false,
                 message:"New email is Empty"
             })
@@ -908,13 +909,13 @@ const requestEmailChange = async (req,res)=>{
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if(!emailRegex.test(newEmail)){
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success:false,
                 message:"Enter a valid email"
             })
         }
 if(newEmail.toLowerCase() === currentEmail.toLowerCase()){
-    return res.json({
+    return res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: "New email is same as current email"
     })
@@ -925,7 +926,7 @@ if(newEmail.toLowerCase() === currentEmail.toLowerCase()){
 
         const isEmailMatch = await User.findOne({email:newEmail,_id: { $ne: userId }})
         if(isEmailMatch){
-            return res.json({
+            return res.status(StatusCodes.CONFLICT).json({
                 success:false,
                 message:"This Email already exist"
             })
@@ -946,19 +947,19 @@ if(newEmail.toLowerCase() === currentEmail.toLowerCase()){
             req.session.save((err) => {
                 if (err) {
                     console.error('Session save error:', err);
-                    return res.json({
+                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                         success: false,
                         message: 'Failed to send OTP. Please try again.'
                     });
                 }
 
-                res.json({
+                res.status(StatusCodes.OK).json({
                     success: true,
                     message: "OTP sent to your email"
                 });
             });
         } else {
-            res.json({
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 success: false,
                 message: "Failed to send OTP"
             });
@@ -970,7 +971,7 @@ if(newEmail.toLowerCase() === currentEmail.toLowerCase()){
 
     }catch(error){
  console.error('Request email change error:', error);
-    res.json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Failed to send OTP'
     });
@@ -984,21 +985,21 @@ const verifyEmailChange = async(req,res)=>{
         const sessionOtp = req.session.emailChangeOtp.code;
 
         if(!otp||!newEmail){
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success:false,
                 message:"Otp or Email is missing"
             })
         }
 
         if(!req.session.emailChangeOtp){
-            return res.status(404).json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success:false,
                 message:"The session expired"
             })
         }
 
         if(!sessionOtp){
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success:false,
                 message:"OTP is missing from session"
             })
@@ -1006,20 +1007,20 @@ const verifyEmailChange = async(req,res)=>{
         }
 
         if(otp!==sessionOtp){
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success:false,
                 message:"Otp is invalid"
             })
         }
         if(req.session.emailChangeOtp.expires < Date.now()){
-            return res.json({
+            return res.status(StatusCodes.GONE).json({
                 success:false,
                 message:"The Otp is expired"
             })
         }
 
         if(req.session.emailChangeOtp.email!==newEmail.toLowerCase()){
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success:false,
                 message:"There a email Mismatch"
             })
@@ -1040,7 +1041,7 @@ const verifyEmailChange = async(req,res)=>{
      delete req.session.emailChangeOtp;  
 
 
-         return res.json({
+         return res.status(StatusCodes.OK).json({
             success:true,
             message:"The Email is success fully changed"
          })
@@ -1049,7 +1050,7 @@ const verifyEmailChange = async(req,res)=>{
     }catch(error){
         
         console.error('Verify email change error:', error);
-    return res.json({
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: "Something went wrong"
     })
@@ -1063,7 +1064,7 @@ const updateProfileImage =async (req,res)=>{
         const userId = req.session.user.id;
 
         if(!req.file){
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success:false,
                 message:'No image file provided'
 
@@ -1079,7 +1080,7 @@ avatar:{
 }
 
 })
-        res.json({
+        res.status(StatusCodes.OK).json({
             success: true,
             message: 'Profile image updated successfully',
             imageUrl: imageUrl
@@ -1087,7 +1088,7 @@ avatar:{
 
     }catch(error){
  console.error('Upload profile image error:', error);
-        res.json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Failed to upload image'
         });

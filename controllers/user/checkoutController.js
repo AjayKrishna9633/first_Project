@@ -2,6 +2,7 @@ import Cart from '../../models/cartSchema.js';
 import Order from '../../models/orderModel.js';
 import Address from '../../models/AddressModal.js';
 import Product from '../../models/porductsModal.js';
+import { StatusCodes } from 'http-status-codes';
 
 
 const getCheckOut = async(req,res)=>{
@@ -18,7 +19,7 @@ const getCheckOut = async(req,res)=>{
         }).populate('items.variantId');
 
         if(!cart || cart.items.length===0){
-                     return res.redirect('/cart');
+                     return res.status(StatusCodes.BAD_REQUEST).redirect('/cart');
         }
 
         // Get user's addresses - your model stores addresses in an array
@@ -33,7 +34,7 @@ const getCheckOut = async(req,res)=>{
 
     }catch(error){
         console.error('Get checkout error:', error);
-        res.redirect('/cart');
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).redirect('/cart');
     }
 }
 
@@ -70,7 +71,7 @@ if (req.session.buyNowData) {
 }
 
 if(!cart || cart.items.length === 0){
-    return res.json({
+    return res.status(StatusCodes.BAD_REQUEST).json({
         message: isBuyNow ? 'Buy now data not found' : 'Cart is empty',
         success: false
     });
@@ -88,7 +89,7 @@ for (const item of cart.items) {
     }
     
     if (!product || product.IsBlocked) {
-        return res.json({
+        return res.status(StatusCodes.BAD_REQUEST).json({
             success: false,
             message: `Product "${product ? product.productName : 'Unknown'}" is no longer available for purchase. Please remove it from your cart and try again.`
         });
@@ -100,7 +101,7 @@ for (const item of cart.items) {
     const variant = item.variantId;
     
     if (!variant || variant.quantity < item.quantity) {
-        return res.json({
+        return res.status(StatusCodes.BAD_REQUEST).json({
             success: false,
             message: `Insufficient stock for ${item.productId.productName}. Available: ${variant ? variant.quantity : 0}, Requested: ${item.quantity}`
         });
@@ -112,7 +113,7 @@ for (const item of cart.items) {
             // Find the address document and the specific address in the array
             const addressDoc = await Address.findOne({ userId });
             if (!addressDoc) {
-                return res.json({
+                return res.status(StatusCodes.NOT_FOUND).json({
                     success: false,
                     message: 'No addresses found'
                 });
@@ -120,7 +121,7 @@ for (const item of cart.items) {
             
             const address = addressDoc.address.find(addr => addr._id.toString() === addressId);
             if (!address) {
-                return res.json({
+                return res.status(StatusCodes.NOT_FOUND).json({
                     success: false,
                     message: 'Invalid address selected'
                 });
@@ -139,7 +140,7 @@ for (const item of cart.items) {
         } else if (newAddress) {
             shippingAddress = newAddress;
         } else {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Shipping address is required'
             });
@@ -208,7 +209,7 @@ if (isBuyNow) {
 }
 
 
-        res.json({
+        res.status(StatusCodes.CREATED).json({
             success: true,
             message: 'Order placed successfully',
             orderNumber: order.orderNumber,
@@ -217,7 +218,7 @@ if (isBuyNow) {
 
     } catch (error) {
         console.error('Place order error:', error);
-        res.json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Failed to place order'
         });
@@ -231,7 +232,7 @@ try{
     const {productId, variantId, quantity } = req.body;
 
     if(!productId||!variantId||!quantity){
-        return res.json({
+        return res.status(StatusCodes.BAD_REQUEST).json({
             success:false,
             message:"Missing required fields"
         })
@@ -239,7 +240,7 @@ try{
 
     // Validate quantity limit
     if (quantity > 3) {
-        return res.json({
+        return res.status(StatusCodes.BAD_REQUEST).json({
             success: false,
             message: 'Maximum 3 units allowed per product'
         });
@@ -249,7 +250,7 @@ try{
         const product = await Product.findById(productId).populate('variants');
         
         if(!product||product.IsBlocked){
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success:false,
                 message:"Product is not available"
             })
@@ -257,13 +258,13 @@ try{
 
         const variant = await product.variants.find(v=>v._id.toString()===variantId);
         if(!variant){
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success:false,
                 message:"variant not found"
             })
         }
                 if (variant.quantity < quantity) {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: `Only ${variant.quantity} items available`
             });
@@ -285,7 +286,7 @@ try{
       
         }
         req.session.buyNowData = orderData;
-     res.json({
+     res.status(StatusCodes.OK).json({
             success: true,
             message: 'Redirecting to checkout',
             redirectUrl: '/checkout/buy-now'
@@ -300,7 +301,7 @@ try{
             variantId: req.body.variantId,
             quantity: req.body.quantity
         });
-        res.json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Failed to process buy now: ' + error.message
         });
@@ -312,14 +313,14 @@ const getBuyNowCheckout = async(req, res) => {
         
         // Check if buy now data exists in session
         if (!req.session.buyNowData) {
-            return res.redirect('/shop');
+            return res.status(StatusCodes.BAD_REQUEST).redirect('/shop');
         }
 
         // Get productId from session data
         const productId = req.session.buyNowData.items[0].productId;
         const product = await Product.findById(productId).populate('variants');
         if(!product||product.IsBlocked){
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success:false,
                 message:"Product is not available"
             })
@@ -353,7 +354,7 @@ const getBuyNowCheckout = async(req, res) => {
 
     } catch (error) {
         console.error('Get buy now checkout error:', error);
-        res.redirect('/shop');
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).redirect('/shop');
     }
 }
 

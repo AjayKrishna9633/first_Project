@@ -263,7 +263,7 @@
 
             try {
                 const response = await fetch(`/admin/product/toggleBlock/${productId}`, {
-                    method: 'POST',
+                    method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json'
                     }

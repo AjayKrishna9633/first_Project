@@ -2,6 +2,7 @@ import Order from '../../models/orderModel.js';
 import Product from '../../models/porductsModal.js';
 import InvoiceService from '../../config/invoiceService.js';
 import { ObjectId } from 'mongodb';
+import { StatusCodes } from 'http-status-codes'
 
 const getUserOrders = async (req, res) => {
     try {
@@ -63,7 +64,7 @@ console.log('Search filter:', filter);
         
     } catch (error) {
         console.error('Get user orders error:', error);
-        res.status(500).render('user/error', { message: 'Failed to load orders' });
+       res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('user/error', { message: 'Failed to load orders' });
     }
 };
 
@@ -75,7 +76,7 @@ const getOrderDetails = async (req, res) => {
         const order = await Order.findOne({ _id: id, userId })
                     .populate({
                 path:'userId',
-                select: 'fullName email phone createdOn'  // ✅ Correct field name
+                select: 'fullName email phone createdOn' 
             })
 
             .populate({
@@ -92,7 +93,7 @@ const getOrderDetails = async (req, res) => {
             });
         
         if (!order) {
-            return res.status(404).render('user/error', { 
+          return  res.status(StatusCodes.NOT_FOUND).render('user/error', { 
                 message: 'Order not found or you do not have permission to view this order' 
             });
         }
@@ -108,7 +109,7 @@ const getOrderDetails = async (req, res) => {
         
     } catch (error) {
         console.error('Get order details error:', error);
-        res.status(500).render('user/error', { message: 'Failed to load order details' });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('user/error', { message: 'Failed to load order details' });
     }
 };
 
@@ -121,18 +122,18 @@ const cancelOrder = async (req, res) => {
         const order = await Order.findOne({ _id: id, userId });
         
         if (!order) {
-            return res.json({ success: false, message: 'Order not found' });
+            return res.status(StatusCodes.NOT_FOUND).json({ success: false, message: 'Order not found' });
         }
         
-        // Check if order can be cancelled
+       
         if (!['pending', 'confirmed'].includes(order.orderStatus)) {
-            return res.json({ 
+            return res.status(StatusCodes.BAD_REQUEST).json({ 
                 success: false, 
                 message: 'Order cannot be cancelled at this stage' 
             });
         }
         
-        // Update order status
+       
         order.orderStatus = 'cancelled';
         order.cancellationReason = reason || 'Cancelled by customer';
         order.cancelledAt = new Date();
@@ -150,7 +151,7 @@ const cancelOrder = async (req, res) => {
         
     } catch (error) {
         console.error('Cancel order error:', error);
-        res.json({ success: false, message: 'Failed to cancel order' });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to cancel order' });
     }
 };
 
@@ -223,7 +224,7 @@ const calculateOrderProgress = (orderStatus) => {
 const restoreProductStock = async (orderItems) => {
     try {
         for (let item of orderItems) {
-            // Extract the actual ObjectId values
+            
             const productId = item.productId._id || item.productId;
             const variantId = item.variantId._id || item.variantId;
             
@@ -263,7 +264,7 @@ const downloadInvoice = async (req, res) => {
             });
         
         if (!order) {
-            return res.status(404).json({ 
+            return res.status(StatusCodes.NOT_FOUND).json({ 
                 success: false, 
                 message: 'Order not found or you do not have permission to access this order' 
             });
@@ -271,7 +272,7 @@ const downloadInvoice = async (req, res) => {
         
         // Only allow invoice download for delivered orders
         if (order.orderStatus !== 'delivered') {
-            return res.status(400).json({ 
+            return res.status(StatusCodes.BAD_REQUEST).json({ 
                 success: false, 
                 message: 'Invoice is only available for delivered orders' 
             });
@@ -291,7 +292,7 @@ const downloadInvoice = async (req, res) => {
         
     } catch (error) {
         console.error('Download invoice error:', error);
-        res.status(500).json({ 
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
             success: false, 
             message: 'Failed to generate invoice' 
         });
@@ -306,33 +307,33 @@ const requestReturn = async (req, res) => {
         const order = await Order.findOne({ _id: orderId, userId });
 
         if (!order) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: 'Order not found'
             });
         }
 
         if (order.orderStatus !== 'delivered') {
-            return res.json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Only delivered orders can be returned'
             });
         }
 
         if (order.returnStatus !== 'none') {
-            return res.json({
+            return res.status(StatusCodes.CONFLICT).json({
                 success: false,
                 message: 'Return request already exists for this order'
             });
         }
 
-        // Check if return window is still open (7 days after delivery)
+    
         const deliveryDate = order.updatedAt;
         const returnWindow = 7 * 24 * 60 * 60 * 1000; // 7 days
         const currentDate = new Date();
 
         if (currentDate - deliveryDate > returnWindow) {
-            return res.json({
+            return res.status(StatusCodes.GONE).json({
                 success: false,
                 message: 'Return window has expired. Returns are only allowed within 7 days of delivery.'
             });
@@ -345,14 +346,14 @@ const requestReturn = async (req, res) => {
 
         await order.save();
 
-        res.json({
+        res.status(StatusCodes.ACCEPTED).json({
             success: true,
             message: 'Return request submitted successfully.'
         });
 
     } catch (error) {
         console.error('Request return error:', error);
-        res.json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Failed to submit return request'
         });
@@ -365,7 +366,7 @@ const updateReturnStatus = async (req, res) => {
         const order = await Order.findById(orderId);
 
         if (!order) {
-            return res.json({
+            return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: 'Order not found'
             });
@@ -386,7 +387,7 @@ const updateReturnStatus = async (req, res) => {
             order.refundStatus = 'processed';
             order.adminReturnNotes = adminNotes;
 
-            // Restore stock for returned items
+         
             for (const item of order.items) {
                 await Product.findOneAndUpdate(
                     { _id: item.productId, 'variants._id': item.variantId },
@@ -397,14 +398,14 @@ const updateReturnStatus = async (req, res) => {
 
         await order.save();
 
-        res.json({
+        res.status(StatusCodes.ACCEPTED).json({
             success: true,
             message: `Return ${action}d successfully`
         });
 
     } catch (error) {
         console.error('Update return status error:', error);
-        res.json({
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Failed to update return status'
         });
