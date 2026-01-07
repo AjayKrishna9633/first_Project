@@ -33,10 +33,26 @@
             <!-- Address Content -->
             <div class="flex-1">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-bold">Shipping Address</h2>
-                    <button onclick="openAddAddressModal()" class="px-6 py-2 bg-white text-black rounded-lg hover:bg-gray-200 transition font-medium">
-                        + Add New Address
-                    </button>
+                    <div>
+                        <h2 class="text-2xl font-bold">Shipping Address</h2>
+                        <p class="text-sm text-gray-400 mt-1">
+                            <% if (addresses && addresses.length > 0) { %>
+                                <%= addresses.length %> of 4 addresses used
+                            <% } else { %>
+                                0 of 4 addresses used
+                            <% } %>
+                        </p>
+                    </div>
+                    <% if (addresses && addresses.length >= 4) { %>
+                        <div class="text-gray-400 text-sm">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Maximum addresses reached
+                        </div>
+                    <% } else { %>
+                        <button onclick="openAddAddressModal()" class="px-6 py-2 bg-white text-black rounded-lg hover:bg-gray-200 transition font-medium">
+                            + Add New Address
+                        </button>
+                    <% } %>
                 </div>
 
                 <!-- Address Cards -->

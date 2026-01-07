@@ -68,6 +68,14 @@ const addAddress = async (req, res) => {
 
         let userAddresses = await Address.findOne({ userId });
 
+        // Check address limit (maximum 4 addresses per user)
+        if (userAddresses && userAddresses.address.length >= 4) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Maximum 4 addresses allowed per user. Please delete an existing address to add a new one.'
+            });
+        }
+
         if (userAddresses) {
             userAddresses.address.push(newAddressData);
             await userAddresses.save();

@@ -417,6 +417,97 @@ const updateReturnStatus = async (req, res) => {
     }
 };
 
+const cancelOrderItem = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { orderId, itemId } = req.params;
+        const { reason } = req.body;
+        
+        const order = await Order.findOne({ _id: orderId, userId })
+            .populate('items.productId')
+            .populate('items.variantId');
+        
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({ 
+                success: false, 
+                message: 'Order not found' 
+            });
+        }
+        
+        // Check if order can be modified
+        if (!['pending', 'confirmed', 'processing'].includes(order.orderStatus)) {
+            return res.status(StatusCodes.BAD_REQUEST).json({ 
+                success: false, 
+                message: 'Items cannot be cancelled at this stage' 
+            });
+        }
+        
+        // Find the specific item
+        const itemIndex = order.items.findIndex(item => item._id.toString() === itemId);
+        
+        if (itemIndex === -1) {
+            return res.status(StatusCodes.NOT_FOUND).json({ 
+                success: false, 
+                message: 'Item not found in order' 
+            });
+        }
+        
+        const item = order.items[itemIndex];
+        
+        // Check if item is already cancelled
+        if (item.status === 'cancelled') {
+            return res.status(StatusCodes.BAD_REQUEST).json({ 
+                success: false, 
+                message: 'Item is already cancelled' 
+            });
+        }
+        
+        // Cancel the item
+        order.items[itemIndex].status = 'cancelled';
+        order.items[itemIndex].cancellationReason = reason || 'Cancelled by customer';
+        order.items[itemIndex].cancelledAt = new Date();
+        order.items[itemIndex].cancelledBy = 'user';
+        
+        // Recalculate order totals
+        const activeItems = order.items.filter(item => item.status === 'active');
+        
+        if (activeItems.length === 0) {
+            // If all items are cancelled, cancel the entire order
+            order.orderStatus = 'cancelled';
+            order.cancellationReason = 'All items cancelled';
+            order.cancelledAt = new Date();
+        } else {
+            // Recalculate totals based on active items
+            order.subtotal = activeItems.reduce((sum, item) => sum + item.totalPrice, 0);
+            order.totalAmount = order.subtotal + (order.shippingCost || 0) + (order.tax || 0);
+        }
+        
+        order.updatedAt = new Date();
+        await order.save();
+        
+        // Restore stock for the cancelled item
+        const Variant = (await import('../../models/variantModel.js')).default;
+        await Variant.findByIdAndUpdate(
+            item.variantId._id,
+            { $inc: { quantity: item.quantity } }
+        );
+        
+        res.status(StatusCodes.OK).json({
+            success: true,
+            message: 'Item cancelled successfully',
+            orderStatus: order.orderStatus,
+            newTotal: order.totalAmount
+        });
+        
+    } catch (error) {
+        console.error('Cancel order item error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
+            success: false, 
+            message: 'Failed to cancel item' 
+        });
+    }
+};
+
 
 
 export default {
@@ -425,5 +516,6 @@ export default {
     cancelOrder,
     downloadInvoice,
     updateReturnStatus,
-    requestReturn
+    requestReturn,
+    cancelOrderItem
 };

@@ -131,6 +131,7 @@ router.get('/checkout/buy-now', protectUser, checkoutCtrl.getBuyNowCheckout);
 router.get('/orders', protectUser, orderCtrl.getUserOrders);
 router.get('/orders/:id', protectUser, orderCtrl.getOrderDetails);
 router.patch('/orders/:id/cancel', protectUser, orderCtrl.cancelOrder);
+router.patch('/orders/:orderId/items/:itemId/cancel', protectUser, orderCtrl.cancelOrderItem);
 router.get('/orders/:id/invoice', protectUser, orderCtrl.downloadInvoice);
 router.post('/orders/return/request', protectUser, orderCtrl.requestReturn);
 

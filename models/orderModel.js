@@ -35,6 +35,17 @@ const orderSchema = new Schema({
         totalPrice: {
             type: Number,
             required: true
+        },
+        status: {
+            type: String,
+            enum: ['active', 'cancelled', 'returned'],
+            default: 'active'
+        },
+        cancellationReason: String,
+        cancelledAt: Date,
+        cancelledBy: {
+            type: String,
+            enum: ['user', 'admin']
         }
     }],
     shippingAddress: {
