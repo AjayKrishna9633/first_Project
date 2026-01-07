@@ -153,7 +153,7 @@ class InvoiceService {
         '',
         '',
         'Tax',
-        '',
+        '',                                   
         this.formatCurrency(order.tax)
     );
 
@@ -210,7 +210,7 @@ class InvoiceService {
     }
 
     formatCurrency(amount) {
-        return '₹' + amount.toLocaleString('en-IN');
+       return 'Rs. ' + amount.toLocaleString('en-IN');
     }
 
     formatDate(date) {

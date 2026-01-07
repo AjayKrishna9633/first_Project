@@ -97,7 +97,20 @@ const orderSchema = new Schema({
         enum: ['none', 'requested', 'approved', 'rejected', 'completed'],
         default: 'none'
     },
-    returnReason: String,
+    returnReason: {
+        type:String,
+        enum:[
+    'DEFECTIVE',
+    'DAMAGED_SHIPPING', 
+    'WRONG_ITEM',
+    'NO_LONGER_NEEDED',
+    'BETTER_PRICE', 
+    'ORDERED_MISTAKE',
+    'LATE_ARRIVAL',
+    'OTHER'
+],
+default: null
+    },
     returnRequestDate: Date,
     returnApprovedDate: Date,
     returnCompletedDate: Date,

@@ -117,7 +117,7 @@ const cancelOrder = async (req, res) => {
     try {
         const userId = req.session.user.id;
         const { id } = req.params;
-        const { reason } = req.body;
+        const { reason, category, reasonCode } = req.body;
         
         const order = await Order.findOne({ _id: id, userId });
         
@@ -126,7 +126,7 @@ const cancelOrder = async (req, res) => {
         }
         
        
-        if (!['pending', 'confirmed'].includes(order.orderStatus)) {
+        if (!['pending', 'confirmed','processing'].includes(order.orderStatus)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ 
                 success: false, 
                 message: 'Order cannot be cancelled at this stage' 
@@ -135,7 +135,7 @@ const cancelOrder = async (req, res) => {
         
        
         order.orderStatus = 'cancelled';
-        order.cancellationReason = reason || 'Cancelled by customer';
+        order.cancellationReason = reason || 'No reason provided';
         order.cancelledAt = new Date();
         order.updatedAt = new Date();
         
@@ -223,22 +223,27 @@ const calculateOrderProgress = (orderStatus) => {
 
 const restoreProductStock = async (orderItems) => {
     try {
+        // Import Variant model for direct variant collection updates
+        const Variant = (await import('../../models/variantModel.js')).default;
+        
         for (let item of orderItems) {
-            
             const productId = item.productId._id || item.productId;
             const variantId = item.variantId._id || item.variantId;
             
             console.log('Restoring stock for:', { productId, variantId, quantity: item.quantity });
             
-            await Product.updateOne(
-                { 
-                    '_id': productId,
-                    'variants._id': variantId
-                },
-                { 
-                    '$inc': { 'variants.$.quantity': item.quantity }
-                }
+            // Update variant stock directly in the variant collection
+            const updateResult = await Variant.findByIdAndUpdate(
+                variantId,
+                { $inc: { quantity: item.quantity } },
+                { new: true }
             );
+            
+            if (!updateResult) {
+                console.error(`Failed to restore stock for variant ${variantId}`);
+            } else {
+                console.log(`Successfully restored ${item.quantity} units for variant ${variantId}`);
+            }
         }
     } catch (error) {
         console.error('Error restoring product stock:', error);
