@@ -77,6 +77,7 @@ const getAddProduct = async(req,res)=>{
         try {
             const { productName, description, category, variants } = req.body;
 
+            console.log(variants)
             // Validate basic fields
             if (!productName || !description || !category) {
                 const categories = await Category.find({ isListed: true });

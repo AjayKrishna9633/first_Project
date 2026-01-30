@@ -49,8 +49,8 @@
         <div class="max-w-7xl mx-auto">
             <h1 class="text-4xl font-bold text-white mb-2">My Wishlist</h1>
             <p class="text-gray-400">
-                <% if (wishlist && wishlist.products.length > 0) { %>
-                    <i class="fas fa-heart text-red-500"></i> <%= wishlist.products.length %> <%= wishlist.products.length === 1 ? 'item' : 'items' %> in your wishlist
+                <% if (wishlist && totalProducts > 0) { %>
+                    <i class="fas fa-heart text-red-500"></i> <%= totalProducts %> <%= totalProducts === 1 ? 'item' : 'items' %> in your wishlist
                 <% } else { %>
                     <i class="far fa-heart text-gray-500"></i> Your wishlist is empty
                 <% } %>
@@ -60,7 +60,7 @@
 
     <!-- Wishlist Content -->
     <div class="max-w-7xl mx-auto py-12 px-6">
-        <% if (wishlist && wishlist.products.length > 0) { %>
+        <% if (wishlist && totalProducts > 0) { %>
             <!-- Wishlist Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 <% wishlist.products.forEach(item => { %>
@@ -178,8 +178,55 @@
                 </a>
             </div>
         <% } %>
-    </div>
+        
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+            <div class="flex justify-center items-center gap-2 mt-12 mb-8">
+                <!-- Previous Button -->
+                <% if (currentPage > 1) { %>
+                    <a href="/wishlist?page=<%= currentPage - 1 %>" 
+                       class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition flex items-center">
+                        <i class="fas fa-chevron-left mr-2"></i>Previous
+                    </a>
+                <% } else { %>
+                    <span class="px-4 py-2 bg-gray-800 text-gray-500 rounded-lg cursor-not-allowed flex items-center">
+                        <i class="fas fa-chevron-left mr-2"></i>Previous
+                    </span>
+                <% } %>
 
+                <!-- Page Numbers -->
+                <div class="flex items-center gap-2">
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <% if (i == currentPage) { %>
+                            <span class="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold min-w-[44px] text-center">
+                                <%= i %>
+                            </span>
+                        <% } else if (i == 1 || i == totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) { %>
+                            <a href="/wishlist?page=<%= i %>" 
+                               class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition min-w-[44px] text-center">
+                                <%= i %>
+                            </a>
+                        <% } else if (i == currentPage - 2 || i == currentPage + 2) { %>
+                            <span class="px-2 text-gray-400">...</span>
+                        <% } %>
+                    <% } %>
+                </div>
+
+                <!-- Next Button -->
+                <% if (currentPage < totalPages) { %>
+                    <a href="/wishlist?page=<%= currentPage + 1 %>" 
+                       class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition flex items-center">
+                        Next<i class="fas fa-chevron-right ml-2"></i>
+                    </a>
+                <% } else { %>
+                    <span class="px-4 py-2 bg-gray-800 text-gray-500 rounded-lg cursor-not-allowed flex items-center">
+                        Next<i class="fas fa-chevron-right ml-2"></i>
+                    </span>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+    
     <!-- Footer -->
     <%- include('../partials/footer') %>
 

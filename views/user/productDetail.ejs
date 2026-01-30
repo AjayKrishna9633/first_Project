@@ -196,7 +196,7 @@
                             class="w-10 h-10 bg-gray-900 border border-gray-700 rounded-lg hover:bg-gray-800 transition">
                             <i class="fas fa-minus"></i>
                         </button>
-                        <input type="number" id="quantity" value="1" min="1" max="3"
+                        <input type="number" id="quantity" value="1" min="1" 
                             class="w-20 text-center bg-gray-900 border border-gray-700 rounded-lg py-2 focus:outline-none focus:border-gray-500">
                         <button onclick="increaseQuantity()" 
                             class="w-10 h-10 bg-gray-900 border border-gray-700 rounded-lg hover:bg-gray-800 transition">
@@ -363,15 +363,27 @@
             // Reset quantity and update max attribute
             const quantityInput = document.getElementById('quantity');
             quantityInput.value = 1;
-            quantityInput.max = Math.min(maxQuantity, 3);
+            quantityInput.max = maxQuantity;
         }
 
         function increaseQuantity() {
             const input = document.getElementById('quantity');
             const currentValue = parseInt(input.value);
-            const maxAllowed = Math.min(maxQuantity, 3); // Enforce 3-unit limit
+            const maxAllowed = maxQuantity; // Enforce 3-unit limit
             if (currentValue < maxAllowed) {
                 input.value = currentValue + 1;
+            }
+            if(currentValue >= 3){
+                input.value = 3;
+               
+                Swal.fire({
+                    title: 'Limit Exceeded',
+                    text: 'Maximum 3 units allowed per product',
+                    icon: 'warning',
+                    confirmButtonColor: '#1f2937'
+                });
+                return;
+            
             }
         }
 
@@ -396,10 +408,30 @@
                 return;
             }
             
+               if (isNaN(quantity) || quantity < 1) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Please enter a valid quantity (minimum 1)',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+                return;
+            }
+            
             if (quantity > maxQuantity) {
                 Swal.fire({
                     title: 'Insufficient Stock',
                     text: `Only ${maxQuantity} items available!`,
+                    icon: 'warning',
+                    confirmButtonColor: '#1f2937'
+                });
+                return;
+            }
+
+            if (quantity > 3) {
+                Swal.fire({
+                    title: 'Limit Exceeded',
+                    text: 'Maximum 3 units allowed per product',
                     icon: 'warning',
                     confirmButtonColor: '#1f2937'
                 });
@@ -536,10 +568,30 @@
         return;
     }
     
+    if (isNaN(quantity) || quantity < 1) {
+        Swal.fire({
+            title: 'Error',
+            text: 'Please enter a valid quantity (minimum 1)',
+            icon: 'error',
+            confirmButtonColor: '#1f2937'
+        });
+        return;
+    }
+
     if (quantity > maxQuantity) {
         Swal.fire({
             title: 'Insufficient Stock',
             text: `Only ${maxQuantity} items available!`,
+            icon: 'warning',
+            confirmButtonColor: '#1f2937'
+        });
+        return;
+    }
+
+    if (quantity > 3) {
+        Swal.fire({
+            title: 'Limit Exceeded',
+            text: 'Maximum 3 units allowed per product',
             icon: 'warning',
             confirmButtonColor: '#1f2937'
         });
@@ -648,7 +700,7 @@
 
 
         // Update quantity input max attribute (enforce 3-unit limit)
-        document.getElementById('quantity').max = Math.min(maxQuantity, 3);
+        document.getElementById('quantity') = maxQuantity;
 
         // ===== IMAGE MAGNIFIER (Lens with Zoom Inside) =====
         const imageContainer = document.getElementById('imageContainer');

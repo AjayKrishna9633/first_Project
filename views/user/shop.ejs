@@ -63,10 +63,12 @@
         <div class="flex items-center justify-between mb-6">
             <!-- Left: Search & Filter Button -->
             <div class="flex items-center gap-3">
-                <form action="/shop" method="GET" class="flex items-center gap-3"></form>
+                <form action="/shop" method="GET" class="flex items-center gap-3">
                     <input type="hidden" name="category" value="<%= selectedCategory %>">
                     <input type="hidden" name="color" value="<%= selectedColor %>">
                     <input type="hidden" name="sort" value="<%= sortBy %>">
+                    <input type="hidden" name="minPrice" value="<%= minPrice %>">
+                    <input type="hidden" name="maxPrice" value="<%= maxPrice %>">
                     <div class="relative">
                         <input type="text" name="search" value="<%= search %>" 
                             placeholder="Search products..."

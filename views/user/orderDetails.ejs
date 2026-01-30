@@ -259,33 +259,54 @@
                         <% 
                             const activeItems = order.items.filter(item => item.status === 'active');
                             const cancelledItems = order.items.filter(item => item.status === 'cancelled');
+                            const allItemsCancelled = activeItems.length === 0 && cancelledItems.length > 0;
                         %>
-                        <div class="flex justify-between text-gray-300">
-                            <span>Subtotal (<%= activeItems.length %> active items):</span>
-                            <span>₹<%= order.subtotal.toLocaleString() %></span>
-                        </div>
-                        <% if (cancelledItems.length > 0) { %>
-                            <div class="flex justify-between text-red-400 text-sm">
-                                <span>Cancelled items (<%= cancelledItems.length %>):</span>
-                                <span>-₹<%= cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString() %></span>
+                        
+                        <% if (allItemsCancelled) { %>
+                            <!-- When all items are cancelled, show different layout -->
+                            <div class="flex justify-between text-red-400">
+                                <span>All items cancelled (<%= cancelledItems.length %> items):</span>
+                                <span>₹<%= cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString() %></span>
+                            </div>
+                            <div class="flex justify-between text-gray-500 text-sm">
+                                <span>Order Total (before cancellation):</span>
+                                <span class="line-through">₹<%= (cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0) + (order.shippingCost || 0) + (order.tax || 0)).toLocaleString() %></span>
+                            </div>
+                            <div class="border-t border-gray-700 pt-3">
+                                <div class="flex justify-between text-xl font-bold text-red-400">
+                                    <span>Final Total:</span>
+                                    <span>₹0 (Order Cancelled)</span>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <!-- Normal display when some items are active -->
+                            <div class="flex justify-between text-gray-300">
+                                <span>Subtotal (<%= activeItems.length %> active items):</span>
+                                <span>₹<%= order.subtotal.toLocaleString() %></span>
+                            </div>
+                            <% if (cancelledItems.length > 0) { %>
+                                <div class="flex justify-between text-red-400 text-sm">
+                                    <span>Cancelled items (<%= cancelledItems.length %>):</span>
+                                    <span>-₹<%= cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString() %></span>
+                                </div>
+                            <% } %>
+                            <div class="flex justify-between text-gray-300">
+                                <span>Shipping:</span>
+                                <span class="<%= order.shippingCost === 0 ? 'text-green-400' : '' %>">
+                                    <%= order.shippingCost === 0 ? 'FREE' : '₹' + order.shippingCost.toLocaleString() %>
+                                </span>
+                            </div>
+                            <div class="flex justify-between text-gray-300">
+                                <span>Tax:</span>
+                                <span>₹<%= order.tax.toLocaleString() %></span>
+                            </div>
+                            <div class="border-t border-gray-700 pt-3">
+                                <div class="flex justify-between text-xl font-bold text-white">
+                                    <span>Total:</span>
+                                    <span class="text-cyan-400">₹<%= order.totalAmount.toLocaleString() %></span>
+                                </div>
                             </div>
                         <% } %>
-                        <div class="flex justify-between text-gray-300">
-                            <span>Shipping:</span>
-                            <span class="<%= order.shippingCost === 0 ? 'text-green-400' : '' %>">
-                                <%= order.shippingCost === 0 ? 'FREE' : '₹' + order.shippingCost.toLocaleString() %>
-                            </span>
-                        </div>
-                        <div class="flex justify-between text-gray-300">
-                            <span>Tax:</span>
-                            <span>₹<%= order.tax.toLocaleString() %></span>
-                        </div>
-                        <div class="border-t border-gray-700 pt-3">
-                            <div class="flex justify-between text-xl font-bold text-white">
-                                <span>Total:</span>
-                                <span class="text-cyan-400">₹<%= order.totalAmount.toLocaleString() %></span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 

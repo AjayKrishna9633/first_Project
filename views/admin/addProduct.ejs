@@ -24,15 +24,26 @@
             <main class="flex-1 overflow-y-auto p-6">
                 <!-- Breadcrumb -->
                 <div class="mb-6">
-                    <div class="flex items-center text-sm text-gray-600 mb-4">
-                        <a href="/admin/products" class="hover:text-gray-900">Products</a>
-                        <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                        <span class="text-gray-900 font-medium">Add New Product</span>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="flex items-center text-sm text-gray-600 mb-4">
+                                <a href="/admin/products" class="hover:text-gray-900">Products</a>
+                                <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                                <span class="text-gray-900 font-medium">Add New Product</span>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-900">Add New Product</h2>
+                            <p class="text-sm text-gray-600 mt-1">Create a new product for your store</p>
+                        </div>
+                        <button 
+                            type="submit"
+                            form="addProductForm"
+                            class="px-3 py-1.5 bg-gray-900 text-white rounded text-sm font-medium hover:bg-gray-800 transition"
+                        >
+                            Add Product
+                        </button>
                     </div>
-                    <h2 class="text-2xl font-bold text-gray-900">Add New Product</h2>
-                    <p class="text-sm text-gray-600 mt-1">Create a new product for your store</p>
                 </div>
 
                 <!-- Error/Success Message -->
@@ -50,7 +61,7 @@
                 <% } %>
 
                 <!-- Add Product Form -->
-                <form action="/admin/products/add" method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <form id="addProductForm" action="/admin/products/add" method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     
                     <!-- Product Name -->
                     <div class="mb-5">
@@ -187,6 +198,9 @@
                                         <p class="price-error text-xs text-red-600 mt-1 hidden"></p>
                                     </div>
                                 </div>
+                                </div>
+
+                                 
 
                                 <!-- Variant Images -->
                                 <div>
@@ -199,7 +213,7 @@
                                         id="variantImagesInput0"
                                         onchange="handleImageSelect(event, 0)"
                                     >
-                                    <button 
+                                    <button id="submitBtn"
                                         type="button"
                                         onclick="document.getElementById('variantImagesInput0').click()"
                                         class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition"
@@ -214,25 +228,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Buttons -->
-                    <div class="flex gap-3 pt-4 border-t border-gray-200">
-                        <button 
-                            type="submit"
-                            class="flex-1 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium flex items-center justify-center gap-2"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            <span>Add Product</span>
-                        </button>
-                        <a 
-                            href="/admin/products"
-                            class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
-                        >
-                            Cancel
-                        </a>
                     </div>
                 </form>
             </main>
@@ -549,9 +544,11 @@
                     
                     // Check images
                     if (files.length === 0) {
+                        const variantTitle = item.querySelector('h3');
+                        const variantNumber = variantTitle ? variantTitle.textContent.split('#')[1] : 'Unknown';
                         Swal.fire({
                             title: 'Missing Images',
-                            text: `Variant #${item.querySelector('h3').textContent.split('#')[1]} needs at least one image!`,
+                            text: `Variant #${variantNumber} needs at least one image!`,
                             icon: 'error',
                             confirmButtonColor: '#1f2937'
                         });
@@ -560,13 +557,23 @@
                     }
                     
                     // Check sale price <= regular price
-                    const regularPrice = parseFloat(item.querySelector(`input[name="variants[${variantIndex}][regularPrice]"]`).value);
-                    const salePrice = parseFloat(item.querySelector(`input[name="variants[${variantIndex}][salePrice]"]`).value);
+                    const regularPriceInput = item.querySelector(`input[name="variants[${variantIndex}][regularPrice]"]`);
+                    const salePriceInput = item.querySelector(`input[name="variants[${variantIndex}][salePrice]"]`);
                     
-                    if (salePrice > regularPrice) {
+                    if (!regularPriceInput || !salePriceInput) {
+                        console.error('Price inputs not found for variant', variantIndex);
+                        return;
+                    }
+                    
+                    const regularPrice = parseFloat(regularPriceInput.value) || 0;
+                    const salePrice = parseFloat(salePriceInput.value) || 0;
+                    
+                    if (salePrice > regularPrice && regularPrice > 0) {
+                        const variantTitle = item.querySelector('h3');
+                        const variantNumber = variantTitle ? variantTitle.textContent.split('#')[1] : 'Unknown';
                         Swal.fire({
                             title: 'Invalid Price',
-                            text: `Variant #${item.querySelector('h3').textContent.split('#')[1]}: Sale price (₹${salePrice}) cannot be greater than regular price (₹${regularPrice})`,
+                            text: `Variant #${variantNumber}: Sale price (₹${salePrice}) cannot be greater than regular price (₹${regularPrice})`,
                             icon: 'error',
                             confirmButtonColor: '#1f2937'
                         });
@@ -597,14 +604,14 @@
                 }
 
                 // Show loading state
-                const submitBtn = this.querySelector('button[type="submit"]');
+                const submitBtn = this.querySelector('#submitBtn');
                 const originalText = submitBtn.innerHTML;
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
                 // Submit form
                 fetch(this.action, {
-                    method: 'PUT',
+                    method: 'POST',
                     body: formData
                 }).then(response => {
                     if (response.ok) {

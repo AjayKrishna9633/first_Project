@@ -59,15 +59,31 @@ const addToWishlist = async(req,res)=>{
 const getWishlist = async(req,res)=>{
     try{
         const userId = req.session.user.id;
-
+const page = parseInt(req.query.page)||1;
+const limit = 10;
+const skip = (page-1)*limit;
         const wishlist = await Wishlist.findOne({userId})
             .populate({
                 path: 'products.productId',
                 populate: { path: 'variants category' }
             });
-
+            if(!wishlist){
+                return res.render('user/wishlist', {
+                    wishlist: {products:[]},
+                    totalPages:0,
+                    currentPage:page,
+                    totalProducts:0,
+                    user: req.session.user
+                });
+            }
+            const totalProducts =wishlist.products.length;
+            const totalPages= Math.ceil(totalProducts/10);
+            const paginatedProducts= wishlist.products.slice(skip,skip+limit)
         res.render('user/wishlist', {
-            wishlist: wishlist || { products: [] },
+            wishlist: {products:paginatedProducts} || { products: [] },
+            totalPages,
+            currentPage:page,
+            totalProducts,
             user: req.session.user
         });
 
@@ -127,7 +143,7 @@ const moveToCart = async (req, res) => {
             });
         }
 
-        // Add to cart (reuse the cart logic)
+        
         const Cart = (await import('../../models/cartSchema.js')).default;
         
         let cart = await Cart.findOne({ userId });
@@ -153,6 +169,13 @@ const moveToCart = async (req, res) => {
                 // Increase quantity if already in cart
                 const newQuantity = cart.items[existingItemIndex].quantity + 1;
                 
+                if (newQuantity > 3) {
+                    return res.json({
+                        success: false,
+                        message: 'Maximum 3 units allowed per product'
+                    });
+                }
+
                 if (newQuantity > variant.quantity) {
                     return res.json({
                         success: false,

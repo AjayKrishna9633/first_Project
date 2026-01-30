@@ -21,15 +21,11 @@ const variantSchema = new Schema({
     salePrice:{
         type:Number,
         required:true
-        
-
     },
     regularPrice:{
         type:Number,
         required:true
     }
-
-
 }, {timestamps:true});
 
 const variant = mongoose.model("variant",variantSchema);
