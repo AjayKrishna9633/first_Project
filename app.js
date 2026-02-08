@@ -6,11 +6,13 @@ import path from 'path';
 import {fileURLToPath}  from 'url';
 import db from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
-import adminRoutes from './routes/adminRoutes.js'
+import adminRoutes from './routes/adminRoutes.js';
+import { preventCrossAccess } from './middlewares/authMiddleware.js';
 const __filename  = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT);
+
 
 // Import passport AFTER env vars are loaded
 const passportModule = await import('./config/passport.js');
@@ -46,13 +48,13 @@ app.set('view engine', 'ejs');
 app.use('/public', express.static(path.join(__dirname, 'public')))
 
 
-
+app.use(preventCrossAccess);
 
 app.use('/',userRoutes);
 app.use('/admin',adminRoutes)
 
 
-app.use((req, res, next) => {
+app.use((req, res) => {
     res.status(404).render('error/error', {
         title: '404 - Page Not Found',
         message: 'The page you are looking for does not exist.',
@@ -63,7 +65,7 @@ app.use((req, res, next) => {
 });
 
 // Global Error Handler
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
     console.error('Global Error Handler:', err);
     res.status(500).render('error/error', {
         title: '500 - Internal Server Error',

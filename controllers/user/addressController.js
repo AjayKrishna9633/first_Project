@@ -4,13 +4,29 @@ import { StatusCodes } from 'http-status-codes';
 const AddressPage = async(req, res) => {
     try {
         const userId = req.session.user.id;
+        const page = parseInt(req.query.page) || 1;
+        const limit = 2; // Show 6 addresses per page
+        const skip = (page - 1) * limit;
+
         const userAddresses = await Address.findOne({ userId: userId });
-        const addresses = userAddresses ? userAddresses.address : [];
+        const allAddresses = userAddresses ? userAddresses.address : [];
+        
+        // Calculate pagination
+        const totalAddresses = allAddresses.length;
+        const totalPages = Math.ceil(totalAddresses / limit);
+        
+        // Get addresses for current page
+        const addresses = allAddresses.slice(skip, skip + limit);
 
         res.render('user/addressPage', {
             addresses: addresses,
             user: req.session.user,
-            hideHeaderSearch: true
+            hideHeaderSearch: true,
+            totalPages: totalPages,
+            currentPage: page,
+            totalAddresses: totalAddresses,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
         });
 
     } catch(error) {
@@ -67,14 +83,6 @@ const addAddress = async (req, res) => {
         };
 
         let userAddresses = await Address.findOne({ userId });
-
-        // Check address limit (maximum 4 addresses per user)
-        if (userAddresses && userAddresses.address.length >= 4) {
-            return res.status(StatusCodes.BAD_REQUEST).json({
-                success: false,
-                message: 'Maximum 4 addresses allowed per user. Please delete an existing address to add a new one.'
-            });
-        }
 
         if (userAddresses) {
             userAddresses.address.push(newAddressData);

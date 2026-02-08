@@ -7,6 +7,41 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Tooltip styling for formatted numbers */
+        [title] {
+            cursor: help;
+            position: relative;
+        }
+        
+        [title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        [title]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 95%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-6 py-8">
@@ -62,7 +97,9 @@
                                         Color: <%= item.variantId?.color || 'N/A' %> | 
                                         Quantity: <%= item.quantity %>
                                     </p>
-                                    <p class="text-sm font-medium text-gray-900">₹<%= item.price.toLocaleString() %> each</p>
+                                    <p class="text-sm font-medium text-gray-900" title="₹<%= getFullNumber(item.price) %> each">
+                                        <%= formatCurrency(item.price) %> each
+                                    </p>
                                     <% if (item.status === 'cancelled' && item.cancellationReason) { %>
                                         <p class="text-xs text-red-600 mt-1">
                                             <i class="fas fa-info-circle mr-1"></i>
@@ -71,8 +108,8 @@
                                     <% } %>
                                 </div>
                                 <div class="text-right">
-                                    <p class="font-semibold text-gray-900 <%= item.status === 'cancelled' ? 'line-through text-gray-500' : '' %>">
-                                        ₹<%= item.totalPrice.toLocaleString() %>
+                                    <p class="font-semibold text-gray-900 <%= item.status === 'cancelled' ? 'line-through text-gray-500' : '' %>" title="₹<%= getFullNumber(item.totalPrice) %>">
+                                        <%= formatCurrency(item.totalPrice) %>
                                     </p>
                                 </div>
                             </div>
@@ -125,7 +162,9 @@
                                             <% } %>
                                         </td>
                                         <td class="px-4 py-4">
-                                            <div class="text-sm font-medium text-gray-900">₹<%= order.totalAmount.toLocaleString() %></div>
+                                            <div class="text-sm font-medium text-gray-900" title="₹<%= getFullNumber(order.totalAmount) %>">
+                                                <%= formatCurrency(order.totalAmount) %>
+                                            </div>
                                         </td>
                                         <td class="px-4 py-4">
                                             <div class="text-sm text-gray-900">
@@ -260,25 +299,27 @@
                         %>
                         <div class="flex justify-between">
                             <span>Subtotal (<%= activeItems.length %> active items):</span>
-                            <span>₹<%= order.subtotal.toLocaleString() %></span>
+                            <span title="₹<%= getFullNumber(order.subtotal) %>"><%= formatCurrency(order.subtotal) %></span>
                         </div>
                         <% if (cancelledItems.length > 0) { %>
                             <div class="flex justify-between text-red-600 text-sm">
                                 <span>Cancelled items (<%= cancelledItems.length %>):</span>
-                                <span>-₹<%= cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString() %></span>
+                                <span title="-₹<%= getFullNumber(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>">
+                                    -<%= formatCurrency(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>
+                                </span>
                             </div>
                         <% } %>
                         <div class="flex justify-between">
                             <span>Shipping:</span>
-                            <span>₹<%= order.shippingCost.toLocaleString() %></span>
+                            <span title="₹<%= getFullNumber(order.shippingCost) %>"><%= formatCurrency(order.shippingCost) %></span>
                         </div>
                         <div class="flex justify-between">
                             <span>Tax:</span>
-                            <span>₹<%= order.tax.toLocaleString() %></span>
+                            <span title="₹<%= getFullNumber(order.tax) %>"><%= formatCurrency(order.tax) %></span>
                         </div>
                         <div class="border-t pt-2 flex justify-between font-semibold text-lg">
                             <span>Total:</span>
-                            <span>₹<%= order.totalAmount.toLocaleString() %></span>
+                            <span title="₹<%= getFullNumber(order.totalAmount) %>"><%= formatCurrency(order.totalAmount) %></span>
                         </div>
                     </div>
                     

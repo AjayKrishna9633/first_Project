@@ -49,7 +49,6 @@
     transform: translateY(-2px) !important;
 }
 
-
 .product-card.out-of-stock::after {
     content: 'OUT OF STOCK';
     position: absolute;
@@ -69,6 +68,27 @@
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
+}
+
+/* Enhanced Magnifier Lens Styles */
+#magnifierLens {
+    border: 4px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(1px);
+    transition: opacity 0.2s ease;
+}
+
+#imageContainer {
+    position: relative;
+    user-select: none;
+}
+
+#mainImage {
+    transition: transform 0.1s ease;
+}
+
+#imageContainer:hover #mainImage {
+    cursor: crosshair;
 }
 </style>
 </head>
@@ -700,7 +720,7 @@
 
 
         // Update quantity input max attribute (enforce 3-unit limit)
-        document.getElementById('quantity') = maxQuantity;
+        document.getElementById('quantity').max = Math.min(maxQuantity, 3);
 
         // ===== IMAGE MAGNIFIER (Lens with Zoom Inside) =====
         const imageContainer = document.getElementById('imageContainer');
@@ -708,17 +728,48 @@
         const magnifierLens = document.getElementById('magnifierLens');
         
         let isZooming = false;
+        let magnifierInitialized = false;
 
-        // Initialize magnifier on image load
-        mainImage.addEventListener('load', function() {
+        // Initialize magnifier on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing magnifier...');
+            
+            // Check if all required elements exist
+            if (!imageContainer) {
+                console.error('Image container not found!');
+                return;
+            }
+            if (!mainImage) {
+                console.error('Main image not found!');
+                return;
+            }
+            if (!magnifierLens) {
+                console.error('Magnifier lens not found!');
+                return;
+            }
+            
+            console.log('All magnifier elements found, proceeding with initialization');
             initMagnifier();
         });
 
         function initMagnifier() {
+            if (magnifierInitialized) return; // Prevent duplicate initialization
+            
+            console.log('Initializing image magnifier...');
+            
             // Mouse enter - show lens
             imageContainer.addEventListener('mouseenter', function() {
-                magnifierLens.classList.remove('hidden');
-                isZooming = true;
+                console.log('Mouse entered image container');
+                console.log('Image complete:', mainImage.complete);
+                console.log('Image natural width:', mainImage.naturalWidth);
+                
+                if (mainImage.complete && mainImage.naturalWidth > 0) {
+                    magnifierLens.classList.remove('hidden');
+                    isZooming = true;
+                    console.log('Magnifier lens activated');
+                } else {
+                    console.log('Image not ready for magnification');
+                }
             });
 
             // Mouse leave - hide lens
@@ -729,46 +780,93 @@
 
             // Mouse move - update lens position and show zoom inside lens
             imageContainer.addEventListener('mousemove', function(e) {
-                if (!isZooming) return;
+                if (!isZooming || !mainImage.complete) return;
                 
-                const rect = imageContainer.getBoundingClientRect();
-                const imgRect = mainImage.getBoundingClientRect();
-                
-                // Calculate cursor position relative to image
-                let x = e.clientX - imgRect.left;
-                let y = e.clientY - imgRect.top;
-                
-                // Lens size (w-40 = 160px)
-                const lensSize = 160;
-                
-                // Prevent lens from going outside image
-                x = Math.max(lensSize / 2, Math.min(x, imgRect.width - lensSize / 2));
-                y = Math.max(lensSize / 2, Math.min(y, imgRect.height - lensSize / 2));
-                
-                // Position the lens centered on cursor
-                magnifierLens.style.left = (x - lensSize / 2 + (imgRect.left - rect.left)) + 'px';
-                magnifierLens.style.top = (y - lensSize / 2 + (imgRect.top - rect.top)) + 'px';
-                
-                // Calculate zoom inside the lens
-                const zoomLevel = 2.5;
-                const bgPosX = -(x * zoomLevel - lensSize / 2);
-                const bgPosY = -(y * zoomLevel - lensSize / 2);
-                
-                // Set background image and position inside the lens
-                magnifierLens.style.backgroundImage = `url('${mainImage.src}')`;
-                magnifierLens.style.backgroundSize = `${imgRect.width * zoomLevel}px ${imgRect.height * zoomLevel}px`;
-                magnifierLens.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
-                magnifierLens.style.backgroundRepeat = 'no-repeat';
+                try {
+                    const rect = imageContainer.getBoundingClientRect();
+                    const imgRect = mainImage.getBoundingClientRect();
+                    
+                    // Calculate cursor position relative to image
+                    let x = e.clientX - imgRect.left;
+                    let y = e.clientY - imgRect.top;
+                    
+                    // Lens size (w-40 = 160px)
+                    const lensSize = 160;
+                    
+                    // Prevent lens from going outside image bounds
+                    x = Math.max(lensSize / 2, Math.min(x, imgRect.width - lensSize / 2));
+                    y = Math.max(lensSize / 2, Math.min(y, imgRect.height - lensSize / 2));
+                    
+                    // Position the lens centered on cursor
+                    const lensLeft = (x - lensSize / 2 + (imgRect.left - rect.left));
+                    const lensTop = (y - lensSize / 2 + (imgRect.top - rect.top));
+                    
+                    magnifierLens.style.left = lensLeft + 'px';
+                    magnifierLens.style.top = lensTop + 'px';
+                    
+                    // Calculate zoom inside the lens
+                    const zoomLevel = 2.5;
+                    const bgPosX = -(x * zoomLevel - lensSize / 2);
+                    const bgPosY = -(y * zoomLevel - lensSize / 2);
+                    
+                    // Set background image and position inside the lens
+                    magnifierLens.style.backgroundImage = `url('${mainImage.src}')`;
+                    magnifierLens.style.backgroundSize = `${imgRect.width * zoomLevel}px ${imgRect.height * zoomLevel}px`;
+                    magnifierLens.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
+                    magnifierLens.style.backgroundRepeat = 'no-repeat';
+                    
+                    // Debug log (remove in production)
+                    if (Math.random() < 0.01) { // Log occasionally to avoid spam
+                        console.log('Magnifier active:', { x, y, lensLeft, lensTop, zoomLevel });
+                    }
+                } catch (error) {
+                    console.error('Error in magnifier mousemove:', error);
+                }
             });
+            
+            magnifierInitialized = true;
+            console.log('Image magnifier initialized successfully');
         }
 
-        // Reinitialize magnifier when image changes
-        const originalChangeMainImage = changeMainImage;
-        changeMainImage = function(imageUrl, thumbnail) {
-            originalChangeMainImage(imageUrl, thumbnail);
+        // Enhanced changeMainImage function with magnifier support
+        const originalChangeMainImage = window.changeMainImage;
+        window.changeMainImage = function(imageUrl, thumbnail) {
+            // Hide lens during image change
             magnifierLens.classList.add('hidden');
-            setTimeout(initMagnifier, 100);
+            isZooming = false;
+            
+            // Call original function logic
+            document.getElementById('mainImage').src = imageUrl;
+            
+            // Update thumbnail borders
+            document.querySelectorAll('.thumbnail-item').forEach(item => {
+                item.classList.remove('border-white');
+                item.classList.add('border-gray-700');
+            });
+            thumbnail.classList.remove('border-gray-700');
+            thumbnail.classList.add('border-white');
+            
+            // Wait for new image to load before re-enabling magnifier
+            const newImage = document.getElementById('mainImage');
+            newImage.onload = function() {
+                console.log('New image loaded, magnifier ready');
+            };
+            newImage.onerror = function() {
+                console.error('Failed to load image:', imageUrl);
+            };
         };
+
+        // Handle image load errors
+        mainImage.addEventListener('error', function() {
+            console.error('Main image failed to load');
+            magnifierLens.classList.add('hidden');
+            isZooming = false;
+        });
+
+        // Ensure magnifier works when image is already loaded
+        if (mainImage.complete && mainImage.naturalWidth > 0) {
+            console.log('Main image already loaded');
+        }
 
         
 

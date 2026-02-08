@@ -1,6 +1,7 @@
 import Order from '../../models/orderModel.js';
 import User from '../../models/userModal.js';
 import Product from '../../models/porductsModal.js';
+import { formatNumber, formatCurrency, getFullNumber } from '../../utils/numberFormatter.js';
 
 const getOrders = async (req, res) => {
     try {
@@ -76,7 +77,10 @@ const getOrders = async (req, res) => {
             limit,
             stats,
             filters: { status, paymentStatus, returnStatus, search, sortBy, sortOrder },
-            admin: req.session.admin || { fullName: 'Admin' }  // ADD THIS LINE
+            admin: req.session.admin || { fullName: 'Admin' },
+            formatNumber,
+            formatCurrency,
+            getFullNumber
         });
         
     } catch (error) {
@@ -111,7 +115,12 @@ const getOrders = async (req, res) => {
                 return res.status(404).render('admin/error',{message:'order not found'})
              }
              
-              res.render('admin/orderDetails', { order });
+              res.render('admin/orderDetails', { 
+                  order,
+                  formatNumber,
+                  formatCurrency,
+                  getFullNumber
+              });
 
         }catch(error){
 console.error('Get order details error:', error);

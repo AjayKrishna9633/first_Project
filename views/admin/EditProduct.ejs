@@ -7,6 +7,25 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Cropper.js CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
+    
+    <style>
+        .croppie-container {
+            max-height: 400px;
+        }
+        
+        .file-processing {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+        }
+        
+        .file-ready {
+            border-color: #10b981 !important;
+            background-color: #ecfdf5 !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
@@ -219,7 +238,7 @@
                                                     accept="image/*"
                                                     class="hidden"
                                                     id="addImages_<%= variant._id %>"
-                                                    onchange="updateExistingVariantFileLabel(this, '<%= variant._id %>')"
+                                                    onchange="handleImageSelect(event, '<%= variant._id %>')"
                                                 >
                                                 <label for="addImages_<%= variant._id %>" class="cursor-pointer">
                                                     <svg class="w-6 h-6 mx-auto text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,6 +248,7 @@
                                                 </label>
                                                 <div id="addImagesList_<%= variant._id %>" class="mt-2 text-xs text-gray-600"></div>
                                             </div>
+                                            <div id="imagePreview_<%= variant._id %>" class="mt-3 grid grid-cols-3 gap-2"></div>
                                         </div>
                                     </div>
                                 <% }); %>
@@ -267,9 +287,48 @@
         </div>
     </div>
 
+    <!-- Image Cropping Modal -->
+    <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">Crop Image</h3>
+                <button onclick="closeCropModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-4">
+                <div id="croppie-container" class="mb-4"></div>
+                
+                <div class="flex justify-end gap-3">
+                    <button onclick="closeCropModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition">
+                        Cancel
+                    </button>
+                    <button onclick="cropAndNext()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                        <i class="fas fa-check mr-2"></i>Crop & Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let newVariantCount = 0;
         let deletedVariantIds = [];
+        let currentCroppie = null;
+        let currentVariantIndex = null;
+        let currentFileIndex = 0;
+        let filesToProcess = [];
+        let croppedFiles = {};
+
+        // Initialize cropped files for existing variants
+        <% if (product.variants && product.variants.length > 0) { %>
+            <% product.variants.forEach((variant, index) => { %>
+                croppedFiles['<%= variant._id %>'] = [];
+            <% }); %>
+        <% } %>
 
         function addNewVariant() {
             const container = document.getElementById('newVariantsContainer');
@@ -355,7 +414,7 @@
                                 required
                                 class="hidden variant-images"
                                 id="newVariantImages${variantIndex}"
-                                onchange="updateNewVariantFileLabel(this, ${variantIndex})"
+                                onchange="handleImageSelect(event, ${variantIndex})"
                             >
                             <label for="newVariantImages${variantIndex}" class="cursor-pointer">
                                 <svg class="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -366,17 +425,174 @@
                             </label>
                             <div id="newVariantFileList${variantIndex}" class="mt-2 text-xs text-gray-600"></div>
                         </div>
+                        <div id="imagePreview${variantIndex}" class="mt-3 grid grid-cols-3 gap-2"></div>
                     </div>
                 </div>
             `;
             
             container.insertAdjacentHTML('beforeend', variantHTML);
+            croppedFiles[variantIndex] = [];
             newVariantCount++;
         }
 
         function removeNewVariant(button) {
             const variantItem = button.closest('.variant-item');
+            const variantIndex = variantItem.getAttribute('data-new-variant-index');
+            delete croppedFiles[variantIndex];
             variantItem.remove();
+        }
+
+        // Handle Image Selection
+        function handleImageSelect(event, variantIndex) {
+            const files = event.target.files;
+            
+            // Validate file count
+            if (files.length > 5) {
+                Swal.fire({
+                    title: 'Too Many Images',
+                    text: 'You can only upload a maximum of 5 images per variant.',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+                event.target.value = '';
+                return;
+            }
+
+            // Validate file size (5MB each)
+            for (let file of files) {
+                if (file.size > 5 * 1024 * 1024) {
+                    Swal.fire({
+                        title: 'File Too Large',
+                        text: `${file.name} is larger than 5MB. Please choose smaller images.`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    event.target.value = '';
+                    return;
+                }
+            }
+
+            currentVariantIndex = variantIndex;
+            filesToProcess = Array.from(files);
+            currentFileIndex = 0;
+            croppedFiles[variantIndex] = [];
+
+            if (filesToProcess.length > 0) {
+                processNextImage();
+            }
+        }
+
+        // Process Next Image
+        function processNextImage() {
+            if (currentFileIndex >= filesToProcess.length) {
+                updateImagePreview();
+                const input = document.getElementById(`newVariantImages${currentVariantIndex}`) || 
+                             document.getElementById(`addImages_${currentVariantIndex}`);
+                if (input) input.value = '';
+                return;
+            }
+
+            const file = filesToProcess[currentFileIndex];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                showCropModal(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Show Crop Modal
+        function showCropModal(imageSrc) {
+            const modal = document.getElementById('cropModal');
+            const container = document.getElementById('croppie-container');
+            
+            modal.classList.remove('hidden');
+            
+            if (currentCroppie) {
+                currentCroppie.destroy();
+            }
+            
+            currentCroppie = new Croppie(container, {
+                viewport: { width: 300, height: 300, type: 'square' },
+                boundary: { width: 400, height: 400 },
+                showZoomer: true,
+                enableResize: false,
+                enableOrientation: true,
+                mouseWheelZoom: 'ctrl'
+            });
+            
+            currentCroppie.bind({
+                url: imageSrc
+            });
+        }
+
+        // Crop and Next
+        function cropAndNext() {
+            if (!currentCroppie) return;
+            
+            currentCroppie.result({
+                type: 'blob',
+                size: { width: 800, height: 800 },
+                format: 'jpeg',
+                quality: 0.9
+            }).then(function(blob) {
+                const fileName = `cropped_${currentVariantIndex}_${currentFileIndex}.jpg`;
+                const file = new File([blob], fileName, { type: 'image/jpeg' });
+                
+                croppedFiles[currentVariantIndex].push(file);
+                currentFileIndex++;
+                
+                closeCropModal();
+                
+                setTimeout(() => {
+                    processNextImage();
+                }, 100);
+            });
+        }
+
+        // Close Crop Modal
+        function closeCropModal() {
+            const modal = document.getElementById('cropModal');
+            modal.classList.add('hidden');
+            
+            if (currentCroppie) {
+                currentCroppie.destroy();
+                currentCroppie = null;
+            }
+        }
+
+        // Update Image Preview
+        function updateImagePreview() {
+            const preview = document.getElementById(`imagePreview${currentVariantIndex}`) || 
+                           document.getElementById(`imagePreview_${currentVariantIndex}`);
+            if (!preview) return;
+            
+            preview.innerHTML = '';
+
+            const files = croppedFiles[currentVariantIndex] || [];
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'relative group';
+                    imgDiv.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-20 object-cover rounded border">
+                        <button type="button" onclick="removeImage('${currentVariantIndex}', ${index})" 
+                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    `;
+                    preview.appendChild(imgDiv);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Remove Image
+        function removeImage(variantIndex, imageIndex) {
+            croppedFiles[variantIndex].splice(imageIndex, 1);
+            currentVariantIndex = variantIndex;
+            updateImagePreview();
         }
 
         async function deleteExistingVariant(button, variantId) {
@@ -410,23 +626,65 @@
             });
         }
 
-        function updateNewVariantFileLabel(input, index) {
-            const fileList = document.getElementById(`newVariantFileList${index}`);
-            if (input.files.length > 0) {
-                fileList.textContent = `${input.files.length} file(s) selected`;
-            } else {
-                fileList.textContent = '';
+        // Form submission handling
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate all variants have images
+            const variantItems = document.querySelectorAll('.variant-item');
+            for (let item of variantItems) {
+                const variantIndex = item.getAttribute('data-new-variant-index') || 
+                                   item.getAttribute('data-variant-id');
+                const files = croppedFiles[variantIndex] || [];
+                
+                // Check images for new variants
+                if (item.getAttribute('data-new-variant-index') && files.length === 0) {
+                    const variantNumber = item.querySelector('h3').textContent.split('#')[1];
+                    Swal.fire({
+                        title: 'Missing Images',
+                        text: `Please add at least one image for Variant #${variantNumber}`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return;
+                }
             }
-        }
 
-        function updateExistingVariantFileLabel(input, variantId) {
-            const fileList = document.getElementById(`addImagesList_${variantId}`);
-            if (input.files.length > 0) {
-                fileList.textContent = `${input.files.length} new image(s) selected`;
-            } else {
-                fileList.textContent = '';
+            // Show loading
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating Product...';
+            
+            const form = this;
+            
+            // Remove old file inputs
+            const oldInputs = form.querySelectorAll('.variant-images-input');
+            oldInputs.forEach(input => {
+                input.remove();
+            });
+
+            // Add cropped images for new variants
+            for (const variantIndex in croppedFiles) {
+                const files = croppedFiles[variantIndex];
+                if (files.length > 0 && !isNaN(variantIndex)) { // Only for new variants (numeric indices)
+                    const dt = new DataTransfer();
+                    files.forEach(file => dt.items.add(file));
+                    
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.name = `variants[${variantIndex}][images]`;
+                    input.multiple = true;
+                    input.files = dt.files;
+                    input.style.display = 'none';
+                    input.className = 'variant-images-input';
+                    form.appendChild(input);
+                }
             }
-        }
+
+            // Submit form
+            form.submit();
+        });
 
         async function removeExistingImage(button, variantId, imageUrl) {
             const result = await Swal.fire({

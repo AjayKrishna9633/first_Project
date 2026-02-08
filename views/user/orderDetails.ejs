@@ -20,6 +20,40 @@
         .progress-line.completed {
             background: linear-gradient(90deg, #06b6d4, #3b82f6);
         }
+        
+        /* Tooltip styling for formatted numbers */
+        [title] {
+            cursor: help;
+            position: relative;
+        }
+        
+        [title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        [title]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 95%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="bg-black text-white">
@@ -176,9 +210,9 @@
                                         Quantity: <%= item.quantity %>
                                     </p>
                                     <div class="flex items-center gap-4">
-                                        <span class="text-sm text-gray-400">₹<%= item.price.toLocaleString() %> each</span>
-                                        <span class="font-semibold text-white <%= item.status === 'cancelled' ? 'line-through text-gray-500' : '' %>">
-                                            ₹<%= item.totalPrice.toLocaleString() %>
+                                        <span class="text-sm text-gray-400" title="₹<%= getFullNumber(item.price) %> each">₹<%= formatCurrency(item.price).replace('₹', '') %> each</span>
+                                        <span class="font-semibold text-white <%= item.status === 'cancelled' ? 'line-through text-gray-500' : '' %>" title="₹<%= getFullNumber(item.totalPrice) %>">
+                                            <%= formatCurrency(item.totalPrice) %>
                                         </span>
                                     </div>
                                     <% if (item.status === 'cancelled' && item.cancellationReason) { %>
@@ -266,11 +300,11 @@
                             <!-- When all items are cancelled, show different layout -->
                             <div class="flex justify-between text-red-400">
                                 <span>All items cancelled (<%= cancelledItems.length %> items):</span>
-                                <span>₹<%= cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString() %></span>
+                                <span title="₹<%= getFullNumber(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>"><%= formatCurrency(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %></span>
                             </div>
                             <div class="flex justify-between text-gray-500 text-sm">
                                 <span>Order Total (before cancellation):</span>
-                                <span class="line-through">₹<%= (cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0) + (order.shippingCost || 0) + (order.tax || 0)).toLocaleString() %></span>
+                                <span class="line-through" title="₹<%= getFullNumber(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0) + (order.shippingCost || 0) + (order.tax || 0)) %>"><%= formatCurrency(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0) + (order.shippingCost || 0) + (order.tax || 0)) %></span>
                             </div>
                             <div class="border-t border-gray-700 pt-3">
                                 <div class="flex justify-between text-xl font-bold text-red-400">
@@ -282,28 +316,28 @@
                             <!-- Normal display when some items are active -->
                             <div class="flex justify-between text-gray-300">
                                 <span>Subtotal (<%= activeItems.length %> active items):</span>
-                                <span>₹<%= order.subtotal.toLocaleString() %></span>
+                                <span title="₹<%= getFullNumber(order.subtotal) %>"><%= formatCurrency(order.subtotal) %></span>
                             </div>
                             <% if (cancelledItems.length > 0) { %>
                                 <div class="flex justify-between text-red-400 text-sm">
                                     <span>Cancelled items (<%= cancelledItems.length %>):</span>
-                                    <span>-₹<%= cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString() %></span>
+                                    <span title="-₹<%= getFullNumber(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>">-<%= formatCurrency(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %></span>
                                 </div>
                             <% } %>
                             <div class="flex justify-between text-gray-300">
                                 <span>Shipping:</span>
-                                <span class="<%= order.shippingCost === 0 ? 'text-green-400' : '' %>">
-                                    <%= order.shippingCost === 0 ? 'FREE' : '₹' + order.shippingCost.toLocaleString() %>
+                                <span class="<%= order.shippingCost === 0 ? 'text-green-400' : '' %>" title="₹<%= getFullNumber(order.shippingCost) %>">
+                                    <%= order.shippingCost === 0 ? 'FREE' : formatCurrency(order.shippingCost) %>
                                 </span>
                             </div>
                             <div class="flex justify-between text-gray-300">
                                 <span>Tax:</span>
-                                <span>₹<%= order.tax.toLocaleString() %></span>
+                                <span title="₹<%= getFullNumber(order.tax) %>"><%= formatCurrency(order.tax) %></span>
                             </div>
                             <div class="border-t border-gray-700 pt-3">
                                 <div class="flex justify-between text-xl font-bold text-white">
                                     <span>Total:</span>
-                                    <span class="text-cyan-400">₹<%= order.totalAmount.toLocaleString() %></span>
+                                    <span class="text-cyan-400" title="₹<%= getFullNumber(order.totalAmount) %>"><%= formatCurrency(order.totalAmount) %></span>
                                 </div>
                             </div>
                         <% } %>

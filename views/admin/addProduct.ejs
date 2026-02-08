@@ -7,8 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Croppie CSS and JS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
+    
+    <style>
+        .croppie-container {
+            max-height: 400px;
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
@@ -22,7 +29,7 @@
 
             <!-- Main Content -->
             <main class="flex-1 overflow-y-auto p-6">
-                <!-- Breadcrumb -->
+                <!-- Page Header -->
                 <div class="mb-6">
                     <div class="flex items-center justify-between">
                         <div>
@@ -39,6 +46,7 @@
                         <button 
                             type="submit"
                             form="addProductForm"
+                            id="submitBtn"
                             class="px-3 py-1.5 bg-gray-900 text-white rounded text-sm font-medium hover:bg-gray-800 transition"
                         >
                             Add Product
@@ -60,46 +68,55 @@
                     </div>
                 <% } %>
 
-                <!-- Add Product Form -->
+                <!-- Product Form -->
                 <form id="addProductForm" action="/admin/products/add" method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     
-                    <!-- Product Name -->
-                    <div class="mb-5">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Product Name *</label>
-                        <input 
-                            type="text" 
-                            name="productName" 
-                            required
-                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
-                            placeholder="e.g., Gaming Keyboard RGB"
-                        >
-                    </div>
+                    <!-- Basic Product Information -->
+                    <div class="grid grid-cols-1 gap-6 mb-8">
+                        <!-- Product Name -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Product Name *</label>
+                            <input 
+                                type="text" 
+                                name="productName" 
+                                required
+                                minlength="3"
+                                maxlength="100"
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
+                                placeholder="e.g., Gaming Keyboard RGB"
+                            >
+                            <p class="text-xs text-gray-500 mt-1">3-100 characters</p>
+                        </div>
 
-                    <!-- Description -->
-                    <div class="mb-5">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
-                        <textarea 
-                            name="description" 
-                            required
-                            rows="4"
-                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition resize-none"
-                            placeholder="Describe your product features, specifications, and benefits..."
-                        ></textarea>
-                    </div>
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
+                            <textarea 
+                                name="description" 
+                                required
+                                minlength="10"
+                                maxlength="1000"
+                                rows="4"
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition resize-none"
+                                placeholder="Describe your product features, specifications, and benefits..."
+                            ></textarea>
+                            <p class="text-xs text-gray-500 mt-1">10-1000 characters</p>
+                        </div>
 
-                    <!-- Category -->
-                    <div class="mb-5">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-                        <select 
-                            name="category" 
-                            required
-                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
-                        >
-                            <option value="">Select a category</option>
-                            <% categories.forEach(category => { %>
-                                <option value="<%= category._id %>"><%= category.name %></option>
-                            <% }); %>
-                        </select>
+                        <!-- Category -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                            <select 
+                                name="category" 
+                                required
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
+                            >
+                                <option value="">Select a category</option>
+                                <% categories.forEach(category => { %>
+                                    <option value="<%= category._id %>"><%= category.name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Product Variants Section -->
@@ -107,16 +124,14 @@
                         <div class="flex items-center justify-between mb-4">
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700">Product Variants *</label>
-                                <p class="text-xs text-gray-500 mt-1">Add different color variants with their own pricing and stock</p>
+                                <p class="text-xs text-gray-500 mt-1">Add different color variants with pricing and stock</p>
                             </div>
                             <button 
                                 type="button"
                                 onclick="addVariant()"
                                 class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition text-sm font-medium flex items-center gap-2"
                             >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                </svg>
+                                <i class="fas fa-plus text-xs"></i>
                                 Add Variant
                             </button>
                         </div>
@@ -132,27 +147,26 @@
                                         onclick="removeVariant(this)"
                                         class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
                                     >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
+                                        <i class="fas fa-trash text-xs"></i>
                                         Remove
                                     </button>
                                 </div>
 
+                                <!-- Variant Fields -->
                                 <div class="grid grid-cols-2 gap-4 mb-4">
-                                    <!-- Color -->
                                     <div>
                                         <label class="block text-xs font-medium text-gray-700 mb-1">Color *</label>
                                         <input 
                                             type="text" 
                                             name="variants[0][color]" 
                                             required
+                                            minlength="2"
+                                            maxlength="30"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                             placeholder="e.g., Black, White, Red"
                                         >
                                     </div>
 
-                                    <!-- Quantity -->
                                     <div>
                                         <label class="block text-xs font-medium text-gray-700 mb-1">Stock Quantity *</label>
                                         <input 
@@ -160,6 +174,7 @@
                                             name="variants[0][quantity]" 
                                             required
                                             min="0"
+                                            max="10000"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                             placeholder="0"
                                         >
@@ -167,7 +182,6 @@
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-4 mb-4">
-                                    <!-- Regular Price -->
                                     <div>
                                         <label class="block text-xs font-medium text-gray-700 mb-1">Regular Price (₹) *</label>
                                         <input 
@@ -175,14 +189,14 @@
                                             name="variants[0][regularPrice]" 
                                             data-regular
                                             required
-                                            min="0"
+                                            min="1"
+                                            max="1000000"
                                             step="0.01"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                             placeholder="0.00"
                                         >
                                     </div>
 
-                                    <!-- Sale Price -->
                                     <div>
                                         <label class="block text-xs font-medium text-gray-700 mb-1">Sale Price (₹) *</label>
                                         <input 
@@ -190,7 +204,8 @@
                                             name="variants[0][salePrice]" 
                                             data-sale
                                             required
-                                            min="0"
+                                            min="1"
+                                            max="1000000"
                                             step="0.01"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                             placeholder="0.00"
@@ -198,9 +213,6 @@
                                         <p class="price-error text-xs text-red-600 mt-1 hidden"></p>
                                     </div>
                                 </div>
-                                </div>
-
-                                 
 
                                 <!-- Variant Images -->
                                 <div>
@@ -208,21 +220,19 @@
                                     <input 
                                         type="file" 
                                         multiple
-                                        accept="image/*"
+                                        accept="image/jpeg,image/jpg,image/png,image/webp"
                                         class="hidden variant-images-input"
                                         id="variantImagesInput0"
                                         onchange="handleImageSelect(event, 0)"
                                     >
-                                    <button id="submitBtn"
+                                    <button 
                                         type="button"
                                         onclick="document.getElementById('variantImagesInput0').click()"
                                         class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition"
                                     >
-                                        <svg class="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                                        </svg>
+                                        <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
                                         <p class="text-xs text-gray-600 mb-1">Click to upload and crop images</p>
-                                        <p class="text-xs text-gray-500">PNG, JPG, WEBP (Max 5)</p>
+                                        <p class="text-xs text-gray-500">PNG, JPG, WEBP (Max 5 images, 5MB each)</p>
                                     </button>
                                     <div id="imagePreview0" class="grid grid-cols-5 gap-2 mt-3"></div>
                                 </div>
@@ -240,12 +250,10 @@
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">Crop Image</h3>
                 <button onclick="closeCropModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                    <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
-            <div id="cropContainer" class="mb-4"></div>
+            <div id="cropContainer" class="mb-4" style="height: 400px;"></div>
             <div class="flex gap-3">
                 <button onclick="cropImage()" class="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium">
                     Crop & Save
@@ -258,21 +266,53 @@
     </div>
 
     <script>
+        // Check if Croppie is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, checking Croppie library...');
+            
+            if (typeof Croppie === 'undefined') {
+                console.error('Croppie library not loaded!');
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Image cropping library failed to load. Please refresh the page.',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+            } else {
+                console.log('Croppie library loaded successfully');
+                console.log('Croppie version:', Croppie.version || 'Unknown');
+            }
+            
+            // Also check if SweetAlert2 is loaded
+            if (typeof Swal === 'undefined') {
+                console.error('SweetAlert2 library not loaded!');
+                alert('Required libraries failed to load. Please refresh the page.');
+            } else {
+                console.log('SweetAlert2 library loaded successfully');
+            }
+        });
+
         let variantCount = 1;
         let currentCroppie = null;
         let currentVariantIndex = null;
-        let currentFileInput = null;
         let currentFileIndex = 0;
         let filesToProcess = [];
-        let croppedFiles = {
-            0: [] // Initialize for the first variant
-        };
+        let croppedFiles = { 0: [] };
 
+        // Add New Variant
         function addVariant() {
             const container = document.getElementById('variantsContainer');
             const variantIndex = variantCount;
             
-            const variantHTML = `
+            const variantHTML = createVariantHTML(variantIndex);
+            container.insertAdjacentHTML('beforeend', variantHTML);
+            croppedFiles[variantIndex] = [];
+            variantCount++;
+        }
+
+        // Create Variant HTML Template
+        function createVariantHTML(variantIndex) {
+            return `
                 <div class="variant-item border border-gray-300 rounded-lg p-5 bg-gray-50" data-variant-index="${variantIndex}">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-semibold text-gray-700">Variant #${variantIndex + 1}</h3>
@@ -281,9 +321,7 @@
                             onclick="removeVariant(this)"
                             class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
                         >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
+                            <i class="fas fa-trash text-xs"></i>
                             Remove
                         </button>
                     </div>
@@ -295,6 +333,8 @@
                                 type="text" 
                                 name="variants[${variantIndex}][color]" 
                                 required
+                                minlength="2"
+                                maxlength="30"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                 placeholder="e.g., Black, White, Red"
                             >
@@ -307,6 +347,7 @@
                                 name="variants[${variantIndex}][quantity]" 
                                 required
                                 min="0"
+                                max="10000"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                 placeholder="0"
                             >
@@ -321,7 +362,8 @@
                                 name="variants[${variantIndex}][regularPrice]" 
                                 data-regular
                                 required
-                                min="0"
+                                min="1"
+                                max="1000000"
                                 step="0.01"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                 placeholder="0.00"
@@ -335,7 +377,8 @@
                                 name="variants[${variantIndex}][salePrice]" 
                                 data-sale
                                 required
-                                min="0"
+                                min="1"
+                                max="1000000"
                                 step="0.01"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                 placeholder="0.00"
@@ -349,7 +392,7 @@
                         <input 
                             type="file" 
                             multiple
-                            accept="image/*"
+                            accept="image/jpeg,image/jpg,image/png,image/webp"
                             class="hidden variant-images-input"
                             id="variantImagesInput${variantIndex}"
                             onchange="handleImageSelect(event, ${variantIndex})"
@@ -359,23 +402,18 @@
                             onclick="document.getElementById('variantImagesInput${variantIndex}').click()"
                             class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition"
                         >
-                            <svg class="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                            </svg>
+                            <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
                             <p class="text-xs text-gray-600 mb-1">Click to upload and crop images</p>
-                            <p class="text-xs text-gray-500">PNG, JPG, WEBP (Max 5)</p>
+                            <p class="text-xs text-gray-500">PNG, JPG, WEBP (Max 5 images, 5MB each)</p>
                         </button>
                         <div id="imagePreview${variantIndex}" class="grid grid-cols-5 gap-2 mt-3"></div>
                     </div>
                 </div>
             `;
-            
-            container.insertAdjacentHTML('beforeend', variantHTML);
-            croppedFiles[variantIndex] = [];
-            variantCount++;
         }
 
-        async function removeVariant(button) {
+        // Remove Variant
+        function removeVariant(button) {
             const variantsContainer = document.getElementById('variantsContainer');
             const variantItems = variantsContainer.querySelectorAll('.variant-item');
             
@@ -397,6 +435,7 @@
             updateVariantNumbers();
         }
 
+        // Update Variant Numbers
         function updateVariantNumbers() {
             const variantItems = document.querySelectorAll('.variant-item');
             variantItems.forEach((item, index) => {
@@ -405,8 +444,18 @@
             });
         }
 
+        // Handle Image Selection
         function handleImageSelect(event, variantIndex) {
             const files = event.target.files;
+            
+            if (!files || files.length === 0) {
+                console.log('No files selected');
+                return;
+            }
+            
+            console.log(`Processing ${files.length} files for variant ${variantIndex}`);
+            
+            // Validate file count
             if (files.length > 5) {
                 Swal.fire({
                     title: 'Too Many Images',
@@ -418,85 +467,261 @@
                 return;
             }
 
+            // Validate file types and sizes
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Check file type
+                if (!validTypes.includes(file.type)) {
+                    Swal.fire({
+                        title: 'Invalid File Type',
+                        text: `${file.name} is not a valid image type. Please select only JPEG, PNG, or WEBP images.`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    event.target.value = '';
+                    return;
+                }
+                
+                // Check file size
+                if (file.size > maxSize) {
+                    Swal.fire({
+                        title: 'File Too Large',
+                        text: `${file.name} is larger than 5MB. Please choose smaller images.`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    event.target.value = '';
+                    return;
+                }
+            }
+
+            // Initialize processing
             currentVariantIndex = variantIndex;
             filesToProcess = Array.from(files);
             currentFileIndex = 0;
-            croppedFiles[variantIndex] = [];
+            
+            // Ensure croppedFiles array exists
+            if (!croppedFiles[variantIndex]) {
+                croppedFiles[variantIndex] = [];
+            } else {
+                croppedFiles[variantIndex] = []; // Reset for new selection
+            }
 
+            console.log('Starting image processing...');
             if (filesToProcess.length > 0) {
                 processNextImage();
             }
         }
 
+        // Process Next Image
         function processNextImage() {
             if (currentFileIndex >= filesToProcess.length) {
-                // All images processed, update preview and clear input
+                // All images processed
+                console.log('All images processed, updating preview...');
                 updateImagePreview();
                 const input = document.getElementById(`variantImagesInput${currentVariantIndex}`);
-                if (input) {
-                    input.value = ''; // Clear the file input
+                if (input) input.value = '';
+                
+                // Show success message
+                const processedCount = croppedFiles[currentVariantIndex] ? croppedFiles[currentVariantIndex].length : 0;
+                if (processedCount > 0) {
+                    Swal.fire({
+                        title: 'Images Processed!',
+                        text: `${processedCount} image(s) cropped and ready`,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
                 }
                 return;
             }
 
             const file = filesToProcess[currentFileIndex];
+            if (!file) {
+                console.error('No file found at index:', currentFileIndex);
+                currentFileIndex++;
+                processNextImage();
+                return;
+            }
+            
+            console.log(`Processing image ${currentFileIndex + 1}/${filesToProcess.length}: ${file.name}`);
+            
             const reader = new FileReader();
             reader.onload = function(e) {
-                showCropModal(e.target.result);
+                if (e.target && e.target.result) {
+                    showCropModal(e.target.result);
+                } else {
+                    console.error('Failed to read file');
+                    Swal.fire({
+                        title: 'Error',
+                        text: `Failed to read ${file.name}. Skipping to next image.`,
+                        icon: 'warning',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    currentFileIndex++;
+                    processNextImage();
+                }
+            };
+            reader.onerror = function(error) {
+                console.error('FileReader error:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: `Error reading ${file.name}. Skipping to next image.`,
+                    icon: 'warning',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                currentFileIndex++;
+                processNextImage();
             };
             reader.readAsDataURL(file);
         }
 
+        // Show Crop Modal
         function showCropModal(imageData) {
             const modal = document.getElementById('cropModal');
             const container = document.getElementById('cropContainer');
+            
+            if (!modal || !container) {
+                console.error('Crop modal elements not found');
+                return;
+            }
+            
             modal.classList.remove('hidden');
             
+            // Clear container
             container.innerHTML = '';
-            const cropDiv = document.createElement('div');
-            cropDiv.style.width = '100%';
-            cropDiv.style.height = '400px';
-            container.appendChild(cropDiv);
-
-            currentCroppie = new Croppie(cropDiv, {
-                viewport: { width: 300, height: 300, type: 'square' },
-                boundary: { width: 500, height: 400 },
-                enableOrientation: true,
-                enableResize: false
-            });
-
-            currentCroppie.bind({ url: imageData });
-        }
-
-        function cropImage() {
-            if (!currentCroppie) return;
-
-            currentCroppie.result({
-                type: 'blob',
-                size: { width: 800, height: 800 },
-                format: 'jpeg',
-                quality: 0.9
-            }).then(function(blob) {
-                // Convert blob to file
-                const fileName = `cropped_${currentVariantIndex}_${currentFileIndex}.jpg`;
-                const file = new File([blob], fileName, { type: 'image/jpeg' });
-                
-                croppedFiles[currentVariantIndex].push(file);
-                currentFileIndex++;
-                
-                closeCropModal();
-                processNextImage();
-            });
-        }
-
-        function closeCropModal() {
-            document.getElementById('cropModal').classList.add('hidden');
+            
+            // Destroy existing croppie if any
             if (currentCroppie) {
-                currentCroppie.destroy();
+                try {
+                    currentCroppie.destroy();
+                } catch (error) {
+                    console.error('Error destroying existing croppie:', error);
+                }
                 currentCroppie = null;
+            }
+
+            // Initialize new croppie
+            try {
+                currentCroppie = new Croppie(container, {
+                    viewport: { width: 300, height: 300, type: 'square' },
+                    boundary: { width: 400, height: 400 },
+                    enableOrientation: true,
+                    enableResize: false,
+                    showZoomer: true,
+                    mouseWheelZoom: 'ctrl'
+                });
+
+                currentCroppie.bind({ 
+                    url: imageData 
+                }).catch(function(err) {
+                    console.error('Error binding image to croppie:', err);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Failed to load image for cropping',
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    closeCropModal();
+                });
+            } catch (error) {
+                console.error('Error initializing croppie:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to initialize image cropper',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+                closeCropModal();
             }
         }
 
+        // Crop Image
+        function cropImage() {
+            if (!currentCroppie) {
+                console.error('No croppie instance found');
+                return;
+            }
+
+            try {
+                currentCroppie.result({
+                    type: 'blob',
+                    size: { width: 800, height: 800 },
+                    format: 'jpeg',
+                    quality: 0.9
+                }).then(function(blob) {
+                    if (!blob) {
+                        console.error('Failed to get cropped image blob');
+                        return;
+                    }
+                    
+                    const fileName = `cropped_${currentVariantIndex}_${currentFileIndex}.jpg`;
+                    const file = new File([blob], fileName, { type: 'image/jpeg' });
+                    
+                    // Ensure croppedFiles array exists
+                    if (!croppedFiles[currentVariantIndex]) {
+                        croppedFiles[currentVariantIndex] = [];
+                    }
+                    
+                    croppedFiles[currentVariantIndex].push(file);
+                    currentFileIndex++;
+                    
+                    closeCropModal();
+                    
+                    // Process next image after a short delay
+                    setTimeout(() => {
+                        processNextImage();
+                    }, 100);
+                }).catch(function(error) {
+                    console.error('Error cropping image:', error);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Failed to crop image. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                });
+            } catch (error) {
+                console.error('Error in cropImage function:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to crop image. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+            }
+        }
+
+        // Close Crop Modal
+        function closeCropModal() {
+            const modal = document.getElementById('cropModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+            
+            if (currentCroppie) {
+                try {
+                    currentCroppie.destroy();
+                } catch (error) {
+                    console.error('Error destroying croppie:', error);
+                }
+                currentCroppie = null;
+            }
+            
+            // Clear container
+            const container = document.getElementById('cropContainer');
+            if (container) {
+                container.innerHTML = '';
+            }
+        }
+
+        // Update Image Preview
         function updateImagePreview() {
             const preview = document.getElementById(`imagePreview${currentVariantIndex}`);
             preview.innerHTML = '';
@@ -512,7 +737,7 @@
                         <button 
                             type="button" 
                             onclick="removeImage(${currentVariantIndex}, ${index})" 
-                            class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+                            class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100 transition flex items-center justify-center hover:bg-red-600"
                         >×</button>
                     `;
                     preview.appendChild(imgDiv);
@@ -521,148 +746,144 @@
             });
         }
 
+        // Remove Image
         function removeImage(variantIndex, imageIndex) {
             croppedFiles[variantIndex].splice(imageIndex, 1);
             currentVariantIndex = variantIndex;
             updateImagePreview();
         }
 
-        // Form submission handler
+        // Form Validation and Submission
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form');
+            const form = document.querySelector('#addProductForm');
             
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                // Validate that all variants have images and prices
-                const variantItems = document.querySelectorAll('.variant-item');
-                let hasError = false;
+                if (!validateForm()) return;
                 
-                variantItems.forEach(item => {
-                    const variantIndex = item.getAttribute('data-variant-index');
-                    const files = croppedFiles[variantIndex] || [];
-                    
-                    // Check images
-                    if (files.length === 0) {
-                        const variantTitle = item.querySelector('h3');
-                        const variantNumber = variantTitle ? variantTitle.textContent.split('#')[1] : 'Unknown';
-                        Swal.fire({
-                            title: 'Missing Images',
-                            text: `Variant #${variantNumber} needs at least one image!`,
-                            icon: 'error',
-                            confirmButtonColor: '#1f2937'
-                        });
-                        hasError = true;
-                        return;
-                    }
-                    
-                    // Check sale price <= regular price
-                    const regularPriceInput = item.querySelector(`input[name="variants[${variantIndex}][regularPrice]"]`);
-                    const salePriceInput = item.querySelector(`input[name="variants[${variantIndex}][salePrice]"]`);
-                    
-                    if (!regularPriceInput || !salePriceInput) {
-                        console.error('Price inputs not found for variant', variantIndex);
-                        return;
-                    }
-                    
-                    const regularPrice = parseFloat(regularPriceInput.value) || 0;
-                    const salePrice = parseFloat(salePriceInput.value) || 0;
-                    
-                    if (salePrice > regularPrice && regularPrice > 0) {
-                        const variantTitle = item.querySelector('h3');
-                        const variantNumber = variantTitle ? variantTitle.textContent.split('#')[1] : 'Unknown';
-                        Swal.fire({
-                            title: 'Invalid Price',
-                            text: `Variant #${variantNumber}: Sale price (₹${salePrice}) cannot be greater than regular price (₹${regularPrice})`,
-                            icon: 'error',
-                            confirmButtonColor: '#1f2937'
-                        });
-                        hasError = true;
-                        return;
-                    }
-                });
-                
-                if (hasError) return;
-                
-                const formData = new FormData(this);
-                
-                // Remove old file inputs
-                const oldInputs = this.querySelectorAll('.variant-images-input');
-                oldInputs.forEach(input => {
-                    const fieldName = input.getAttribute('name');
-                    if (fieldName) {
-                        formData.delete(fieldName);
-                    }
-                });
-
-                // Add cropped images to form data
-                for (const variantIndex in croppedFiles) {
-                    const files = croppedFiles[variantIndex];
-                    files.forEach(file => {
-                        formData.append(`variants[${variantIndex}][images]`, file);
-                    });
-                }
-
-                // Show loading state
-                const submitBtn = this.querySelector('#submitBtn');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-
-                // Submit form
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData
-                }).then(response => {
-                    if (response.ok) {
-                        window.location.href = '/admin/products';
-                    } else {
-                        return response.text().then(text => {
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = originalText;
-                            Swal.fire({
-                                title: 'Error',
-                                text: 'Failed to add product. Please try again.',
-                                icon: 'error',
-                                confirmButtonColor: '#1f2937'
-                            });
-                            console.error('Server response:', text);
-                        });
-                    }
-                }).catch(error => {
-                    console.error('Error:', error);
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                    Swal.fire({
-                        title: 'Error',
-                        text: 'An error occurred while submitting the form',
-                        icon: 'error',
-                        confirmButtonColor: '#1f2937'
-                    });
-                });
+                submitForm();
             });
         });
 
-        // Real-time price validation (clean version)
-        document.addEventListener('input', (e) => {
+        // Validate Form
+        function validateForm() {
+            const variantItems = document.querySelectorAll('.variant-item');
+            
+            for (let item of variantItems) {
+                const variantIndex = item.getAttribute('data-variant-index');
+                const files = croppedFiles[variantIndex] || [];
+                
+                // Check images
+                if (files.length === 0) {
+                    const variantNumber = item.querySelector('h3').textContent.split('#')[1];
+                    Swal.fire({
+                        title: 'Missing Images',
+                        text: `Variant #${variantNumber} needs at least one image!`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+                
+                // Check price validation
+                const regularPrice = parseFloat(item.querySelector('[data-regular]').value) || 0;
+                const salePrice = parseFloat(item.querySelector('[data-sale]').value) || 0;
+                
+                if (salePrice > regularPrice && regularPrice > 0) {
+                    const variantNumber = item.querySelector('h3').textContent.split('#')[1];
+                    Swal.fire({
+                        title: 'Invalid Price',
+                        text: `Variant #${variantNumber}: Sale price (₹${salePrice}) cannot be greater than regular price (₹${regularPrice})`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // Submit Form
+        function submitForm() {
+            const form = document.querySelector('#addProductForm');
+            const formData = new FormData(form);
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Remove old file inputs
+            const oldInputs = form.querySelectorAll('.variant-images-input');
+            oldInputs.forEach(input => {
+                const fieldName = input.getAttribute('name');
+                if (fieldName) formData.delete(fieldName);
+            });
+
+            // Add cropped images
+            for (const variantIndex in croppedFiles) {
+                const files = croppedFiles[variantIndex];
+                files.forEach(file => {
+                    formData.append(`variants[${variantIndex}][images]`, file);
+                });
+            }
+
+            // Show loading state
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+
+            // Submit form
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Product added successfully!',
+                        icon: 'success',
+                        confirmButtonColor: '#1f2937'
+                    }).then(() => {
+                        window.location.href = '/admin/products';
+                    });
+                } else {
+                    throw new Error('Server error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to add product. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+            });
+        }
+
+        // Real-time Price Validation
+        document.addEventListener('input', function(e) {
             const variant = e.target.closest('.variant-item');
             if (!variant) return;
             
-            const regular = parseFloat(variant.querySelector("[data-regular]")?.value) || 0;
-            const sale = parseFloat(variant.querySelector("[data-sale]")?.value) || 0;
-            const saleInput = variant.querySelector("[data-sale]");
-            const errorMsg = variant.querySelector(".price-error");
+            const regularInput = variant.querySelector('[data-regular]');
+            const saleInput = variant.querySelector('[data-sale]');
+            const errorMsg = variant.querySelector('.price-error');
             
-            if (!saleInput || !errorMsg) return;
+            if (!regularInput || !saleInput || !errorMsg) return;
+            
+            const regular = parseFloat(regularInput.value) || 0;
+            const sale = parseFloat(saleInput.value) || 0;
             
             if (sale > regular && regular > 0) {
-                saleInput.classList.add("border-red-500", "border-2");
+                saleInput.classList.add('border-red-500');
                 errorMsg.textContent = `Sale price cannot exceed ₹${regular}`;
-                errorMsg.classList.remove("hidden");
+                errorMsg.classList.remove('hidden');
             } else {
-                saleInput.classList.remove("border-red-500", "border-2");
-                errorMsg.classList.add("hidden");
-                errorMsg.textContent = "";
+                saleInput.classList.remove('border-red-500');
+                errorMsg.classList.add('hidden');
             }
         });
     </script>

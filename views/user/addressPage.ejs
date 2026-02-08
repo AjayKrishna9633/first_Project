@@ -36,23 +36,17 @@
                     <div>
                         <h2 class="text-2xl font-bold">Shipping Address</h2>
                         <p class="text-sm text-gray-400 mt-1">
-                            <% if (addresses && addresses.length > 0) { %>
-                                <%= addresses.length %> of 4 addresses used
+                            <% if (typeof totalAddresses !== 'undefined' && totalAddresses > 0) { %>
+                                <%= totalAddresses %> <%= totalAddresses === 1 ? 'address' : 'addresses' %> saved
                             <% } else { %>
-                                0 of 4 addresses used
+                                No addresses saved yet
                             <% } %>
                         </p>
                     </div>
-                    <% if (addresses && addresses.length >= 4) { %>
-                        <div class="text-gray-400 text-sm">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Maximum addresses reached
-                        </div>
-                    <% } else { %>
-                        <button onclick="openAddAddressModal()" class="px-6 py-2 bg-white text-black rounded-lg hover:bg-gray-200 transition font-medium">
-                            + Add New Address
-                        </button>
-                    <% } %>
+                    <button onclick="openAddAddressModal()" class="px-6 py-2 bg-white text-black rounded-lg hover:bg-gray-200 transition font-medium flex items-center gap-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Add New Address</span>
+                    </button>
                 </div>
 
                 <!-- Address Cards -->
@@ -128,6 +122,133 @@
                         </div>
                     <% } %>
                 </div>
+
+                <!-- Improved Pagination -->
+                <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                    <div class="mt-8 flex items-center justify-between border-t border-gray-800 pt-6">
+                        <!-- Mobile Pagination -->
+                        <div class="flex-1 flex justify-between sm:hidden">
+                            <% if (hasPrevPage) { %>
+                                <a href="?page=<%= currentPage - 1 %>" 
+                                   class="relative inline-flex items-center px-4 py-2 border border-gray-700 text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700">
+                                    <i class="fas fa-chevron-left mr-2"></i>
+                                    Previous
+                                </a>
+                            <% } else { %>
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-700 text-sm font-medium rounded-md text-gray-500 bg-gray-900 cursor-not-allowed">
+                                    <i class="fas fa-chevron-left mr-2"></i>
+                                    Previous
+                                </span>
+                            <% } %>
+                            
+                            <% if (hasNextPage) { %>
+                                <a href="?page=<%= currentPage + 1 %>" 
+                                   class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-700 text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700">
+                                    Next
+                                    <i class="fas fa-chevron-right ml-2"></i>
+                                </a>
+                            <% } else { %>
+                                <span class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-700 text-sm font-medium rounded-md text-gray-500 bg-gray-900 cursor-not-allowed">
+                                    Next
+                                    <i class="fas fa-chevron-right ml-2"></i>
+                                </span>
+                            <% } %>
+                        </div>
+                        
+                        <!-- Desktop Pagination -->
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400">
+                                    Showing 
+                                    <span class="font-medium text-white"><%= ((currentPage - 1) * 2) + 1 %></span>
+                                    to 
+                                    <span class="font-medium text-white"><%= Math.min(currentPage * 2, totalAddresses) %></span>
+                                    of 
+                                    <span class="font-medium text-white"><%= totalAddresses %></span>
+                                    addresses
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                    <!-- Previous Button -->
+                                    <% if (hasPrevPage) { %>
+                                        <a href="?page=<%= currentPage - 1 %>" 
+                                           class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-700 bg-gray-800 text-sm font-medium text-white hover:bg-gray-700">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    <% } else { %>
+                                        <span class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-700 bg-gray-900 text-sm font-medium text-gray-500 cursor-not-allowed">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </span>
+                                    <% } %>
+                                    
+                                    <!-- Page Numbers -->
+                                    <% 
+                                        let startPage = Math.max(1, currentPage - 2);
+                                        let endPage = Math.min(totalPages, currentPage + 2);
+                                        
+                                        // Adjust if we're near the start or end
+                                        if (currentPage <= 3) {
+                                            endPage = Math.min(5, totalPages);
+                                        }
+                                        if (currentPage >= totalPages - 2) {
+                                            startPage = Math.max(1, totalPages - 4);
+                                        }
+                                    %>
+                                    
+                                    <!-- First page if not in range -->
+                                    <% if (startPage > 1) { %>
+                                        <a href="?page=1" 
+                                           class="relative inline-flex items-center px-4 py-2 border border-gray-700 bg-gray-800 text-sm font-medium text-white hover:bg-gray-700">
+                                            1
+                                        </a>
+                                        <% if (startPage > 2) { %>
+                                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-700 bg-gray-900 text-sm font-medium text-gray-400">
+                                                ...
+                                            </span>
+                                        <% } %>
+                                    <% } %>
+                                    
+                                    <!-- Page number links -->
+                                    <% for (let i = startPage; i <= endPage; i++) { %>
+                                        <a href="?page=<%= i %>" 
+                                           class="relative inline-flex items-center px-4 py-2 border text-sm font-medium 
+                                                  <%= i === currentPage 
+                                                      ? 'z-10 bg-cyan-500 border-cyan-500 text-white' 
+                                                      : 'border-gray-700 bg-gray-800 text-white hover:bg-gray-700' %>">
+                                            <%= i %>
+                                        </a>
+                                    <% } %>
+                                    
+                                    <!-- Last page if not in range -->
+                                    <% if (endPage < totalPages) { %>
+                                        <% if (endPage < totalPages - 1) { %>
+                                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-700 bg-gray-900 text-sm font-medium text-gray-400">
+                                                ...
+                                            </span>
+                                        <% } %>
+                                        <a href="?page=<%= totalPages %>" 
+                                           class="relative inline-flex items-center px-4 py-2 border border-gray-700 bg-gray-800 text-sm font-medium text-white hover:bg-gray-700">
+                                            <%= totalPages %>
+                                        </a>
+                                    <% } %>
+                                    
+                                    <!-- Next Button -->
+                                    <% if (hasNextPage) { %>
+                                        <a href="?page=<%= currentPage + 1 %>" 
+                                           class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-700 bg-gray-800 text-sm font-medium text-white hover:bg-gray-700">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    <% } else { %>
+                                        <span class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-700 bg-gray-900 text-sm font-medium text-gray-500 cursor-not-allowed">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </span>
+                                    <% } %>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>
@@ -137,179 +258,171 @@
 
     <!-- Add Address Modal -->
     <div id="addAddressModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-800">
-        <div class="p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-2xl font-bold">Add New Address</h3>
-                <button onclick="closeAddAddressModal()" class="text-gray-400 hover:text-white">
-                    <i class="fas fa-times text-2xl"></i>
-                </button>
+        <div class="bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-800">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold">Add New Address</h3>
+                    <button onclick="closeAddAddressModal()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <form id="addAddressForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Address Type *</label>
+                        <select name="addressType" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                            <option value="">Select Type</option>
+                            <option value="Home">Home</option>
+                            <option value="Work">Work</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Full Name *</label>
+                        <input type="text" name="name" required 
+                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
+                            placeholder="Enter full name">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Street Address *</label>
+                        <textarea name="streetAddress" required rows="2"
+                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
+                            placeholder="House no, Building name, Street"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">City *</label>
+                            <input type="text" name="city" required 
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
+                                placeholder="City">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">State *</label>
+                            <input type="text" name="state" required 
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
+                                placeholder="State">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Pin Code *</label>
+                        <input type="text" name="pinCode" required pattern="\d{6}" maxlength="6"
+                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
+                            placeholder="6-digit pin code">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Phone Number *</label>
+                            <input type="text" name="phone" required pattern="\d{10}" maxlength="10"
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
+                                placeholder="10-digit number">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Alternate Phone</label>
+                            <input type="text" name="altPhone" pattern="\d{10}" maxlength="10"
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
+                                placeholder="Optional">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 pt-4">
+                        <button type="submit" 
+                            class="flex-1 px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition font-medium">
+                            Save Address
+                        </button>
+                        <button type="button" onclick="closeAddAddressModal()"
+                            class="flex-1 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition font-medium">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <form id="addAddressForm" class="space-y-4">
-                <!-- Address Type -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">Address Type *</label>
-                    <select name="addressType" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
-                        <option value="">Select Type</option>
-                        <option value="Home">Home</option>
-                        <option value="Work">Work</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-
-                <!-- Name -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">Full Name *</label>
-                    <input type="text" name="name" required 
-                        class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
-                        placeholder="Enter full name">
-                </div>
-
-                <!-- Street Address -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">Street Address *</label>
-                    <textarea name="streetAddress" required rows="2"
-                        class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
-                        placeholder="House no, Building name, Street"></textarea>
-                </div>
-
-                <!-- City and State -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">City *</label>
-                        <input type="text" name="city" required 
-                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
-                            placeholder="City">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">State *</label>
-                        <input type="text" name="state" required 
-                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
-                            placeholder="State">
-                    </div>
-                </div>
-
-                <!-- Pin Code -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">Pin Code *</label>
-                    <input type="text" name="pinCode" required pattern="\d{6}" maxlength="6"
-                        class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
-                        placeholder="6-digit pin code">
-                </div>
-
-                <!-- Phone Numbers -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Phone Number *</label>
-                        <input type="text" name="phone" required pattern="\d{10}" maxlength="10"
-                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
-                            placeholder="10-digit number">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Alternate Phone</label>
-                        <input type="text" name="altPhone" pattern="\d{10}" maxlength="10"
-                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
-                            placeholder="Optional">
-                    </div>
-                </div>
-
-                <!-- Buttons -->
-                <div class="flex gap-4 pt-4">
-                    <button type="submit" 
-                        class="flex-1 px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition font-medium">
-                        Save Address
-                    </button>
-                    <button type="button" onclick="closeAddAddressModal()"
-                        class="flex-1 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition font-medium">
-                        Cancel
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
-<!-- Edit Address Modal -->
-<div id="editAddressModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-800">
-        <div class="p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-2xl font-bold">Edit Address</h3>
-                <button onclick="closeEditAddressModal()" class="text-gray-400 hover:text-white">
-                    <i class="fas fa-times text-2xl"></i>
-                </button>
+
+    <!-- Edit Address Modal -->
+    <div id="editAddressModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-800">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold">Edit Address</h3>
+                    <button onclick="closeEditAddressModal()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <form id="editAddressForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Address Type *</label>
+                        <select name="addressType" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                            <option value="Home">Home</option>
+                            <option value="Work">Work</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Full Name *</label>
+                        <input type="text" name="name" required 
+                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Street Address *</label>
+                        <textarea name="streetAddress" required rows="2"
+                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">City *</label>
+                            <input type="text" name="city" required 
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">State *</label>
+                            <input type="text" name="state" required 
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Pin Code *</label>
+                        <input type="text" name="pinCode" required pattern="\d{6}" maxlength="6"
+                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Phone Number *</label>
+                            <input type="text" name="phone" required pattern="\d{10}" maxlength="10"
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Alternate Phone</label>
+                            <input type="text" name="altPhone" pattern="\d{10}" maxlength="10"
+                                class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 pt-4">
+                        <button type="submit" 
+                            class="flex-1 px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition font-medium">
+                            Update Address
+                        </button>
+                        <button type="button" onclick="closeEditAddressModal()"
+                            class="flex-1 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition font-medium">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <form id="editAddressForm" class="space-y-4">
-                <!-- Same fields as add modal -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">Address Type *</label>
-                    <select name="addressType" required class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
-                        <option value="Home">Home</option>
-                        <option value="Work">Work</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-2">Full Name *</label>
-                    <input type="text" name="name" required 
-                        class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-2">Street Address *</label>
-                    <textarea name="streetAddress" required rows="2"
-                        class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"></textarea>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">City *</label>
-                        <input type="text" name="city" required 
-                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">State *</label>
-                        <input type="text" name="state" required 
-                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-2">Pin Code *</label>
-                    <input type="text" name="pinCode" required pattern="\d{6}" maxlength="6"
-                        class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Phone Number *</label>
-                        <input type="text" name="phone" required pattern="\d{10}" maxlength="10"
-                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Alternate Phone</label>
-                        <input type="text" name="altPhone" pattern="\d{10}" maxlength="10"
-                            class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
-                    </div>
-                </div>
-
-                <div class="flex gap-4 pt-4">
-                    <button type="submit" 
-                        class="flex-1 px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition font-medium">
-                        Update Address
-                    </button>
-                    <button type="button" onclick="closeEditAddressModal()"
-                        class="flex-1 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition font-medium">
-                        Cancel
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
-
 
 <script>
     // Open add address modal

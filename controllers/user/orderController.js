@@ -2,7 +2,8 @@ import Order from '../../models/orderModel.js';
 import Product from '../../models/porductsModal.js';
 import InvoiceService from '../../config/invoiceService.js';
 import { ObjectId } from 'mongodb';
-import { StatusCodes } from 'http-status-codes'
+import { StatusCodes } from 'http-status-codes';
+import { formatNumber, formatCurrency, getFullNumber } from '../../utils/numberFormatter.js';
 
 const getUserOrders = async (req, res) => {
     try {
@@ -59,7 +60,10 @@ console.log('Search filter:', filter);
             limit,
             stats,
             filters: { status, search },
-            user: req.session.user
+            user: req.session.user,
+            formatNumber: formatNumber,
+            formatCurrency: formatCurrency,
+            getFullNumber: getFullNumber
         });
         
     } catch (error) {
@@ -104,7 +108,10 @@ const getOrderDetails = async (req, res) => {
         res.render('user/orderDetails', { 
             order,
             orderProgress, 
-            user: req.session.user
+            user: req.session.user,
+            formatNumber,
+            formatCurrency,
+            getFullNumber
         });
         
     } catch (error) {
