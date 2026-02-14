@@ -57,7 +57,7 @@ const getAddCategory = async (req, res) => {
 // Add new category
 const addCategory = async (req, res) => {
     try {
-        const { name, description } = req.body;
+        const { name, description, offerType, offerValue } = req.body;
 
         // Validation
         if (!name || !description) {
@@ -84,7 +84,9 @@ const addCategory = async (req, res) => {
         // Create new category
         const category = new Category({
             name: name.trim(),
-            description: description.trim()
+            description: description.trim(),
+            offerType: offerType || 'none',
+            offerValue: parseFloat(offerValue) || 0
         });
 
         await category.save();
@@ -127,8 +129,7 @@ const getEditCategory = async (req, res) => {
 const updateCategory = async (req, res) => {
     try {
         const categoryId = req.params.id;
-        console.log(req.body)
-        const { name, description } = req.body;
+        const { name, description, offerType, offerValue } = req.body;
 
         // Validation
         if (!name || !description) {
@@ -145,19 +146,18 @@ const updateCategory = async (req, res) => {
         });
 
         if (existingCategory) {
-            const category = await Category.findById(categoryId);
-            return res.json('admin/editCategory', {
-                category,
-                admin: req.session.admin,
-                message: 'Category name already exists',
-                isError: true
+            return res.json({
+                success: false,
+                message: 'Category name already exists'
             });
         }
 
         // Update category
         await Category.findByIdAndUpdate(categoryId, {
             name: name.trim(),
-            description: description.trim()
+            description: description.trim(),
+            offerType: offerType || 'none',
+            offerValue: parseFloat(offerValue) || 0
         });
 
         res.json({
@@ -167,7 +167,10 @@ const updateCategory = async (req, res) => {
 
     } catch (error) {
         console.log('Error in updateCategory:', error);
-        res.redirect('/admin/categories');
+        res.json({
+            success: false,
+            message: 'Failed to update category'
+        });
     }
 };
 
@@ -187,9 +190,6 @@ const toggleListCategory = async (req, res) => {
         category.isListed = !category.isListed;
         await category.save();
 
-        if(!category.isListed){
-            const productId = await product.f
-        }
         res.json({
             success: true,
             isListed: category.isListed,
@@ -205,32 +205,11 @@ const toggleListCategory = async (req, res) => {
     }
 };
 
-// Delete category
-// const deleteCategory = async (req, res) => {
-//     try {
-//         const categoryId = req.params.id;
-//         await Category.findByIdAndDelete(categoryId);
-
-//         res.json({
-//             success: true,
-//             message: 'Category deleted successfully'
-//         });
-
-//     } catch (error) {
-//         console.log('Error in deleteCategory:', error);
-//         res.json({
-//             success: false,
-//             message: 'Failed to delete category'
-//         });
-//     }
-// };
-
 export default {
     getCategories,
     getAddCategory,
     addCategory,
     getEditCategory,
     updateCategory,
-    toggleListCategory,
-    // deleteCategory
+    toggleListCategory
 };

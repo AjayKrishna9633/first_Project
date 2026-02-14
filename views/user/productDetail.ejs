@@ -153,14 +153,39 @@
 
                 <!-- Price -->
                 <div class="mb-6">
-                    <p id="productPrice" class="text-3xl md:text-4xl font-bold">
-                        ₹<%= product.variants && product.variants.length > 0 ? product.variants[0].salePrice.toLocaleString() : '0' %>
-                    </p>
-                    <p id="productRegularPrice" class="text-gray-400 line-through text-lg">
-                        <% if (product.variants && product.variants.length > 0 && product.variants[0].regularPrice > product.variants[0].salePrice) { %>
-                            ₹<%= product.variants[0].regularPrice.toLocaleString() %>
+                    <% 
+                        let hasDiscount = false;
+                        let displayPrice = 0;
+                        let originalPrice = 0;
+                        let discountPercentage = 0;
+                        let appliedOffer = null;
+
+                        if (product.variants && product.variants.length > 0) {
+                            const firstVariant = product.variants[0];
+                            displayPrice = firstVariant.finalPrice || firstVariant.salePrice;
+                            originalPrice = firstVariant.regularPrice;
+                            hasDiscount = firstVariant.discountAmount > 0;
+                            discountPercentage = firstVariant.discountPercentage || 0;
+                            appliedOffer = firstVariant.appliedOffer;
+                        }
+                    %>
+
+                    <div class="flex items-center gap-3">
+                        <p id="productPrice" class="text-3xl md:text-4xl font-bold <%= hasDiscount ? 'text-red-400' : '' %>">
+                            ₹<%= displayPrice.toLocaleString() %>
+                        </p>
+                        <% if (hasDiscount) { %>
+                            <p id="productRegularPrice" class="text-gray-400 line-through text-lg">
+                                ₹<%= originalPrice.toLocaleString() %>
+                            </p>
+                            <span id="discountBadge" class="px-3 py-1 rounded-full text-sm font-semibold <%= appliedOffer === 'category' ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400' %>">
+                                <%= discountPercentage.toFixed(2) %>% OFF
+                            </span>
+                        <% } else { %>
+                            <p id="productRegularPrice" class="text-gray-400 line-through text-lg" style="display: none;"></p>
+                            <span id="discountBadge" style="display: none;"></span>
                         <% } %>
-                    </p>
+                    </div>
                 </div>
 
                 <!-- Stock Status -->
@@ -190,14 +215,20 @@
                             Color: <span id="selectedColorName" class="text-gray-400"><%= product.variants[0].color %></span>
                         </label>
                         <div class="flex flex-wrap gap-3">
-                            <% product.variants.forEach((variant, index) => { %>
+                            <% product.variants.forEach((variant, index) => { 
+                                const vDisplayPrice = variant.discountedPrice !== undefined ? variant.discountedPrice : variant.salePrice;
+                                const vOriginalPrice = variant.originalPrice !== undefined ? variant.originalPrice : variant.salePrice;
+                                const vHasDiscount = vDisplayPrice < vOriginalPrice;
+                            %>
                                 <button 
                                     type="button"
                                     class="color-option px-6 py-3 border-2 rounded-lg transition <%= index === 0 ? 'border-white bg-gray-900' : 'border-gray-700 hover:border-gray-500' %>"
                                     data-variant-id="<%= variant._id %>"
                                     data-color="<%= variant.color %>"
-                                    data-price="<%= variant.salePrice %>"
-                                    data-regular-price="<%= variant.regularPrice %>"
+                                    data-price="<%= vDisplayPrice %>"
+                                    data-original-price="<%= vOriginalPrice %>"
+                                    data-has-discount="<%= vHasDiscount %>"
+                                    data-offer-info='<%= variant.appliedOffer ? JSON.stringify(variant.appliedOffer) : "null" %>'
                                     data-quantity="<%= variant.quantity %>"
                                     data-images='<%= JSON.stringify(variant.images) %>'
                                     onclick="selectVariant(this)">
@@ -338,13 +369,41 @@
             
             // Update price
             const price = parseFloat(button.dataset.price);
-            const regularPrice = parseFloat(button.dataset.regularPrice);
-            document.getElementById('productPrice').textContent = '₹' + price.toLocaleString();
+            const originalPrice = parseFloat(button.dataset.originalPrice);
+            const hasDiscount = button.dataset.hasDiscount === 'true';
+            const offerInfo = JSON.parse(button.dataset.offerInfo);
+
+            const priceElement = document.getElementById('productPrice');
+            const regularPriceElement = document.getElementById('productRegularPrice');
             
-            if (regularPrice > price) {
-                document.getElementById('productRegularPrice').innerHTML = '₹' + regularPrice.toLocaleString();
+            priceElement.textContent = '₹' + price.toLocaleString();
+            
+            // Handle Price Styling and Regular Price Display
+            if (hasDiscount) {
+                priceElement.classList.add('text-red-400');
+                regularPriceElement.style.display = 'block';
+                regularPriceElement.textContent = '₹' + originalPrice.toLocaleString();
+                
+                // Update Offer Badge
+                let badge = document.querySelector('.bg-green-100'); // Check if badge exists
+                if (!badge && offerInfo) {
+                    // Create badge if not exists
+                    badge = document.createElement('span');
+                    badge.className = 'bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300 ml-2';
+                    priceElement.parentNode.appendChild(badge); // Append to the flex container
+                }
+                
+                if (badge && offerInfo) {
+                    badge.textContent = (offerInfo.type === 'percentage' ? Math.round(offerInfo.value) + '% OFF' : '₹' + offerInfo.value + ' OFF') + ` (${offerInfo.name})`;
+                    badge.style.display = 'inline-block';
+                }
             } else {
-                document.getElementById('productRegularPrice').innerHTML = '';
+                priceElement.classList.remove('text-red-400');
+                regularPriceElement.style.display = 'none';
+                
+                // Hide badge
+                const badge = document.querySelector('.bg-green-100');
+                if (badge) badge.style.display = 'none';
             }
             
             // Update stock status

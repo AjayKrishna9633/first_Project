@@ -5,6 +5,9 @@ import { isAdminAuthenticated ,isAdminNotAuthenticated } from "../middlewares/au
 import adminCtrl from '../controllers/admin/adminController.js'
 import { upload } from "../config/cloudinary.js";
 import orderCtrl from '../controllers/admin/orderController.js';
+import salesReportCtrl from "../controllers/admin/salesReportController.js";
+import couponCtrl from "../controllers/admin/couponController.js";
+
 const router = Router();
 
 //login routes
@@ -61,6 +64,21 @@ router.patch('/returns/update', isAdminAuthenticated, orderCtrl.updateReturnStat
 
 //logout route
 router.get('/logout', isAdminAuthenticated, adminCtrl.logout)
+
+// Coupon Management Routes
+
+router.get('/coupons', isAdminAuthenticated, couponCtrl.getCoupons);
+router.post('/coupons/add', isAdminAuthenticated, couponCtrl.createCoupon);
+router.get('/coupons/:id', isAdminAuthenticated, couponCtrl.getCouponById);
+router.put('/coupons/update/:id', isAdminAuthenticated, couponCtrl.updateCoupon);
+router.patch('/coupons/toggle-status/:id', isAdminAuthenticated, couponCtrl.toggleCouponStatus);
+router.delete('/coupons/delete/:id', isAdminAuthenticated, couponCtrl.deleteCoupon);
+
+// Sales Report Routes
+
+router.get('/sales-report', isAdminAuthenticated, salesReportCtrl.getSalesReport);
+router.get('/sales-report/pdf', isAdminAuthenticated, salesReportCtrl.downloadPDF);
+router.get('/sales-report/excel', isAdminAuthenticated, salesReportCtrl.downloadExcel);
 
 export default router;
 

@@ -67,6 +67,40 @@
 
     <!-- Cart Content -->
     <div class="max-w-7xl mx-auto py-12 px-6">
+        <!-- Stock Validation Error Alert -->
+        <% if (typeof stockValidationError !== 'undefined' && stockValidationError) { %>
+            <div class="mb-6 bg-red-900 border border-red-700 rounded-lg p-6">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1"></i>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-semibold text-white mb-2">Cannot Proceed to Checkout</h3>
+                        <p class="text-red-200 mb-4"><%= stockValidationError.message %></p>
+                        
+                        <div class="space-y-3">
+                            <p class="text-sm text-red-200 font-semibold">Items with stock issues:</p>
+                            <% stockValidationError.issues.forEach(issue => { %>
+                                <div class="bg-red-800 bg-opacity-50 rounded-lg p-4 border border-red-600">
+                                    <p class="font-semibold text-white"><%= issue.productName %></p>
+                                    <% if (issue.color) { %>
+                                        <p class="text-sm text-red-200">Color: <%= issue.color %></p>
+                                    <% } %>
+                                    <p class="text-sm text-red-200 mt-1">
+                                        Your cart: <span class="font-semibold"><%= issue.cartQuantity %></span> | 
+                                        Available: <span class="font-semibold"><%= issue.availableQuantity %></span>
+                                    </p>
+                                </div>
+                            <% }); %>
+                        </div>
+                        
+                        <p class="text-sm text-red-200 mt-4">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Please update the quantities below before proceeding to checkout.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+
         <% if (cart && cart.items.length > 0) { %>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Cart Items -->
@@ -308,16 +342,13 @@
             }
             
             if (newQuantity > 3) {
-         
-                    Swal.fire({
+                Swal.fire({
                     title: 'Limit Exceeded',
                     text: 'Maximum 3 units allowed per product',
                     icon: 'warning',
                     confirmButtonColor: '#1f2937'
                 });
-                newQuantity = 3;
                 return;
-              
             }
 
             try {
@@ -345,9 +376,43 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    // Check if there's a warning (stock limitation)
+                    if (result.warning && result.availableQuantity) {
+                        await Swal.fire({
+                            title: 'Stock Limited',
+                            html: `
+                                <p class="mb-2">${result.message}</p>
+                                <p class="text-sm text-gray-600">Please adjust quantity to ${result.availableQuantity} before checkout.</p>
+                            `,
+                            icon: 'warning',
+                            confirmButtonColor: '#1f2937',
+                            confirmButtonText: 'OK'
+                        });
+                    }
                     location.reload();
                 } else {
-                    Swal.fire('Error', result.message, 'error');
+                    // Show error with available quantity if provided
+                    if (result.availableQuantity !== undefined) {
+                        await Swal.fire({
+                            title: 'Stock Limitation',
+                            html: `
+                                <p class="mb-2">${result.message}</p>
+                                <p class="text-sm text-gray-600 mt-2">Would you like to update to ${result.availableQuantity} items?</p>
+                            `,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#1f2937',
+                            cancelButtonColor: '#6b7280',
+                            confirmButtonText: `Update to ${result.availableQuantity}`,
+                            cancelButtonText: 'Cancel'
+                        }).then((confirmResult) => {
+                            if (confirmResult.isConfirmed) {
+                                updateQuantity(itemId, result.availableQuantity);
+                            }
+                        });
+                    } else {
+                        Swal.fire('Error', result.message, 'error');
+                    }
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -358,8 +423,7 @@
 
         // Proceed to checkout
         function proceedToCheckout() {
-    window.location.href = '/checkout';
-
+            window.location.href = '/checkout';
         }
     </script>
 </body>

@@ -127,6 +127,19 @@
         </div>
 
         <!-- Submit -->
+        <!-- Referral Code -->
+        <div>
+          <input 
+            type="text" 
+            id="referralCode"
+            name="referralCode"
+            placeholder="Referral Code (Optional)" 
+            class="w-full bg-transparent border border-gray-600 rounded px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-400 transition"
+            value="<%= oldInput && oldInput.referralCode ? oldInput.referralCode : '' %>"
+            >
+        </div>
+
+        <!-- Submit -->
         <button 
         
           id="submit"

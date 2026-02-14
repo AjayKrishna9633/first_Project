@@ -242,10 +242,63 @@ const deleteAddress = async(req, res) => {
     }
 };
 
+const setDefaultAddress = async(req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const addressId = req.params.id;
+
+        // Find the user's address document
+        const userAddresses = await Address.findOne({ userId });
+        
+        if (!userAddresses) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: 'No addresses found'
+            });
+        }
+
+        // Check if the address exists
+        const addressExists = userAddresses.address.some(addr => addr._id.toString() === addressId);
+        
+        if (!addressExists) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: 'Address not found'
+            });
+        }
+
+        // Set all addresses to non-default
+        userAddresses.address.forEach(addr => {
+            addr.isDefault = false;
+        });
+
+        // Set the selected address as default
+        const selectedAddress = userAddresses.address.find(addr => addr._id.toString() === addressId);
+        if (selectedAddress) {
+            selectedAddress.isDefault = true;
+        }
+
+        await userAddresses.save();
+
+        res.status(StatusCodes.OK).json({
+            success: true,
+            message: 'Default address updated successfully'
+        });
+
+    } catch(error) {
+        console.error('Set default address error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to set default address'
+        });
+    }
+};
+
 export default { 
     AddressPage,
     addAddress,
     getEditAddress,
     updateAddress,
-    deleteAddress
+    deleteAddress,
+    setDefaultAddress
 };

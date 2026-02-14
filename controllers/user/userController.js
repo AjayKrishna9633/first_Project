@@ -192,14 +192,14 @@ export const getSignup = (req, res) => {
 
 export const registerUser = async (req, res) => {
     try {
-        const { name, password, confirmPassword, email } = req.body;
+        const { name, password, confirmPassword, email, referralCode } = req.body;
 
         // Enhanced validation
         if (!name || !email || !password || !confirmPassword) {
             return res.render('user/signup', {
                 message: 'All fields are required.',
                 isError: true,
-                oldInput: { name, email }
+                oldInput: { name, email, referralCode }
             });
         }
 
@@ -207,7 +207,7 @@ export const registerUser = async (req, res) => {
             return res.render('user/signup', {
                 message: 'Name must be at least 3 characters long.',
                 isError: true,
-                oldInput: { name, email }
+                oldInput: { name, email, referralCode }
             });
         }
 
@@ -217,7 +217,7 @@ export const registerUser = async (req, res) => {
             return res.render('user/signup', {
                 message: 'Please enter a valid email address.',
                 isError: true,
-                oldInput: { name, email }
+                oldInput: { name, email, referralCode }
             });
         }
 
@@ -225,7 +225,7 @@ export const registerUser = async (req, res) => {
             return res.render('user/signup', {
                 message: 'Password must be at least 8 characters long.',
                 isError: true,
-                oldInput: { name, email }
+                oldInput: { name, email, referralCode }
             });
         }
         
@@ -234,7 +234,7 @@ export const registerUser = async (req, res) => {
             return res.render('user/signup', {
                 message: 'Passwords do not match.',
                 isError: true,
-                oldInput: { name, email }
+                oldInput: { name, email, referralCode }
             });
         }
 
@@ -247,13 +247,25 @@ export const registerUser = async (req, res) => {
             return res.render("user/signup", {
                 message: "An account with this email already exists.",
                 isError: true,
-                oldInput: { name, email }
+                oldInput: { name, email, referralCode }
             });
+        }
+
+        // Validate Referral Code if provided
+        if (referralCode) {
+            const validReferrer = await User.findOne({ referralCode: referralCode });
+            if (!validReferrer) {
+                return res.render("user/signup", {
+                    message: "Invalid Referral Code.",
+                    isError: true,
+                    oldInput: { name, email, referralCode }
+                });
+            }
         }
 
         // Generate OTP
         const otp = generateOtp();
-        const otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+        const otpExpires = Date.now() + 5 * 60 * 1000; 
 
         // Send OTP email
         const emailSent = await sendEmailVerification(normalizedEmail, otp);
@@ -262,7 +274,7 @@ export const registerUser = async (req, res) => {
             return res.render("user/signup", {
                 message: "Failed to send verification email. Please try again.",
                 isError: true,
-                oldInput: { name, email }
+                oldInput: { name, email, referralCode }
             });
         }
 
@@ -279,7 +291,8 @@ export const registerUser = async (req, res) => {
         req.session.userData = {
             fullName: name.trim(),
             email: normalizedEmail,
-            password: hashedPassword
+            password: hashedPassword,
+            referralCode: referralCode || null
         };
 
         // Save session and redirect
@@ -322,6 +335,10 @@ export const getOtp = (req, res) => {
         otpExpires: req.session.userOtp.expires
     });
 };
+
+
+import Offer from "../../models/OfferModel.js";
+import WalletTransaction from "../../models/WalletTransaction.js";
 
 export const verifyOtp = async (req, res) => {
     try {
@@ -368,7 +385,7 @@ export const verifyOtp = async (req, res) => {
             });
         }
 
-        const { fullName, email, password } = req.session.userData;
+        const { fullName, email, password, referralCode } = req.session.userData;
 
        
         const existingUser = await User.findOne({ email });
@@ -386,11 +403,76 @@ export const verifyOtp = async (req, res) => {
             fullName: fullName.trim(),
             email: email.trim(),
             password,
-            isBlocked: false
+            isBlocked: false,
+            referralCode: 'REF' + Math.random().toString(36).substring(2, 8).toUpperCase() // Generate unique referral code
         };
+
+        // Handle Referral Logic
+        let referrer = null;
+        let referralReward = 0;
+
+        // Check for active referral offer
+        const activeReferralOffer = await Offer.findOne({
+            targetType: 'referral',
+            startDate: { $lte: new Date() },
+            endDate: { $gte: new Date() },
+            isActive: true
+        });
+
+        if (activeReferralOffer) {
+            referralReward = activeReferralOffer.value;
+        }
+
+        if (referralCode) {
+            referrer = await User.findOne({ referralCode: referralCode });
+            if (referrer) {
+                userData.referredBy = referralCode;
+                
+                // Credit Referrer
+                if (referralReward > 0) {
+                    referrer.Wallet += referralReward;
+                    referrer.referralEarnings += referralReward;
+                    await referrer.save();
+
+                    // Log transaction for referrer
+                    await WalletTransaction.create({
+                        userId: referrer._id,
+                        amount: referralReward,
+                        type: 'credit',
+                        balance: referrer.Wallet,
+                        paymentMethod: 'wallet',
+                        status: 'success',
+                        description: `Referral Bonus for referring ${userData.email}`
+                    });
+                }
+            }
+        }
+
+        // Credit New User (Signup Bonus via Referral)
+        // Usually, new user also gets a bonus if they use a code, or just for signing up?
+        // Let's assume the offer applies to both for now, or just referrer?
+        // "Referral Logic" often implies benefit for both.
+        // Let's give the new user the same reward if they used a code.
+        if (referrer && referralReward > 0) {
+            userData.Wallet = referralReward;
+            // Transaction will be created after saving user
+        }
 
         const user = new User(userData);
         const savedUser = await user.save();
+
+        if (referrer && referralReward > 0) {
+             // Log transaction for new user
+             await WalletTransaction.create({
+                userId: savedUser._id,
+                amount: referralReward,
+                type: 'credit',
+                balance: savedUser.Wallet,
+                paymentMethod: 'wallet',
+                status: 'success',
+                description: `Signup Bonus using referral code ${referralCode}`
+            });
+        }
 
         
         req.session.user = {
@@ -1032,7 +1114,7 @@ const verifyEmailChange = async(req,res)=>{
 
         await userData.save();
 
-// await User.findByIdAndUpdate(userId, {  // ✅ One line!
+// await User.findByIdAndUpdate(userId, {  
 //     email: newEmail.toLowerCase()
 // });
 

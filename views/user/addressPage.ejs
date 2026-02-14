@@ -53,12 +53,20 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <% if (addresses && addresses.length > 0) { %>
                         <% addresses.forEach(address => { %>
-                            <div class="bg-gray-900 rounded-lg p-6 border border-gray-800">
-                                <% if (address.addressType) { %>
-                                    <div class="inline-block px-3 py-1 bg-cyan-400 text-black text-xs font-semibold rounded-full mb-4">
-                                        <%= address.addressType %>
-                                    </div>
-                                <% } %>
+                            <div class="bg-gray-900 rounded-lg p-6 border <%= address.isDefault ? 'border-cyan-400' : 'border-gray-800' %>">
+                                <div class="flex items-center justify-between mb-4">
+                                    <% if (address.addressType) { %>
+                                        <div class="inline-block px-3 py-1 bg-cyan-400 text-black text-xs font-semibold rounded-full">
+                                            <%= address.addressType %>
+                                        </div>
+                                    <% } %>
+                                    <% if (address.isDefault) { %>
+                                        <div class="inline-block px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
+                                            <i class="fas fa-check-circle mr-1"></i>
+                                            Default
+                                        </div>
+                                    <% } %>
+                                </div>
                                 
                                 <div class="space-y-3 text-gray-300">
                                     <% if (address.name) { %>
@@ -102,13 +110,22 @@
                                     <% } %>
                                 </div>
 
-                                <div class="flex gap-3 mt-6 pt-6 border-t border-gray-800">
-                                    <button onclick="editAddress('<%= address._id %>')" class="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition">
-                                        Edit Address
-                                    </button>
-                                    <button onclick="deleteAddress('<%= address._id %>')" class="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-red-900 transition">
-                                        Delete Address
-                                    </button>
+                                <div class="flex flex-col gap-3 mt-6 pt-6 border-t border-gray-800">
+                                    <% if (!address.isDefault) { %>
+                                        <button onclick="setDefaultAddress('<%= address._id %>')" 
+                                                class="w-full px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition flex items-center justify-center gap-2">
+                                            <i class="fas fa-star"></i>
+                                            Set as Default
+                                        </button>
+                                    <% } %>
+                                    <div class="flex gap-3">
+                                        <button onclick="editAddress('<%= address._id %>')" class="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition">
+                                            Edit Address
+                                        </button>
+                                        <button onclick="deleteAddress('<%= address._id %>')" class="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-red-900 transition">
+                                            Delete Address
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         <% }); %>
@@ -529,6 +546,45 @@
                     confirmButtonColor: '#ef4444'
                 });
             }
+        }
+    }
+
+    // Set default address
+    async function setDefaultAddress(addressId) {
+        try {
+            const response = await fetch(`/address/set-default/${addressId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Default Address Set!',
+                    text: data.message,
+                    confirmButtonColor: '#10b981',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                location.reload();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message,
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to set default address',
+                confirmButtonColor: '#ef4444'
+            });
         }
     }
 

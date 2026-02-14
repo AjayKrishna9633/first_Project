@@ -60,8 +60,25 @@ const orderSchema = new Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['cod', 'card', 'upi', 'netbanking'],
+        enum: ['cod', 'online', 'wallet'],
         required: true
+    },
+    razorpayOrderId: {
+        type: String
+    },
+    razorpayPaymentId: {
+        type: String
+    },
+    couponCode: {
+        type: String
+    },
+    couponDiscount: {
+        type: Number,
+        default: 0
+    },
+    walletAmountUsed: {
+        type: Number,
+        default: 0
     },
     paymentStatus: {
         type: String,

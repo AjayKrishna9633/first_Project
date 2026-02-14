@@ -249,10 +249,21 @@
     <!-- Price -->
     <div>
         <% if (product.variants && product.variants.length > 0) { %>
-            <% if (minPrice === maxPrice) { %>
-                <p class="text-lg font-bold <%= !productHasStock ? 'text-gray-500' : '' %>">₹<%= minPrice.toLocaleString() %></p>
+            <% 
+                const firstVariant = product.variants[0];
+                const hasDiscount = firstVariant.discountAmount > 0;
+            %>
+            
+            <% if (hasDiscount) { %>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <p class="text-lg font-bold text-red-400">₹<%= firstVariant.finalPrice.toLocaleString() %></p>
+                    <p class="text-xs text-gray-500 line-through">₹<%= firstVariant.regularPrice.toLocaleString() %></p>
+                    <span class="text-xs px-2 py-0.5 rounded-full <%= firstVariant.appliedOffer === 'category' ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400' %> font-medium">
+                        <%= firstVariant.discountPercentage.toFixed(2) %>% OFF
+                    </span>
+                </div>
             <% } else { %>
-                <p class="text-base font-bold <%= !productHasStock ? 'text-gray-500' : '' %>">₹<%= minPrice.toLocaleString() %> - ₹<%= maxPrice.toLocaleString() %></p>
+                <p class="text-lg font-bold <%= !productHasStock ? 'text-gray-500' : '' %>">₹<%= firstVariant.finalPrice.toLocaleString() %></p>
             <% } %>
         <% } else { %>
             <p class="text-lg font-bold <%= !productHasStock ? 'text-gray-500' : '' %>">₹<%= (product.salePrice || product.regularPrice || 0).toLocaleString() %></p>

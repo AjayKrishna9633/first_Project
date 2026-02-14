@@ -73,6 +73,7 @@
                             <tr>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Category Name</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Description</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Offer</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Created</th>
                                 <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
@@ -81,7 +82,7 @@
                         <tbody class="divide-y divide-gray-200 bg-white">
                             <% if (categories.length === 0) { %>
                                 <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center">
+                                    <td colspan="6" class="px-6 py-12 text-center">
                                         <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                                         </svg>
@@ -105,6 +106,22 @@
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-600">
                                             <%= category.description ? (category.description.length > 60 ? category.description.substring(0, 60) + '...' : category.description) : 'No description' %>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <% if (category.offerType && category.offerType !== 'none' && category.offerValue > 0) { %>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700 flex items-center gap-1">
+                                                        <i class="fas fa-tag"></i>
+                                                        <% if (category.offerType === 'percentage') { %>
+                                                            <%= category.offerValue %>% OFF
+                                                        <% } else if (category.offerType === 'flat') { %>
+                                                            ₹<%= category.offerValue %> OFF
+                                                        <% } %>
+                                                    </span>
+                                                </div>
+                                            <% } else { %>
+                                                <span class="text-xs text-gray-400">No offer</span>
+                                            <% } %>
                                         </td>
                                         <td class="px-6 py-4">
                                             <span class="px-2.5 py-1 text-xs font-medium rounded-full <%= category.isListed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' %>">

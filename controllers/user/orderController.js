@@ -1,9 +1,15 @@
 import Order from '../../models/orderModel.js';
 import Product from '../../models/porductsModal.js';
+import User from '../../models/userModal.js';
+import WalletTransaction from '../../models/WalletTransaction.js';
 import InvoiceService from '../../config/invoiceService.js';
 import { ObjectId } from 'mongodb';
 import { StatusCodes } from 'http-status-codes';
 import { formatNumber, formatCurrency, getFullNumber } from '../../utils/numberFormatter.js';
+import razorpayInstance from '../../config/razorpay.js';
+import crypto from 'crypto';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const getUserOrders = async (req, res) => {
     try {
@@ -120,7 +126,7 @@ const getOrderDetails = async (req, res) => {
     }
 };
 
-const cancelOrder = async (req, res) => {
+    const cancelOrder = async (req, res) => {
     try {
         const userId = req.session.user.id;
         const { id } = req.params;
@@ -146,6 +152,40 @@ const cancelOrder = async (req, res) => {
         order.cancelledAt = new Date();
         order.updatedAt = new Date();
         
+        // Handle Refund for Prepaid Orders
+        let refundAmount = 0;
+        
+        // Check if order was paid online (not COD)
+        if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
+            refundAmount += order.totalAmount;
+        }
+        
+        // Add wallet amount used
+        if (order.walletAmountUsed > 0) {
+            refundAmount += order.walletAmountUsed;
+        }
+        
+        // Process refund if there's an amount to refund
+        if (refundAmount > 0) {
+            const user = await User.findById(userId);
+            user.Wallet += refundAmount;
+            await user.save();
+            
+            await WalletTransaction.create({
+                userId,
+                amount: refundAmount,
+                type: 'credit',
+                balance: user.Wallet,
+                paymentMethod: 'refund',
+                status: 'success',
+                description: `Refund for cancelled order #${order.orderNumber}`,
+                orderId: order._id
+            });
+            
+            order.refundAmount = refundAmount;
+            order.refundStatus = 'processed';
+        }
+
         await order.save();
         
         // Restore product stock
@@ -475,6 +515,9 @@ const cancelOrderItem = async (req, res) => {
         order.items[itemIndex].cancelledAt = new Date();
         order.items[itemIndex].cancelledBy = 'user';
         
+        // Calculate refund amount for this item
+        const itemRefundAmount = item.totalPrice;
+        
         // Recalculate order totals
         const activeItems = order.items.filter(item => item.status === 'active');
         
@@ -483,10 +526,70 @@ const cancelOrderItem = async (req, res) => {
             order.orderStatus = 'cancelled';
             order.cancellationReason = 'All items cancelled';
             order.cancelledAt = new Date();
+            
+            // Refund entire order amount
+            let totalRefund = 0;
+            
+            if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
+                totalRefund += order.totalAmount;
+            }
+            
+            if (order.walletAmountUsed > 0) {
+                totalRefund += order.walletAmountUsed;
+            }
+            
+            if (totalRefund > 0) {
+                const user = await User.findById(userId);
+                user.Wallet += totalRefund;
+                await user.save();
+                
+                await WalletTransaction.create({
+                    userId,
+                    amount: totalRefund,
+                    type: 'credit',
+                    balance: user.Wallet,
+                    paymentMethod: 'refund',
+                    status: 'success',
+                    description: `Refund for cancelled order #${order.orderNumber}`,
+                    orderId: order._id
+                });
+                
+                order.refundAmount = totalRefund;
+                order.refundStatus = 'processed';
+            }
         } else {
-            // Recalculate totals based on active items
+            // Partial cancellation - recalculate totals and refund item amount
+            const oldSubtotal = order.subtotal;
             order.subtotal = activeItems.reduce((sum, item) => sum + item.totalPrice, 0);
-            order.totalAmount = order.subtotal + (order.shippingCost || 0) + (order.tax || 0);
+            
+            // Recalculate discount proportionally
+            let newDiscount = 0;
+            if (order.couponDiscount > 0) {
+                newDiscount = Math.round((order.couponDiscount / oldSubtotal) * order.subtotal);
+            }
+            
+            order.totalAmount = order.subtotal - newDiscount + (order.shippingCost || 0) + (order.tax || 0);
+            
+            // Refund the item amount if order was prepaid
+            if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
+                const user = await User.findById(userId);
+                user.Wallet += itemRefundAmount;
+                await user.save();
+                
+                await WalletTransaction.create({
+                    userId,
+                    amount: itemRefundAmount,
+                    type: 'credit',
+                    balance: user.Wallet,
+                    paymentMethod: 'refund',
+                    status: 'success',
+                    description: `Refund for cancelled item in order #${order.orderNumber}`,
+                    orderId: order._id
+                });
+                
+                order.refundAmount = (order.refundAmount || 0) + itemRefundAmount;
+                order.refundStatus = 'processed';
+            }
         }
         
         order.updatedAt = new Date();
@@ -517,6 +620,131 @@ const cancelOrderItem = async (req, res) => {
 
 
 
+// Pay COD Order Online
+const payCODOrder = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { id } = req.params;
+        
+        const order = await Order.findOne({ _id: id, userId });
+        
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+        
+        // Check if order is COD and not delivered
+        if (order.paymentMethod !== 'cod') {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'This order is not a Cash on Delivery order'
+            });
+        }
+        
+        if (['delivered', 'cancelled', 'returned'].includes(order.orderStatus)) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Cannot pay for this order at this stage'
+            });
+        }
+        
+        if (order.paymentStatus === 'paid') {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Order is already paid'
+            });
+        }
+        
+        // Create Razorpay order
+        const instance = razorpayInstance;
+        
+        const timestamp = Date.now().toString().slice(-8);
+        const orderIdShort = order._id.toString().slice(-8);
+        const receipt = `COD${orderIdShort}${timestamp}`;
+        
+        const options = {
+            amount: Math.round(order.totalAmount) * 100,
+            currency: "INR",
+            receipt: receipt
+        };
+        
+        const razorpayOrder = await instance.orders.create(options);
+        
+        res.status(StatusCodes.OK).json({
+            success: true,
+            razorpayOrder: {
+                id: razorpayOrder.id,
+                amount: razorpayOrder.amount,
+                currency: razorpayOrder.currency,
+                key_id: process.env.RAZORPAY_KEY_ID
+            },
+            orderNumber: order.orderNumber
+        });
+        
+    } catch (error) {
+        console.error('Pay COD order error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to initiate payment'
+        });
+    }
+};
+
+// Verify COD Payment
+const verifyCODPayment = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { id } = req.params;
+        const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+        
+        const order = await Order.findOne({ _id: id, userId });
+        
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+        
+        // Verify signature
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(body.toString())
+            .digest("hex");
+        
+        if (expectedSignature !== razorpay_signature) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Payment verification failed'
+            });
+        }
+        
+        // Update order
+        order.paymentMethod = 'online';
+        order.paymentStatus = 'paid';
+        order.razorpayOrderId = razorpay_order_id;
+        order.razorpayPaymentId = razorpay_payment_id;
+        order.updatedAt = new Date();
+        await order.save();
+        
+        res.status(StatusCodes.OK).json({
+            success: true,
+            message: 'Payment successful'
+        });
+        
+    } catch (error) {
+        console.error('Verify COD payment error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Payment verification failed'
+        });
+    }
+};
+
+
 export default {
     getUserOrders,
     getOrderDetails,
@@ -524,5 +752,7 @@ export default {
     downloadInvoice,
     updateReturnStatus,
     requestReturn,
-    cancelOrderItem
+    cancelOrderItem,
+    payCODOrder,
+    verifyCODPayment
 };

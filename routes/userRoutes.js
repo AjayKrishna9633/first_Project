@@ -9,6 +9,7 @@ import wishlistCtrl from "../controllers/user/whislistcontroller.js";
 import cartCtrl from "../controllers/user/cartController.js";
 import checkoutCtrl from "../controllers/user/checkoutController.js";
 import orderCtrl from "../controllers/user/orderController.js";
+import walletCtrl from "../controllers/user/walletController.js";
 const router = Router();
 
 //  HOME ROUTE 
@@ -103,6 +104,7 @@ router.post('/address/add',protectUser,addressCtrl.addAddress)
 router.get('/address/edit/:id', protectUser, addressCtrl.getEditAddress);
 router.delete('/address/delete/:id', protectUser, addressCtrl.deleteAddress);
 router.patch('/address/update/:id', protectUser, addressCtrl.updateAddress);
+router.patch('/address/set-default/:id', protectUser, addressCtrl.setDefaultAddress);
 
 //whishlist
 router.post('/wishlist/add', protectUser, wishlistCtrl.addToWishlist);
@@ -120,8 +122,11 @@ router.delete('/cart/remove',protectUser,cartCtrl.removeFromCart)
 //checkout
 router.get('/checkout', protectUser, checkoutCtrl.getCheckOut);
 router.post('/checkout/place-order', protectUser, checkoutCtrl.placeOrder);
+router.post('/checkout/apply-coupon', protectUser, checkoutCtrl.applyCoupon);
+router.post('/checkout/verify-payment', protectUser, checkoutCtrl.verifyPayment);
 
-
+router.get('/orders/success', protectUser, checkoutCtrl.getOrderSuccess);
+router.get('/orders/failed', protectUser, checkoutCtrl.getOrderFailure);
 
 
 router.post('/buy-now', protectUser, checkoutCtrl.buyNow);
@@ -134,6 +139,14 @@ router.patch('/orders/:id/cancel', protectUser, orderCtrl.cancelOrder);
 router.patch('/orders/:orderId/items/:itemId/cancel', protectUser, orderCtrl.cancelOrderItem);
 router.get('/orders/:id/invoice', protectUser, orderCtrl.downloadInvoice);
 router.post('/orders/return/request', protectUser, orderCtrl.requestReturn);
+router.post('/orders/:id/pay-cod', protectUser, orderCtrl.payCODOrder);
+router.post('/orders/:id/verify-cod-payment', protectUser, orderCtrl.verifyCODPayment);
+
+//wallet routes
+router.get('/wallet', protectUser, walletCtrl.getWallet);
+router.post('/wallet/add-money', protectUser, walletCtrl.addMoney);
+router.post('/wallet/verify-payment', protectUser, walletCtrl.verifyPayment);
+router.post('/wallet/apply-referral', protectUser, walletCtrl.applyReferral);
 
 
 export default router;

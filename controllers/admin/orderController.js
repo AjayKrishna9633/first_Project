@@ -164,6 +164,14 @@ console.error('Get order details error:', error);
         }
         
         if (paymentStatus) {
+            // Prevent changing payment status for online/wallet payments
+            if ((currentOrder.paymentMethod === 'online' || currentOrder.paymentMethod === 'wallet') && 
+                currentOrder.paymentStatus === 'paid') {
+                return res.json({ 
+                    success: false, 
+                    message: 'Cannot change payment status for online/wallet payments that are already paid' 
+                });
+            }
             updateData.paymentStatus = paymentStatus;
         }
         
@@ -325,7 +333,7 @@ const updateReturnStatus = async (req, res) => {
 
         console.log('Update return status request:', { orderId, action, adminNotes });
 
-        const order = await Order.findById(orderId);
+        const order = await Order.findById(orderId).populate('userId');
 
         if (!order) {
             console.log('Order not found:', orderId);
@@ -351,6 +359,26 @@ const updateReturnStatus = async (req, res) => {
             order.refundAmount = order.totalAmount;
             order.refundStatus = 'processed';
             order.adminReturnNotes = adminNotes;
+            
+            // Credit User Wallet
+             if (order.totalAmount > 0) {
+                 const user = await User.findById(order.userId._id);
+                 if (user) {
+                     user.Wallet += order.totalAmount;
+                     await user.save();
+                     
+                     await WalletTransaction.create({
+                        userId: user._id,
+                        amount: order.totalAmount,
+                        type: 'credit',
+                        balance: user.Wallet,
+                        paymentMethod: 'wallet',
+                        status: 'success',
+                        description: `Refund for Returned Order #${order.orderNumber}`,
+                        orderId: order._id
+                    });
+                 }
+             }
 
             // Restore stock for returned items
             console.log('Restoring stock for items:', order.items.length);

@@ -15,9 +15,15 @@ const categorySchema = new Schema({
         type:Boolean,
         default:true
     },
-    offerId:{
-        type: Schema.Types.ObjectId,
-        ref:"offer"
+    offerType:{
+        type: String,
+        enum: ['percentage', 'flat', 'none'],
+        default: 'none'
+    },
+    offerValue:{
+        type: Number,
+        default: 0,
+        min: 0
     }
 
 },{timestamps:true})

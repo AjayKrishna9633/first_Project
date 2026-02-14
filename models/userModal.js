@@ -50,7 +50,23 @@ const userschema = new mongoose.Schema({
   Wallet:{
     type:Number,
     default:0,
-
+  },
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  referredBy: {
+    type: String,
+    default: null
+  },
+  hasUsedReferral: {
+    type: Boolean,
+    default: false
+  },
+  referralEarnings: {
+    type: Number,
+    default: 0
   },
   whislist:[{
     type: Schema.Types.ObjectId,
@@ -59,16 +75,6 @@ const userschema = new mongoose.Schema({
   orderHistory:[{
     type:Schema.Types.ObjectId,
     ref:"orderCollection"
-  }],
-  referalCode:{
-    type:String
-  },
-  redeemed:{
-    type:Boolean
-  },
-  redeemedUsers:[{
-    type:Schema.Types.ObjectId,
-    ref:"user"
   }],
   searchHistory:[{
     category:{

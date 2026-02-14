@@ -3,6 +3,7 @@ import Category from "../../models/categoryModel.js";
 import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
 import { StatusCodes } from 'http-status-codes';
+import { applyBestDiscountToProduct } from '../../utils/discountCalculator.js';
 
 // Shop Page
 const getShopPage = async (req, res) => {
@@ -83,6 +84,9 @@ const getShopPage = async (req, res) => {
             { $skip: skip },
             { $limit: limit }
         ]);
+
+        // Apply best discount calculation to each product
+        products = products.map(product => applyBestDiscountToProduct(product));
 
 
      
@@ -185,22 +189,29 @@ const getProductDetail = async (req, res) => {
 
         // Fetch product with variants and category
         const product = await Product.findById(productId)
-            .populate('category', 'name')
+            .populate('category', 'name offerType offerValue')
             .populate('variants');
 
         if (!product || product.IsBlocked) {
             return res.status(StatusCodes.NOT_FOUND).redirect('/shop');
         }
 
+        // Apply best discount calculation
+        const productWithDiscount = applyBestDiscountToProduct(product.toObject());
+
         // Fetch related products (same category, exclude current)
-        const relatedProducts = await Product.find({
+        let relatedProducts = await Product.find({
             category: product.category._id,
             _id: { $ne: productId },
             IsBlocked: false,
             status: 'Available'
         })
+            .populate('category', 'name offerType offerValue')
             .populate('variants')
             .limit(4);
+
+        // Apply discount to related products
+        relatedProducts = relatedProducts.map(p => applyBestDiscountToProduct(p.toObject()));
 
         // Check if product is in wishlist
         let isInWishlist = false;
@@ -216,13 +227,13 @@ const getProductDetail = async (req, res) => {
 let totalStock = 0;
 let hasStock = false;
 
-if (product.variants && product.variants.length > 0) {
-    totalStock = product.variants.reduce((sum, variant) => sum + variant.quantity, 0);
+if (productWithDiscount.variants && productWithDiscount.variants.length > 0) {
+    totalStock = productWithDiscount.variants.reduce((sum, variant) => sum + variant.quantity, 0);
     hasStock = totalStock > 0;
 }
 
 res.render('user/productDetail', {
-    product,
+    product: productWithDiscount,
     relatedProducts,
     isInWishlist,
     hasStock,
