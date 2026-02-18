@@ -123,7 +123,9 @@ router.delete('/cart/remove',protectUser,cartCtrl.removeFromCart)
 router.get('/checkout', protectUser, checkoutCtrl.getCheckOut);
 router.post('/checkout/place-order', protectUser, checkoutCtrl.placeOrder);
 router.post('/checkout/apply-coupon', protectUser, checkoutCtrl.applyCoupon);
+router.get('/checkout/available-coupons', protectUser, checkoutCtrl.getAvailableCoupons);
 router.post('/checkout/verify-payment', protectUser, checkoutCtrl.verifyPayment);
+router.post('/checkout/cancel-payment', protectUser, checkoutCtrl.cancelPayment);
 
 router.get('/orders/success', protectUser, checkoutCtrl.getOrderSuccess);
 router.get('/orders/failed', protectUser, checkoutCtrl.getOrderFailure);

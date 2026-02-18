@@ -6,6 +6,7 @@
     <title>Coupons - Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/text-wrap.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -118,9 +119,9 @@
                                                             <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-indigo-100 rounded-lg">
                                                                 <i class="fas fa-ticket-alt text-indigo-600"></i>
                                                             </div>
-                                                            <div class="ml-4">
+                                                            <div class="ml-4 max-w-xs">
                                                                 <div class="text-sm font-medium text-gray-900"><%= coupon.code %></div>
-                                                                <div class="text-xs text-gray-500"><%= coupon.description %></div>
+                                                                <div class="text-xs text-gray-500 truncate" title="<%= coupon.description %>"><%= coupon.description %></div>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -281,7 +282,10 @@
                         <div class="col-span-2">
                             <label class="block text-left text-sm font-medium text-gray-700 mb-1">Description *</label>
                             <input type="text" name="description" placeholder="Short description" required 
+                                   minlength="10"
+                                   maxlength="200"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <p class="text-xs text-gray-500 mt-1">10-200 characters</p>
                         </div>
 
                         <div>
@@ -369,7 +373,10 @@
                         <div class="col-span-2">
                             <label class="block text-left text-sm font-medium text-gray-700 mb-1">Description *</label>
                             <input type="text" id="editDescription" name="description" required 
+                                   minlength="10"
+                                   maxlength="200"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <p class="text-xs text-gray-500 mt-1">10-200 characters</p>
                         </div>
 
                         <div>
@@ -484,6 +491,49 @@
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
 
+            const offerPrice = parseFloat(data.offerPrice);
+            const minimumPrice = parseFloat(data.minimumPrice);
+            const maxDiscountAmount = data.maxDiscountAmount ? parseFloat(data.maxDiscountAmount) : null;
+            const discountType = data.discountType;
+
+            if (discountType === 'percentage') {
+                if (offerPrice >= 100) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Discount',
+                        text: 'Percentage discount cannot be 100% or more. Maximum allowed is 99%'
+                    });
+                    return;
+                }
+
+                if (!maxDiscountAmount) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Missing Field',
+                        text: 'Maximum discount amount is required for percentage-based coupons'
+                    });
+                    return;
+                }
+
+                if (maxDiscountAmount >= minimumPrice) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Values',
+                        text: 'Maximum discount must be less than minimum purchase amount to ensure order value remains positive'
+                    });
+                    return;
+                }
+            } else {
+                if (offerPrice >= minimumPrice) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Values',
+                        text: 'Fixed discount amount must be less than minimum purchase amount to ensure order value remains positive'
+                    });
+                    return;
+                }
+            }
+
             try {
                 const response = await fetch('/admin/coupons/add', {
                     method: 'POST',
@@ -564,6 +614,49 @@
             const data = Object.fromEntries(formData);
             const id = data.id;
             delete data.id;
+
+            const offerPrice = parseFloat(data.offerPrice);
+            const minimumPrice = parseFloat(data.minimumPrice);
+            const maxDiscountAmount = data.maxDiscountAmount ? parseFloat(data.maxDiscountAmount) : null;
+            const discountType = data.discountType;
+
+            if (discountType === 'percentage') {
+                if (offerPrice >= 100) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Discount',
+                        text: 'Percentage discount cannot be 100% or more. Maximum allowed is 99%'
+                    });
+                    return;
+                }
+
+                if (!maxDiscountAmount) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Missing Field',
+                        text: 'Maximum discount amount is required for percentage-based coupons'
+                    });
+                    return;
+                }
+
+                if (maxDiscountAmount >= minimumPrice) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Values',
+                        text: 'Maximum discount must be less than minimum purchase amount to ensure order value remains positive'
+                    });
+                    return;
+                }
+            } else {
+                if (offerPrice >= minimumPrice) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Values',
+                        text: 'Fixed discount amount must be less than minimum purchase amount to ensure order value remains positive'
+                    });
+                    return;
+                }
+            }
 
             try {
                 const response = await fetch(`/admin/coupons/update/${id}`, {

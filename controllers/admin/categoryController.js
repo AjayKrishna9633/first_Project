@@ -1,7 +1,6 @@
 import Category from "../../models/categoryModel.js";
 import product from "../../models/porductsModal.js";
 
-// Get all categories
 const getCategories = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -40,7 +39,6 @@ const getCategories = async (req, res) => {
     }
 };
 
-// Get add category page
 const getAddCategory = async (req, res) => {
     try {
         res.render('admin/addCategory', {
@@ -54,12 +52,10 @@ const getAddCategory = async (req, res) => {
     }
 };
 
-// Add new category
 const addCategory = async (req, res) => {
     try {
         const { name, description, offerType, offerValue } = req.body;
 
-        // Validation
         if (!name || !description) {
             return res.render('admin/addCategory', {
                 admin: req.session.admin,
@@ -68,7 +64,6 @@ const addCategory = async (req, res) => {
             });
         }
 
-        // Check if category already exists
         const existingCategory = await Category.findOne({
             name: { $regex: new RegExp(`^${name}$`, 'i') }
         });
@@ -81,7 +76,15 @@ const addCategory = async (req, res) => {
             });
         }
 
-        // Create new category
+        // Validate description length
+        if (description.trim().length < 10 || description.trim().length > 500) {
+            return res.render('admin/addCategory', {
+                admin: req.session.admin,
+                message: 'Description must be between 10 and 500 characters',
+                isError: true
+            });
+        }
+
         const category = new Category({
             name: name.trim(),
             description: description.trim(),
@@ -102,7 +105,6 @@ const addCategory = async (req, res) => {
     }
 };
 
-// Get edit category page
 const getEditCategory = async (req, res) => {
     try {
         const categoryId = req.params.id;
@@ -125,13 +127,11 @@ const getEditCategory = async (req, res) => {
     }
 };
 
-// Update category
 const updateCategory = async (req, res) => {
     try {
         const categoryId = req.params.id;
         const { name, description, offerType, offerValue } = req.body;
 
-        // Validation
         if (!name || !description) {
             return res.status(400).json({
                 success: false,
@@ -139,7 +139,14 @@ const updateCategory = async (req, res) => {
             });
         }
 
-        // Check if another category with same name exists
+        // Validate description length
+        if (description.trim().length < 10 || description.trim().length > 500) {
+            return res.status(400).json({
+                success: false,
+                message: 'Description must be between 10 and 500 characters'
+            });
+        }
+
         const existingCategory = await Category.findOne({
             name: { $regex: new RegExp(`^${name}$`, 'i') },
             _id: { $ne: categoryId }
@@ -152,7 +159,6 @@ const updateCategory = async (req, res) => {
             });
         }
 
-        // Update category
         await Category.findByIdAndUpdate(categoryId, {
             name: name.trim(),
             description: description.trim(),
@@ -174,7 +180,6 @@ const updateCategory = async (req, res) => {
     }
 };
 
-// Toggle category listing status
 const toggleListCategory = async (req, res) => {
     try {
         const categoryId = req.params.id;

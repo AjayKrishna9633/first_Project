@@ -89,6 +89,17 @@ const getAddProduct = async(req,res)=>{
                 });
             }
 
+            // Validate description length
+            if (description.trim().length < 10 || description.trim().length > 1000) {
+                const categories = await Category.find({ isListed: true });
+                return res.render('admin/addProduct', {
+                    categories,
+                    admin: req.session.admin,
+                    message: 'Description must be between 10 and 1000 characters',
+                    isError: true
+                });
+            }
+
             // Validate variants data
             if (!variants || Object.keys(variants).length === 0) {
                 const categories = await Category.find({ isListed: true });

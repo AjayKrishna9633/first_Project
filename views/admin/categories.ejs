@@ -6,6 +6,7 @@
     <title>Categories - GEARGRID Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/text-wrap.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-50">
@@ -105,7 +106,9 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-600">
-                                            <%= category.description ? (category.description.length > 60 ? category.description.substring(0, 60) + '...' : category.description) : 'No description' %>
+                                            <div class="max-w-xs truncate" title="<%= category.description || 'No description' %>">
+                                                <%= category.description || 'No description' %>
+                                            </div>
                                         </td>
                                         <td class="px-6 py-4">
                                             <% if (category.offerType && category.offerType !== 'none' && category.offerValue > 0) { %>

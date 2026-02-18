@@ -9,10 +9,8 @@ import { StatusCodes } from 'http-status-codes';
 import razorpayInstance from '../../config/razorpay.js';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
+import { applyBestDiscountToProduct } from '../../utils/discountCalculator.js';
 dotenv.config();
-
-// Razorpay instance will be initialized lazily in the controller methods
-// to prevent crashing if environment variables are missing at startup.
 
 const getCheckOut = async(req,res)=>{
     try{
@@ -22,8 +20,7 @@ const getCheckOut = async(req,res)=>{
         .populate({
             path :'items.productId',
             populate:{
-                path:'variants category',
-                select:'name color salePrice regularPrice quantity images'
+                path:'variants category'
             }
         }).populate('items.variantId');
 
@@ -31,7 +28,31 @@ const getCheckOut = async(req,res)=>{
             return res.status(StatusCodes.BAD_REQUEST).redirect('/cart');
         }
 
-        // Validate stock for all cart items
+        let cartUpdated = false;
+        for(let item of cart.items){
+            if(item.productId && item.variantId && item.productId.variants){
+                let productObj = item.productId.toObject ? item.productId.toObject() : item.productId;
+                productObj = applyBestDiscountToProduct(productObj);
+                
+                const itemVariantId = item.variantId._id || item.variantId;
+                const variant = productObj.variants.find(v => 
+                    v._id.toString() === itemVariantId.toString()
+                );
+                
+                if(variant && variant.finalPrice !== undefined){
+                    const currentBestPrice = variant.finalPrice;
+                    if(item.price !== currentBestPrice){
+                        item.price = currentBestPrice;
+                        item.totalPrice = currentBestPrice * item.quantity;
+                        cartUpdated = true;
+                    }
+                }
+            }
+        }
+        if(cartUpdated){
+            await cart.save();
+        }
+
         const stockIssues = [];
         
         for (const item of cart.items) {
@@ -44,7 +65,6 @@ const getCheckOut = async(req,res)=>{
                 continue;
             }
 
-            // Check if product is blocked
             if (item.productId.IsBlocked) {
                 stockIssues.push({
                     productName: item.productId.productName,
@@ -54,7 +74,6 @@ const getCheckOut = async(req,res)=>{
                 continue;
             }
 
-            // Find the specific variant
             const variant = item.productId.variants.find(
                 v => v._id.toString() === item.variantId._id.toString()
             );
@@ -68,7 +87,6 @@ const getCheckOut = async(req,res)=>{
                 continue;
             }
 
-            // Check if cart quantity exceeds available stock
             if (item.quantity > variant.quantity) {
                 stockIssues.push({
                     productName: item.productId.productName,
@@ -79,7 +97,6 @@ const getCheckOut = async(req,res)=>{
             }
         }
 
-        // If there are stock issues, redirect back to cart with error
         if (stockIssues.length > 0) {
             req.session.stockValidationError = {
                 message: 'Some items in your cart exceed available stock',
@@ -88,11 +105,9 @@ const getCheckOut = async(req,res)=>{
             return res.redirect('/cart');
         }
 
-        // Get user's addresses - your model stores addresses in an array
         const addressDoc = await Address.findOne({ userId });
         const addresses = addressDoc ? addressDoc.address : [];
 
-        // Get Wallet Balance
         const user = await User.findById(userId);
         const walletBalance = user ? user.Wallet : 0;
 
@@ -100,7 +115,7 @@ const getCheckOut = async(req,res)=>{
             cart,
             addresses,
             user: req.session.user,
-            walletBalance // Pass wallet balance to view
+            walletBalance
         });
 
     }catch(error){
@@ -130,7 +145,6 @@ const applyCoupon = async (req, res) => {
             });
         }
 
-        // Validate expiry
         if (new Date() > coupon.endDate) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
@@ -145,7 +159,6 @@ const applyCoupon = async (req, res) => {
             });
         }
 
-        // Validate minimum purchase
         if (cartTotal < coupon.minimumPrice) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
@@ -153,10 +166,6 @@ const applyCoupon = async (req, res) => {
             });
         }
 
-        // Validation usage limit per user (Check order history?)
-        // Assuming we check if user has used this coupon before if strict logic needed
-        // For 4-day sprint, maybe skip or basic check if Order model stores used coupons.
-        
         let discountAmount = 0;
         if (coupon.discountType === 'percentage') {
             discountAmount = (cartTotal * coupon.offerPrice) / 100;
@@ -167,16 +176,31 @@ const applyCoupon = async (req, res) => {
             discountAmount = coupon.offerPrice;
         }
 
-        // Ensure discount doesn't exceed total
         if (discountAmount > cartTotal) {
             discountAmount = cartTotal;
+        }
+
+        const finalAmount = cartTotal - discountAmount;
+        
+        if (finalAmount <= 0) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'This coupon cannot be applied as it would make the order total zero or negative. Please contact support.'
+            });
+        }
+
+        if (finalAmount < 1) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Order total must be at least ₹1 after discount'
+            });
         }
 
         res.status(StatusCodes.OK).json({
             success: true,
             message: 'Coupon applied successfully',
             discountAmount: Math.round(discountAmount),
-            newTotal: Math.round(cartTotal - discountAmount),
+            newTotal: Math.round(finalAmount),
             couponCode: coupon.code
         });
 
@@ -190,11 +214,35 @@ const applyCoupon = async (req, res) => {
 };
 
 const removeCoupon = async (req, res) => {
-    // Just a placeholder for UI interaction if needed, mostly client side sufficient
     res.status(StatusCodes.OK).json({
         success: true,
         message: 'Coupon removed'
     });
+};
+
+const getAvailableCoupons = async (req, res) => {
+    try {
+        const currentDate = new Date();
+        
+        const coupons = await Coupon.find({
+            isListed: true,
+            startDate: { $lte: currentDate },
+            endDate: { $gte: currentDate }
+        })
+        .select('name code description discountType offerPrice minimumPrice maxDiscountAmount endDate')
+        .sort({ createdon: -1 });
+
+        res.status(StatusCodes.OK).json({
+            success: true,
+            coupons
+        });
+    } catch (error) {
+        console.error('Get available coupons error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to fetch coupons'
+        });
+    }
 };
 
 const placeOrder=async(req,res)=>{
@@ -213,7 +261,6 @@ const placeOrder=async(req,res)=>{
         } = req.body;
 
         if (req.session.buyNowData) {
-            // Buy Now flow - use session data
             isBuyNow = true;
             cart = {
                 items: req.session.buyNowData.items.map(item => ({
@@ -237,15 +284,13 @@ const placeOrder=async(req,res)=>{
                 success: false
             });
         }
-        // Validate all cart items for blocked products
+
         for (const item of cart.items) {
             let product;
             
             if (isBuyNow) {
-                // For buy now, we need to fetch the product
                 product = await Product.findById(item.productId._id).populate('variants');
             } else {
-                // For regular cart, product is already populated
                 product = item.productId;
             }
             
@@ -258,7 +303,6 @@ const placeOrder=async(req,res)=>{
         }
 
         for (let item of cart.items) {
-            // Use the populated variantId directly
             const variant = item.variantId;
             
             if (!variant || variant.quantity < item.quantity) {
@@ -271,7 +315,6 @@ const placeOrder=async(req,res)=>{
 
         let shippingAddress;
         if (addressId) {
-            // Find the address document and the specific address in the array
             const addressDoc = await Address.findOne({ userId });
             if (!addressDoc) {
                 return res.status(StatusCodes.NOT_FOUND).json({
@@ -307,18 +350,15 @@ const placeOrder=async(req,res)=>{
             });
         }
 
-        // Calculate totals
         const subtotal = cart.items.reduce((total, item) => total + item.totalPrice, 0);
-        let shippingCost = 0; // Free shipping
-        let tax = 0; // No tax for now
+        let shippingCost = 0;
+        let tax = 0;
         let discountAmount = 0;
         let couponApplied = null;
 
-        // Apply Coupon Validation if code provided
         if (couponCode) {
             const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isListed: true });
             if (coupon) {
-                 // Re-validate conditions to be safe
                  if (new Date() <= coupon.endDate && new Date() >= coupon.startDate && subtotal >= coupon.minimumPrice) {
                     if (coupon.discountType === 'percentage') {
                         discountAmount = (subtotal * coupon.offerPrice) / 100;
@@ -337,13 +377,12 @@ const placeOrder=async(req,res)=>{
         let totalAmount = subtotal + shippingCost + tax - discountAmount;
         let walletAmountUsed = 0;
 
-        // Apply Wallet
         if (useWallet) {
              const user = await User.findById(userId);
              if (user && user.Wallet > 0) {
                  if (user.Wallet >= totalAmount) {
                      walletAmountUsed = totalAmount;
-                     totalAmount = 0; // Fully paid by wallet
+                     totalAmount = 0;
                  } else {
                      walletAmountUsed = user.Wallet;
                      totalAmount -= user.Wallet;
@@ -351,10 +390,8 @@ const placeOrder=async(req,res)=>{
              }
         }
 
-        // Generate order number
-        const orderNumber = 'ORD' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase();
+        const orderNumber = 'ORD' + Date.now() + Math.random().toString(36).substring(2, 7).toUpperCase();
 
-        // Create order
         const order = new Order({
             userId,
             orderNumber,
@@ -383,14 +420,12 @@ const placeOrder=async(req,res)=>{
         } else if (paymentMethod === 'cod') {
              order.orderStatus = 'confirmed';
         } else if (paymentMethod === 'online') {
-             // Online payment via Razorpay
              order.orderStatus = 'pending';
              order.paymentStatus = 'pending';
         } else {
              order.orderStatus = 'pending';
         }
 
-        // If online payment, Create Razorpay Order
         let razorpayOrderDetails = null;
         if (order.orderStatus === 'pending' && Math.round(totalAmount) > 0) {
              
@@ -398,7 +433,7 @@ const placeOrder=async(req,res)=>{
                 const instance = razorpayInstance;
 
                 const options = {
-                    amount: Math.round(totalAmount) * 100, 
+                    amount: Math.round(totalAmount) * 100,
                     currency: "INR",
                     receipt: orderNumber
                 };
@@ -428,12 +463,6 @@ const placeOrder=async(req,res)=>{
 
         await order.save();
 
-        // Update Stock ONLY if Order is Placed/Paid (or if we reserve stock? Usually reserve on order creation)
-        // With Pending order, we should probably reserve stock. 
-        // If payment fails, we can release it later (or keep it reserved for a bit).
-        // Let's reserve it now as per original logic.
-
-        // Deduct from Wallet
         if (walletAmountUsed > 0) {
             const user = await User.findById(userId);
              user.Wallet -= walletAmountUsed;
@@ -451,35 +480,33 @@ const placeOrder=async(req,res)=>{
             });
         }
 
-      
-        // Update product stock - Direct variant collection update
-        const Variant = (await import('../../models/variantModel.js')).default;
-        
-        for (let item of cart.items) {
-            try {
-                const variantId = item.variantId._id;
-                
-                const updateResult = await Variant.findByIdAndUpdate(
-                    variantId,
-                    { $inc: { quantity: -item.quantity } },
-                    { new: true }
-                );
-                
-                if (!updateResult) {
-                    console.error(`Failed to update stock for variant ${variantId}`);
+        if (paymentMethod === 'cod' || paymentMethod === 'wallet') {
+            const Variant = (await import('../../models/variantModel.js')).default;
+            
+            for (let item of cart.items) {
+                try {
+                    const variantId = item.variantId._id;
+                    
+                    const updateResult = await Variant.findByIdAndUpdate(
+                        variantId,
+                        { $inc: { quantity: -item.quantity } },
+                        { new: true }
+                    );
+                    
+                    if (!updateResult) {
+                        console.error(`Failed to update stock for variant ${variantId}`);
+                    }
+                } catch (error) {
+                    console.error(`Error updating stock for variant:`, error);
                 }
-            } catch (error) {
-                console.error(`Error updating stock for variant:`, error);
             }
         }
-
 
         if (isBuyNow) {
             delete req.session.buyNowData;
         } else {
             await Cart.findOneAndDelete({ userId });
         }
-
 
         res.status(StatusCodes.CREATED).json({
             success: true,
@@ -511,12 +538,32 @@ const verifyPayment = async (req, res) => {
             .digest("hex");
 
         if (expectedSignature === razorpay_signature) {
-             const order = await Order.findById(order_id);
+             const order = await Order.findById(order_id).populate('items.variantId');
              if (order) {
                  order.paymentStatus = 'paid';
                  order.orderStatus = 'confirmed';
                  order.razorpayPaymentId = razorpay_payment_id;
                  await order.save();
+                 
+                 const Variant = (await import('../../models/variantModel.js')).default;
+                 
+                 for (let item of order.items) {
+                     try {
+                         const variantId = item.variantId._id;
+                         
+                         const updateResult = await Variant.findByIdAndUpdate(
+                             variantId,
+                             { $inc: { quantity: -item.quantity } },
+                             { new: true }
+                         );
+                         
+                         if (!updateResult) {
+                             console.error(`Failed to update stock for variant ${variantId}`);
+                         }
+                     } catch (error) {
+                         console.error(`Error updating stock for variant:`, error);
+                     }
+                 }
                  
                  return res.status(StatusCodes.OK).json({
                      success: true,
@@ -525,10 +572,10 @@ const verifyPayment = async (req, res) => {
              }
         }
         
-        // If Failed
         const order = await Order.findById(order_id);
         if (order) {
              order.paymentStatus = 'failed';
+             order.orderStatus = 'failed';
              await order.save();
         }
 
@@ -539,9 +586,51 @@ const verifyPayment = async (req, res) => {
 
     } catch (error) {
          console.error('Verify payment error:', error);
+         
+         try {
+             const order = await Order.findById(req.body.order_id);
+             if (order) {
+                 order.paymentStatus = 'failed';
+                 order.orderStatus = 'failed';
+                 await order.save();
+             }
+         } catch (err) {
+             console.error('Error updating order status:', err);
+         }
+         
          res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Verification success failed internally'
+            message: 'Verification failed internally'
+        });
+    }
+};
+
+const cancelPayment = async (req, res) => {
+    try {
+        const { order_id } = req.body;
+        
+        const order = await Order.findById(order_id);
+        if (order) {
+            order.paymentStatus = 'cancelled';
+            order.orderStatus = 'cancelled';
+            await order.save();
+            
+            return res.status(StatusCodes.OK).json({
+                success: true,
+                message: 'Payment cancelled'
+            });
+        }
+        
+        return res.status(StatusCodes.NOT_FOUND).json({
+            success: false,
+            message: 'Order not found'
+        });
+        
+    } catch (error) {
+        console.error('Cancel payment error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to cancel payment'
         });
     }
 };
@@ -558,7 +647,6 @@ const buyNow = async(req,res)=>{
             })
         }
 
-        // Validate quantity limit
         if (quantity > 3) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
@@ -566,8 +654,7 @@ const buyNow = async(req,res)=>{
             });
         }
 
-
-        const product = await Product.findById(productId).populate('variants');
+        let product = await Product.findById(productId).populate('variants').populate('category').lean();
         
         if(!product||product.IsBlocked){
             return res.status(StatusCodes.NOT_FOUND).json({
@@ -576,33 +663,38 @@ const buyNow = async(req,res)=>{
             })
         }
 
-        const variant = await product.variants.find(v=>v._id.toString()===variantId);
+        product = applyBestDiscountToProduct(product);
+
+        const variant = product.variants.find(v=>v._id.toString()===variantId);
         if(!variant){
             return res.status(StatusCodes.NOT_FOUND).json({
                 success:false,
                 message:"variant not found"
             })
         }
-                if (variant.quantity < quantity) {
+
+        if (variant.quantity < quantity) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: `Only ${variant.quantity} items available`
             });
         }
         
+        const finalPrice = variant.finalPrice !== undefined ? variant.finalPrice : variant.salePrice;
+        
         const orderData = {
               items: [{
                 productId: product._id,
                 variantId: variant._id,
                 quantity: parseInt(quantity),
-                price: variant.salePrice, // Should be Best Offer Price ideally
-                totalPrice: variant.salePrice * parseInt(quantity),
+                price: finalPrice,
+                totalPrice: finalPrice * parseInt(quantity),
                 productName: product.productName,
                 variantColor: variant.color,
                 image: variant.images[0]
             }],
-                  subtotal: variant.salePrice * parseInt(quantity),
-            total: variant.salePrice * parseInt(quantity)
+            subtotal: finalPrice * parseInt(quantity),
+            total: finalPrice * parseInt(quantity)
       
         }
         req.session.buyNowData = orderData;
@@ -631,12 +723,10 @@ const getBuyNowCheckout = async(req, res) => {
     try {
         const userId = req.session.user.id;
         
-        // Check if buy now data exists in session
         if (!req.session.buyNowData) {
             return res.status(StatusCodes.BAD_REQUEST).redirect('/shop');
         }
 
-        // Get productId from session data
         const productId = req.session.buyNowData.items[0].productId;
         const product = await Product.findById(productId).populate('variants');
         if(!product||product.IsBlocked){
@@ -646,15 +736,12 @@ const getBuyNowCheckout = async(req, res) => {
             })
         }
 
-        // Get user's addresses
         const addressDoc = await Address.findOne({ userId });
         const addresses = addressDoc ? addressDoc.address : [];
 
-        // Get Wallet Balance
         const user = await User.findById(userId);
         const walletBalance = user ? user.Wallet : 0;
 
-        // Create a cart-like object for the checkout page
         const buyNowCart = {
             items: req.session.buyNowData.items.map(item => ({
                 productId: {
@@ -673,7 +760,7 @@ const getBuyNowCheckout = async(req, res) => {
             cart: buyNowCart,
             addresses,
             user: req.session.user,
-            isBuyNow: true,  // Flag to indicate this is buy now flow
+            isBuyNow: true,
             walletBalance
         });
 
@@ -707,7 +794,7 @@ const getOrderFailure = async (req, res) => {
         if (!orderId) return res.redirect('/orders');
         
         const order = await Order.findById(orderId);
-        // If order exists, show failure page.
+        
         res.render('user/orderFailure', { 
             order,
             user: req.session.user 
@@ -725,7 +812,9 @@ export default {
     getBuyNowCheckout,
     applyCoupon,
     removeCoupon,
+    getAvailableCoupons,
     verifyPayment,
+    cancelPayment,
     getOrderSuccess,
     getOrderFailure
 };

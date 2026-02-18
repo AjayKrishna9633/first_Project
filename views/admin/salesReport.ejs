@@ -6,6 +6,7 @@
     <title>Sales Report - Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/text-wrap.css">
 </head>
 <body class="bg-gray-100 font-sans">
     <div class="flex h-screen overflow-hidden">
@@ -190,8 +191,8 @@
                                                 <div class="text-xs text-gray-500"><%= order.createdAt.toLocaleTimeString() %></div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm font-medium text-gray-900"><%= order.userId?.fullName || 'Guest' %></div>
-                                                <div class="text-xs text-gray-500"><%= order.userId?.email || 'N/A' %></div>
+                                                <div class="text-sm font-medium text-gray-900 truncate max-w-xs" title="<%= order.userId?.fullName || 'Guest' %>"><%= order.userId?.fullName || 'Guest' %></div>
+                                                <div class="text-xs text-gray-500 truncate max-w-xs" title="<%= order.userId?.email || 'N/A' %>"><%= order.userId?.email || 'N/A' %></div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm font-semibold text-gray-900">₹<%= order.totalAmount.toLocaleString('en-IN') %></div>

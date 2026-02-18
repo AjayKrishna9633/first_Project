@@ -102,6 +102,55 @@ const createCoupon = async (req, res) => {
             usagePerUser 
         } = req.body;
 
+        // Validate description length
+        if (description.trim().length < 10 || description.trim().length > 200) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Description must be between 10 and 200 characters'
+            });
+        }
+
+        const parsedOfferPrice = parseFloat(offerPrice);
+        const parsedMinimumPrice = parseFloat(minimumPrice);
+        const parsedMaxDiscount = maxDiscountAmount ? parseFloat(maxDiscountAmount) : null;
+
+        if (discountType === 'percentage') {
+            if (parsedOfferPrice <= 0 || parsedOfferPrice > 100) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Percentage discount must be between 1 and 100'
+                });
+            }
+
+            if (parsedOfferPrice >= 100) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Percentage discount cannot be 100% or more. Maximum allowed is 99%'
+                });
+            }
+
+            if (!parsedMaxDiscount) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Maximum discount amount is required for percentage-based coupons to prevent zero-value orders'
+                });
+            }
+
+            if (parsedMaxDiscount >= parsedMinimumPrice) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Maximum discount must be less than minimum purchase amount to ensure order value remains positive'
+                });
+            }
+        } else {
+            if (parsedOfferPrice >= parsedMinimumPrice) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Fixed discount amount must be less than minimum purchase amount to ensure order value remains positive'
+                });
+            }
+        }
+
         const existingCoupon = await Coupon.findOne({ name: name.toUpperCase() });
         if (existingCoupon) {
             return res.status(StatusCodes.BAD_REQUEST).json({
@@ -112,7 +161,7 @@ const createCoupon = async (req, res) => {
 
         const newCoupon = new Coupon({
             name: name.toUpperCase(),
-            code: name.toUpperCase(), // Assuming code is same as name for now, or use separate field if passed
+            code: name.toUpperCase(), 
             description,
             startDate,
             endDate,
@@ -248,7 +297,55 @@ const updateCoupon = async (req, res) => {
             });
         }
 
-        // Check if name/code is being changed and if it already exists
+        // Validate description length
+        if (description.trim().length < 10 || description.trim().length > 200) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Description must be between 10 and 200 characters'
+            });
+        }
+
+        const parsedOfferPrice = parseFloat(offerPrice);
+        const parsedMinimumPrice = parseFloat(minimumPrice);
+        const parsedMaxDiscount = maxDiscountAmount ? parseFloat(maxDiscountAmount) : null;
+
+        if (discountType === 'percentage') {
+            if (parsedOfferPrice <= 0 || parsedOfferPrice > 100) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Percentage discount must be between 1 and 100'
+                });
+            }
+
+            if (parsedOfferPrice >= 100) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Percentage discount cannot be 100% or more. Maximum allowed is 99%'
+                });
+            }
+
+            if (!parsedMaxDiscount) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Maximum discount amount is required for percentage-based coupons to prevent zero-value orders'
+                });
+            }
+
+            if (parsedMaxDiscount >= parsedMinimumPrice) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Maximum discount must be less than minimum purchase amount to ensure order value remains positive'
+                });
+            }
+        } else {
+            if (parsedOfferPrice >= parsedMinimumPrice) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Fixed discount amount must be less than minimum purchase amount to ensure order value remains positive'
+                });
+            }
+        }
+
         if (name.toUpperCase() !== coupon.name) {
             const existingCoupon = await Coupon.findOne({ 
                 name: name.toUpperCase(),

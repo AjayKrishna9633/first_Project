@@ -1,0 +1,131 @@
+/* Global Text Wrapping Styles - Prevents UI Breaking */
+
+/* Apply to all text content by default */
+body {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Specific class for data display fields */
+.text-wrap,
+.address-text,
+.description-text,
+.data-display {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+/* For extremely long strings without spaces */
+.break-anywhere {
+    overflow-wrap: anywhere;
+}
+
+/* Product descriptions */
+.product-description,
+.category-description,
+.coupon-description {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    white-space: pre-wrap; /* Preserve line breaks but wrap */
+}
+
+/* Table cells - prevent overflow */
+td, th {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+
+/* Card content */
+.card-content,
+.order-details,
+.product-info {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Prevent horizontal scroll on containers */
+.container,
+.max-w-7xl,
+.max-w-6xl,
+.max-w-4xl,
+.max-w-2xl {
+    overflow-wrap: break-word;
+}
+
+/* Admin table cells */
+.admin-table td,
+.admin-table th {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* User profile and order details */
+.user-info,
+.order-info,
+.address-info {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Prevent overflow in flex and grid items */
+.flex > *,
+.grid > * {
+    min-width: 0; /* Allow flex/grid items to shrink below content size */
+}
+
+/* Specific for long URLs or emails */
+.break-url {
+    word-break: break-all;
+    overflow-wrap: anywhere;
+}
+
+/* For code or technical content that should break */
+pre, code {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Text truncation with ellipsis */
+.text-truncate,
+.truncate-1-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.truncate-2-lines {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.truncate-3-lines {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Coupon description specific */
+.coupon-description {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.coupon-description:hover {
+    white-space: normal;
+    overflow: visible;
+}

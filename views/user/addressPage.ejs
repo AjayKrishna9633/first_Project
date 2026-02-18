@@ -6,7 +6,22 @@
     <title>My Account - Shipping Address | GEARGRID</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/text-wrap.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Prevent text overflow and ensure proper wrapping */
+        .address-text {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            hyphens: auto;
+        }
+        
+        /* Ensure long strings without spaces also break */
+        .break-anywhere {
+            overflow-wrap: anywhere;
+        }
+    </style>
 </head>
 <body class="bg-black text-white">
     <!-- Header -->
@@ -54,58 +69,60 @@
                     <% if (addresses && addresses.length > 0) { %>
                         <% addresses.forEach(address => { %>
                             <div class="bg-gray-900 rounded-lg p-6 border <%= address.isDefault ? 'border-cyan-400' : 'border-gray-800' %>">
-                                <div class="flex items-center justify-between mb-4">
-                                    <% if (address.addressType) { %>
-                                        <div class="inline-block px-3 py-1 bg-cyan-400 text-black text-xs font-semibold rounded-full">
-                                            <%= address.addressType %>
-                                        </div>
-                                    <% } %>
-                                    <% if (address.isDefault) { %>
-                                        <div class="inline-block px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
-                                            <i class="fas fa-check-circle mr-1"></i>
-                                            Default
-                                        </div>
-                                    <% } %>
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex items-center gap-2">
+                                        <% if (address.addressType) { %>
+                                            <span class="inline-block px-3 py-1 bg-cyan-400 text-black text-xs font-semibold rounded-full">
+                                                <%= address.addressType %>
+                                            </span>
+                                        <% } %>
+                                        <% if (address.isDefault) { %>
+                                            <span class="inline-block px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
+                                                <i class="fas fa-check-circle mr-1"></i>
+                                                Default
+                                            </span>
+                                        <% } %>
+                                    </div>
                                 </div>
                                 
                                 <div class="space-y-3 text-gray-300">
                                     <% if (address.name) { %>
                                         <div>
                                             <p class="text-xs text-gray-500 mb-1">Name</p>
-                                            <p class="text-white"><%= address.name %></p>
+                                            <p class="text-white address-text"><%= address.name %></p>
                                         </div>
                                     <% } %>
 
                                     <div>
                                         <p class="text-xs text-gray-500 mb-1">Street Address</p>
-                                        <p class="text-white"><%= address.streetAddress %></p>
+                                        <p class="text-white address-text break-anywhere"><%= address.streetAddress %></p>
                                     </div>
 
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
                                             <p class="text-xs text-gray-500 mb-1">City</p>
-                                            <p class="text-white"><%= address.city %></p>
+                                            <p class="text-white address-text"><%= address.city %></p>
                                         </div>
                                         <div>
                                             <p class="text-xs text-gray-500 mb-1">State</p>
-                                            <p class="text-white"><%= address.state %></p>
+                                            <p class="text-white address-text"><%= address.state %></p>
                                         </div>
                                     </div>
 
                                     <div>
                                         <p class="text-xs text-gray-500 mb-1">Pin Code</p>
-                                        <p class="text-white"><%= address.pinCode %></p>
+                                        <p class="text-white address-text"><%= address.pinCode %></p>
                                     </div>
 
                                     <div>
                                         <p class="text-xs text-gray-500 mb-1">Phone</p>
-                                        <p class="text-white"><%= address.phone %></p>
+                                        <p class="text-white address-text"><%= address.phone %></p>
                                     </div>
 
                                     <% if (address.altPhone) { %>
                                         <div>
                                             <p class="text-xs text-gray-500 mb-1">Alternate Phone</p>
-                                            <p class="text-white"><%= address.altPhone %></p>
+                                            <p class="text-white address-text"><%= address.altPhone %></p>
                                         </div>
                                     <% } %>
                                 </div>
@@ -298,29 +315,41 @@
                     <div>
                         <label class="block text-sm font-medium mb-2">Full Name *</label>
                         <input type="text" name="name" required 
+                            minlength="2"
+                            maxlength="50"
                             class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
                             placeholder="Enter full name">
+                        <p class="text-xs text-gray-500 mt-1">2-50 characters</p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-2">Street Address *</label>
                         <textarea name="streetAddress" required rows="2"
+                            minlength="10"
+                            maxlength="200"
                             class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
                             placeholder="House no, Building name, Street"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">10-200 characters</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium mb-2">City *</label>
                             <input type="text" name="city" required 
+                                minlength="2"
+                                maxlength="50"
                                 class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
                                 placeholder="City">
+                            <p class="text-xs text-gray-500 mt-1">2-50 characters</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-2">State *</label>
                             <input type="text" name="state" required 
+                                minlength="2"
+                                maxlength="50"
                                 class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"
                                 placeholder="State">
+                            <p class="text-xs text-gray-500 mt-1">2-50 characters</p>
                         </div>
                     </div>
 
@@ -385,25 +414,37 @@
                     <div>
                         <label class="block text-sm font-medium mb-2">Full Name *</label>
                         <input type="text" name="name" required 
+                            minlength="2"
+                            maxlength="50"
                             class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                        <p class="text-xs text-gray-500 mt-1">2-50 characters</p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-2">Street Address *</label>
                         <textarea name="streetAddress" required rows="2"
+                            minlength="10"
+                            maxlength="200"
                             class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">10-200 characters</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium mb-2">City *</label>
                             <input type="text" name="city" required 
+                                minlength="2"
+                                maxlength="50"
                                 class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                            <p class="text-xs text-gray-500 mt-1">2-50 characters</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-2">State *</label>
                             <input type="text" name="state" required 
+                                minlength="2"
+                                maxlength="50"
                                 class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-cyan-400 text-white">
+                            <p class="text-xs text-gray-500 mt-1">2-50 characters</p>
                         </div>
                     </div>
 

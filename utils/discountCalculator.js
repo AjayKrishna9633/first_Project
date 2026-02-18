@@ -10,51 +10,50 @@ export const calculateBestDiscount = (regularPrice, salePrice, category) => {
 
    
     let categoryDiscount = 0;
-    let categoryFinalPrice = regularPrice; // Start from regular price
+    let categoryFinalPrice = regularPrice;
 
     if (category && category.offerType && category.offerType !== 'none' && category.offerValue > 0) {
         if (category.offerType === 'percentage') {
-            // Apply percentage discount to REGULAR price
             categoryDiscount = (regularPrice * category.offerValue) / 100;
             categoryFinalPrice = regularPrice - categoryDiscount;
         } else if (category.offerType === 'flat') {
-            // Apply flat discount to REGULAR price
             categoryDiscount = category.offerValue;
             categoryFinalPrice = regularPrice - categoryDiscount;
         }
     }
 
 
-    let finalPrice, discountAmount, discountPercentage, appliedOffer;
+    let finalPrice, discountAmount, discountPercentage, appliedOffer, appliedOfferDetails;
 
     if (categoryFinalPrice < salePrice && categoryFinalPrice > 0) {
-       
         finalPrice = categoryFinalPrice;
-     
         discountAmount = regularPrice - categoryFinalPrice;
-       
-        // Show the category offer percentage, not the total discount from regular price
         discountPercentage = category.offerType === 'percentage' ? category.offerValue : 
                             (salePrice > 0 ? ((categoryDiscount / salePrice) * 100) : 0);
         appliedOffer = 'category';
+        appliedOfferDetails = {
+            type: category.offerType,
+            value: category.offerValue,
+            name: category.name || 'Category Offer'
+        };
     } else {
-       
         finalPrice = salePrice;
         discountAmount = productDiscount;
         discountPercentage = productDiscountPercentage;
         appliedOffer = 'product';
+        appliedOfferDetails = null;
     }
 
     finalPrice = Math.max(0, finalPrice);
     discountAmount = Math.max(0, discountAmount);
-   
     discountPercentage = Math.max(0, Math.min(100, discountPercentage));
 
     return {
         finalPrice: Math.round(finalPrice),
         discountAmount: Math.round(discountAmount),
         discountPercentage: discountPercentage, 
-        appliedOffer, 
+        appliedOffer,
+        appliedOfferDetails,
         productDiscount: Math.round(productDiscount),
         categoryDiscount: Math.round(categoryDiscount)
     };

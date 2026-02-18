@@ -5,11 +5,10 @@ import { ObjectId } from "mongodb";
 import { StatusCodes } from 'http-status-codes';
 import { applyBestDiscountToProduct } from '../../utils/discountCalculator.js';
 
-// Shop Page
 const getShopPage = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 12; // Products per page
+        const limit = 12;
         const skip = (page - 1) * limit;
 
         const search = req.query.search || "";
@@ -24,17 +23,14 @@ const getShopPage = async (req, res) => {
             status: 'Available'
         };
 
-        // Search filter
         if (search) {
             query.productName = { $regex: search, $options: 'i' };
         }
 
-        // Category filter
         if (categoryFilter && categoryFilter !== 'all') {
             query.category = new ObjectId(categoryFilter);
         }
 
-        // Sort options
         let sortOption = {};
         switch (sortBy) {
             case 'price-low':
@@ -104,8 +100,7 @@ const getShopPage = async (req, res) => {
             });
         }
 
-        // Filter by price range if specified
-      if (minPrice > 0 || maxPrice > 0) {
+        if (minPrice > 0 || maxPrice > 0) {
     products = products.filter(product => {
         if (product.variants && product.variants.length > 0) {
             return product.variants.some(variant => {
@@ -129,7 +124,6 @@ const getShopPage = async (req, res) => {
         const totalProducts = await Product.countDocuments(query);
         const totalPages = Math.ceil(totalProducts / limit);
 
-        // Fetch all categories for filter
         const categories = await Category.find({ isListed: true });
 
         // Get all unique colors from variants
@@ -155,7 +149,6 @@ const getShopPage = async (req, res) => {
                     wishlistProductIds = wishlist.products.map(item => item.productId.toString());
                 }
             } catch (error) {
-                // Silently handle wishlist fetch errors
             }
         }
 
@@ -182,12 +175,10 @@ const getShopPage = async (req, res) => {
     }
 };
 
-// Product Detail Page
 const getProductDetail = async (req, res) => {
     try {
         const productId = req.params.id;
 
-        // Fetch product with variants and category
         const product = await Product.findById(productId)
             .populate('category', 'name offerType offerValue')
             .populate('variants');
@@ -196,10 +187,8 @@ const getProductDetail = async (req, res) => {
             return res.status(StatusCodes.NOT_FOUND).redirect('/shop');
         }
 
-        // Apply best discount calculation
         const productWithDiscount = applyBestDiscountToProduct(product.toObject());
 
-        // Fetch related products (same category, exclude current)
         let relatedProducts = await Product.find({
             category: product.category._id,
             _id: { $ne: productId },
@@ -210,10 +199,8 @@ const getProductDetail = async (req, res) => {
             .populate('variants')
             .limit(4);
 
-        // Apply discount to related products
         relatedProducts = relatedProducts.map(p => applyBestDiscountToProduct(p.toObject()));
 
-        // Check if product is in wishlist
         let isInWishlist = false;
         if (req.session.user) {
             const Wishlist = (await import('../../models/wishlist.js')).default;

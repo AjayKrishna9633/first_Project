@@ -5,17 +5,15 @@ const AddressPage = async(req, res) => {
     try {
         const userId = req.session.user.id;
         const page = parseInt(req.query.page) || 1;
-        const limit = 2; // Show 6 addresses per page
+        const limit = 2;
         const skip = (page - 1) * limit;
 
         const userAddresses = await Address.findOne({ userId: userId });
         const allAddresses = userAddresses ? userAddresses.address : [];
         
-        // Calculate pagination
         const totalAddresses = allAddresses.length;
         const totalPages = Math.ceil(totalAddresses / limit);
         
-        // Get addresses for current page
         const addresses = allAddresses.slice(skip, skip + limit);
 
         res.render('user/addressPage', {
@@ -44,6 +42,34 @@ const addAddress = async (req, res) => {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'All required fields must be filled'
+            });
+        }
+
+        if (name.trim().length < 2 || name.trim().length > 50) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Name must be between 2 and 50 characters'
+            });
+        }
+
+        if (streetAddress.trim().length < 10 || streetAddress.trim().length > 200) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Street address must be between 10 and 200 characters'
+            });
+        }
+
+        if (city.trim().length < 2 || city.trim().length > 50) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'City must be between 2 and 50 characters'
+            });
+        }
+
+        if (state.trim().length < 2 || state.trim().length > 50) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'State must be between 2 and 50 characters'
             });
         }
 
@@ -143,11 +169,38 @@ const updateAddress = async(req, res) => {
         const addressId = req.params.id;
         const { name, streetAddress, city, state, pinCode, phone, altPhone, addressType } = req.body;
 
-        // Validation
         if (!name || !streetAddress || !city || !state || !pinCode || !phone || !addressType) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'All required fields must be filled'
+            });
+        }
+
+        if (name.trim().length < 2 || name.trim().length > 50) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Name must be between 2 and 50 characters'
+            });
+        }
+
+        if (streetAddress.trim().length < 10 || streetAddress.trim().length > 200) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Street address must be between 10 and 200 characters'
+            });
+        }
+
+        if (city.trim().length < 2 || city.trim().length > 50) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'City must be between 2 and 50 characters'
+            });
+        }
+
+        if (state.trim().length < 2 || state.trim().length > 50) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'State must be between 2 and 50 characters'
             });
         }
 
@@ -247,7 +300,6 @@ const setDefaultAddress = async(req, res) => {
         const userId = req.session.user.id;
         const addressId = req.params.id;
 
-        // Find the user's address document
         const userAddresses = await Address.findOne({ userId });
         
         if (!userAddresses) {
@@ -257,7 +309,6 @@ const setDefaultAddress = async(req, res) => {
             });
         }
 
-        // Check if the address exists
         const addressExists = userAddresses.address.some(addr => addr._id.toString() === addressId);
         
         if (!addressExists) {
@@ -267,12 +318,10 @@ const setDefaultAddress = async(req, res) => {
             });
         }
 
-        // Set all addresses to non-default
         userAddresses.address.forEach(addr => {
             addr.isDefault = false;
         });
 
-        // Set the selected address as default
         const selectedAddress = userAddresses.address.find(addr => addr._id.toString() === addressId);
         if (selectedAddress) {
             selectedAddress.isDefault = true;

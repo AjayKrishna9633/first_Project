@@ -18,26 +18,21 @@ const getUserOrders = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
         
-      
         const { status, search } = req.query;
-        
 
         let filter = { userId };
         if (status && status !== 'all') {
             filter.orderStatus = status;
         }
-       
 
-console.log('Search filter:', filter);
+        console.log('Search filter:', filter);
 
-       
         if (search) {
             filter.$or = [
                 { orderNumber: { $regex: search, $options: 'i' } }
             ];
         }
         
-       
         const orders = await Order.find(filter)
             .populate({
                 path: 'items.productId',
@@ -51,11 +46,9 @@ console.log('Search filter:', filter);
             .skip(skip)
             .limit(limit);
         
-        // Get total count for pagination
         const totalOrders = await Order.countDocuments(filter);
         const totalPages = Math.ceil(totalOrders / limit);
         
-        // Get order statistics for user
         const stats = await getUserOrderStats(userId);
         
         res.render('user/orders', {
@@ -108,7 +101,6 @@ const getOrderDetails = async (req, res) => {
             });
         }
         
-        // Calculate order progress
         const orderProgress = calculateOrderProgress(order.orderStatus);
         
         res.render('user/orderDetails', { 
@@ -138,7 +130,7 @@ const getOrderDetails = async (req, res) => {
             return res.status(StatusCodes.NOT_FOUND).json({ success: false, message: 'Order not found' });
         }
         
-       
+        
         if (!['pending', 'confirmed','processing'].includes(order.orderStatus)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ 
                 success: false, 
@@ -146,26 +138,23 @@ const getOrderDetails = async (req, res) => {
             });
         }
         
-       
+        
         order.orderStatus = 'cancelled';
         order.cancellationReason = reason || 'No reason provided';
         order.cancelledAt = new Date();
         order.updatedAt = new Date();
         
-        // Handle Refund for Prepaid Orders
+       
         let refundAmount = 0;
         
-        // Check if order was paid online (not COD)
         if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
             refundAmount += order.totalAmount;
         }
         
-        // Add wallet amount used
         if (order.walletAmountUsed > 0) {
             refundAmount += order.walletAmountUsed;
         }
         
-        // Process refund if there's an amount to refund
         if (refundAmount > 0) {
             const user = await User.findById(userId);
             user.Wallet += refundAmount;
@@ -188,7 +177,6 @@ const getOrderDetails = async (req, res) => {
 
         await order.save();
         
-        // Restore product stock
         await restoreProductStock(order.items);
         
         res.json({
@@ -298,13 +286,11 @@ const restoreProductStock = async (orderItems) => {
 };
 
 
-// Add this function to your existing orderController
 const downloadInvoice = async (req, res) => {
     try {
         const userId = req.session.user.id;
         const { id } = req.params;
         
-        // Get the order with populated data
         const order = await Order.findOne({ _id: id, userId })
             .populate({
                 path: 'items.productId',
@@ -322,7 +308,6 @@ const downloadInvoice = async (req, res) => {
             });
         }
         
-        // Only allow invoice download for delivered orders
         if (order.orderStatus !== 'delivered') {
             return res.status(StatusCodes.BAD_REQUEST).json({ 
                 success: false, 
@@ -330,16 +315,13 @@ const downloadInvoice = async (req, res) => {
             });
         }
         
-        // Generate invoice
         const invoiceService = new InvoiceService();
         const pdfBuffer = await invoiceService.generateInvoice(order, req.session.user);
         
-        // Set response headers for PDF download
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderNumber}.pdf`);
         res.setHeader('Content-Length', pdfBuffer.length);
         
-        // Send the PDF
         res.send(pdfBuffer);
         
     } catch (error) {
@@ -379,9 +361,8 @@ const requestReturn = async (req, res) => {
             });
         }
 
-    
         const deliveryDate = order.updatedAt;
-        const returnWindow = 7 * 24 * 60 * 60 * 1000; // 7 days
+        const returnWindow = 7 * 24 * 60 * 60 * 1000;
         const currentDate = new Date();
 
         if (currentDate - deliveryDate > returnWindow) {
@@ -439,7 +420,6 @@ const updateReturnStatus = async (req, res) => {
             order.refundStatus = 'processed';
             order.adminReturnNotes = adminNotes;
 
-         
             for (const item of order.items) {
                 await Product.findOneAndUpdate(
                     { _id: item.productId, 'variants._id': item.variantId },

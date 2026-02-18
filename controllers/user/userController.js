@@ -94,7 +94,6 @@ export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Validation
         if (!email || !password) {
             return res.render('user/login', {
                 message: 'Email and password are required.',
@@ -105,7 +104,6 @@ export const loginUser = async (req, res) => {
 
         const normalizedEmail = email.trim().toLowerCase();
 
-        // Find user
         const findUser = await User.findOne({ 
             email: normalizedEmail,
             isAdmin: false 
@@ -119,7 +117,6 @@ export const loginUser = async (req, res) => {
             });
         }
 
-        // Check if blocked
         if (findUser.isBlocked) {
             return res.render('user/login', {
                 message: 'Your account has been blocked. Please contact support.',
@@ -128,7 +125,6 @@ export const loginUser = async (req, res) => {
             });
         }
 
-        // Check if Google OAuth user
         if (findUser.googleId && !findUser.password) {
             return res.render('user/login', {
                 message: 'Please sign in with Google',
@@ -137,7 +133,6 @@ export const loginUser = async (req, res) => {
             });
         }
 
-        // Verify password
         const passwordMatch = await comparePassword(password, findUser.password);
         
         if (!passwordMatch) {
@@ -148,7 +143,6 @@ export const loginUser = async (req, res) => {
             });
         }
 
-        // Set session
         req.session.user = {
             id: findUser._id,
             fullName: findUser.fullName,
@@ -156,7 +150,6 @@ export const loginUser = async (req, res) => {
             role: 'user'
         };
 
-        // Save session and redirect
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
@@ -194,7 +187,6 @@ export const registerUser = async (req, res) => {
     try {
         const { name, password, confirmPassword, email, referralCode } = req.body;
 
-        // Enhanced validation
         if (!name || !email || !password || !confirmPassword) {
             return res.render('user/signup', {
                 message: 'All fields are required.',
@@ -211,7 +203,6 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        // Email format validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.render('user/signup', {
@@ -228,7 +219,6 @@ export const registerUser = async (req, res) => {
                 oldInput: { name, email, referralCode }
             });
         }
-        
 
         if (password !== confirmPassword) {
             return res.render('user/signup', {
@@ -240,7 +230,6 @@ export const registerUser = async (req, res) => {
 
         const normalizedEmail = email.trim().toLowerCase();
 
-        // Check if user exists
         const existingUser = await User.findOne({ email: normalizedEmail });
         
         if (existingUser) {
@@ -251,7 +240,6 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        // Validate Referral Code if provided
         if (referralCode) {
             const validReferrer = await User.findOne({ referralCode: referralCode });
             if (!validReferrer) {
@@ -263,11 +251,9 @@ export const registerUser = async (req, res) => {
             }
         }
 
-        // Generate OTP
         const otp = generateOtp();
         const otpExpires = Date.now() + 5 * 60 * 1000; 
 
-        // Send OTP email
         const emailSent = await sendEmailVerification(normalizedEmail, otp);
         
         if (!emailSent) {
@@ -278,10 +264,8 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        // Hash password
         const hashedPassword = await hashPassword(password);
 
-        // Store in session
         req.session.userOtp = {
             code: otp,
             email: normalizedEmail,
@@ -295,7 +279,6 @@ export const registerUser = async (req, res) => {
             referralCode: referralCode || null
         };
 
-        // Save session and redirect
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
@@ -337,17 +320,14 @@ export const getOtp = (req, res) => {
 };
 
 
-import Offer from "../../models/OfferModel.js";
 import WalletTransaction from "../../models/WalletTransaction.js";
 
 export const verifyOtp = async (req, res) => {
     try {
         let { otp } = req.body;
 
-        // Handle array inputs
         otp = Array.isArray(otp) ? otp.join('') : otp;
 
-        // Validate inputs
         if (!otp) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
@@ -355,7 +335,6 @@ export const verifyOtp = async (req, res) => {
             });
         }
 
-        // Validate OTP session data
         if (!req.session.userOtp) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
@@ -377,7 +356,6 @@ export const verifyOtp = async (req, res) => {
             });
         }
 
-        // Validate signup data exists
         if (!req.session.userData) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
@@ -387,7 +365,6 @@ export const verifyOtp = async (req, res) => {
 
         const { fullName, email, password, referralCode } = req.session.userData;
 
-       
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             delete req.session.userOtp;
@@ -398,43 +375,27 @@ export const verifyOtp = async (req, res) => {
             });
         }
 
-      
         const userData = {
             fullName: fullName.trim(),
             email: email.trim(),
             password,
             isBlocked: false,
-            referralCode: 'REF' + Math.random().toString(36).substring(2, 8).toUpperCase() // Generate unique referral code
+            referralCode: 'REF' + Math.random().toString(36).substring(2, 8).toUpperCase()
         };
 
-        // Handle Referral Logic
         let referrer = null;
-        let referralReward = 0;
-
-        // Check for active referral offer
-        const activeReferralOffer = await Offer.findOne({
-            targetType: 'referral',
-            startDate: { $lte: new Date() },
-            endDate: { $gte: new Date() },
-            isActive: true
-        });
-
-        if (activeReferralOffer) {
-            referralReward = activeReferralOffer.value;
-        }
+        const referralReward = 100;
 
         if (referralCode) {
             referrer = await User.findOne({ referralCode: referralCode });
             if (referrer) {
                 userData.referredBy = referralCode;
                 
-                // Credit Referrer
                 if (referralReward > 0) {
                     referrer.Wallet += referralReward;
                     referrer.referralEarnings += referralReward;
                     await referrer.save();
 
-                    // Log transaction for referrer
                     await WalletTransaction.create({
                         userId: referrer._id,
                         amount: referralReward,
@@ -448,21 +409,14 @@ export const verifyOtp = async (req, res) => {
             }
         }
 
-        // Credit New User (Signup Bonus via Referral)
-        // Usually, new user also gets a bonus if they use a code, or just for signing up?
-        // Let's assume the offer applies to both for now, or just referrer?
-        // "Referral Logic" often implies benefit for both.
-        // Let's give the new user the same reward if they used a code.
         if (referrer && referralReward > 0) {
             userData.Wallet = referralReward;
-            // Transaction will be created after saving user
         }
 
         const user = new User(userData);
         const savedUser = await user.save();
 
         if (referrer && referralReward > 0) {
-             // Log transaction for new user
              await WalletTransaction.create({
                 userId: savedUser._id,
                 amount: referralReward,
@@ -474,7 +428,6 @@ export const verifyOtp = async (req, res) => {
             });
         }
 
-        
         req.session.user = {
             id: savedUser._id,
             fullName: savedUser.fullName,
@@ -482,11 +435,9 @@ export const verifyOtp = async (req, res) => {
             role: 'user'
         };
 
-       
         delete req.session.userOtp;
         delete req.session.userData;
 
-        
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
@@ -535,11 +486,9 @@ export const resendOtp = async (req, res) => {
             });
         }
 
-        
         const otp = generateOtp();
         const otpExpires = Date.now() + 5 * 60 * 1000;
 
-        
         const emailSent = await sendEmailVerification(email, otp);
 
         if (!emailSent) {
@@ -549,14 +498,12 @@ export const resendOtp = async (req, res) => {
             });
         }
 
-       
         req.session.userOtp = {
             code: otp,
             email,
             expires: otpExpires
         };
 
-        
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
@@ -604,7 +551,6 @@ export const sendPasswordResetOTP = async (req, res) => {
         }
 
         const normalizedEmail = email.trim().toLowerCase();
-
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(normalizedEmail)) {
@@ -675,7 +621,6 @@ export const verifyResetOTP = async (req, res) => {
     try {
         let { otp } = req.body;
 
-        // Handle array inputs
         otp = Array.isArray(otp) ? otp.join('') : otp;
 
         if (!otp) {
@@ -851,16 +796,13 @@ const updateProfile = async(req,res)=>{
         const userId = req.session.user.id;
         const {fullName , phone} = req.body;
 
-        // Update user in database
         await User.findByIdAndUpdate(userId,{
             fullName:fullName,
             phone:phone
         });
 
-        // Fetch the updated user data
         const updatedUser = await User.findById(userId);
 
-        // Update session
         req.session.user.fullName = updatedUser.fullName;
 
         return res.render('user/profile', {
@@ -905,7 +847,6 @@ const changePassword = async(req, res) => {
         const { currentPassword, newPassword } = req.body;
         const userId = req.session.user.id;
 
-       
         const user = await User.findById(userId);
 
         if (!user) {
@@ -915,7 +856,6 @@ const changePassword = async(req, res) => {
             });
         }
 
-   
         if (!user.password) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
@@ -932,7 +872,6 @@ const changePassword = async(req, res) => {
             });
         }
 
-      
         const isSamePassword = await comparePassword(newPassword, user.password);
         
         if (isSamePassword) {
@@ -944,7 +883,6 @@ const changePassword = async(req, res) => {
 
         const hashedPassword = await hashPassword(newPassword);
 
-        // Update password
         user.password = hashedPassword;
         await user.save();
 
