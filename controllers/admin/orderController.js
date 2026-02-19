@@ -163,17 +163,18 @@ console.error('Get order details error:', error);
             updateData.orderStatus = orderStatus;
         }
         
-        // if (paymentStatus) {
-        //     // Prevent changing payment status for online/wallet payments
-        //     if ((currentOrder.paymentMethod === 'online' || currentOrder.paymentMethod === 'wallet') && 
-        //         currentOrder.paymentStatus === 'paid') {
-        //         return res.json({ 
-        //             success: false, 
-        //             message: 'Cannot change payment status for online/wallet payments that are already paid' 
-        //         });
-        //     }
-        //     updateData.paymentStatus = paymentStatus;
-        // }
+        if (paymentStatus) {
+            // Prevent changing payment status for online/wallet payments that are already paid
+            if ((currentOrder.paymentMethod === 'online' || currentOrder.paymentMethod === 'wallet') && 
+                currentOrder.paymentStatus === 'paid' && 
+                paymentStatus !== 'paid') {  // Only block if trying to CHANGE from paid
+                return res.json({ 
+                    success: false, 
+                    message: 'Cannot change payment status for online/wallet payments that are already paid' 
+                });
+            }
+            updateData.paymentStatus = paymentStatus;
+        }
         
         if (notes) {
             updateData.adminNotes = notes;

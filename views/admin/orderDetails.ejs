@@ -8,6 +8,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/public/css/text-wrap.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Helper function to format return reasons
+        function formatReturnReason(reason) {
+            const reasonMap = {
+                'DEFECTIVE': 'Defective product',
+                'DAMAGED_SHIPPING': 'Damaged during shipping',
+                'WRONG_ITEM': 'Wrong item received',
+                'NO_LONGER_NEEDED': 'No longer needed',
+                'BETTER_PRICE': 'Found better price elsewhere',
+                'ORDERED_MISTAKE': 'Ordered by mistake',
+                'LATE_ARRIVAL': 'Late arrival',
+                'OTHER': 'Other'
+            };
+            return reasonMap[reason] || reason;
+        }
+    </script>
     <style>
         /* Tooltip styling for formatted numbers */
         [title] {
@@ -157,7 +173,9 @@
                                             </div>
                                         </td>
                                         <td class="px-4 py-4">
-                                            <div class="text-sm text-gray-900"><%= order.returnReason %></div>
+                                            <div class="text-sm text-gray-900">
+                                                <script>document.write(formatReturnReason('<%= order.returnReason %>'));</script>
+                                            </div>
                                             <% if (order.returnNotes) { %>
                                                 <div class="text-xs text-gray-500 mt-1"><%= order.returnNotes %></div>
                                             <% } %>
@@ -403,11 +421,18 @@
                 `,
                 focusConfirm: false,
                 preConfirm: () => {
-                    return {
+                    const paymentStatusField = document.getElementById('paymentStatus');
+                    const result = {
                         orderStatus: document.getElementById('orderStatus').value,
-                        paymentStatus: document.getElementById('paymentStatus').value,
                         notes: document.getElementById('adminNotes').value
+                    };
+                    
+                    // Only include paymentStatus if the field is not disabled
+                    if (!paymentStatusField.disabled) {
+                        result.paymentStatus = paymentStatusField.value;
                     }
+                    
+                    return result;
                 }
             });
 
