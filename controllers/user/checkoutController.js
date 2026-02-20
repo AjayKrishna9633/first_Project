@@ -10,6 +10,16 @@ import razorpayInstance from '../../config/razorpay.js';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { applyBestDiscountToProduct } from '../../utils/discountCalculator.js';
+import { 
+    CART_MESSAGES, 
+    PRODUCT_MESSAGES, 
+    ADDRESS_MESSAGES, 
+    ORDER_MESSAGES, 
+    PAYMENT_MESSAGES,
+    COUPON_MESSAGES,
+    CHECKOUT_MESSAGES,
+    formatMessage 
+} from '../../constants/messages.js';
 dotenv.config();
 
 const getCheckOut = async(req,res)=>{
@@ -132,7 +142,7 @@ const applyCoupon = async (req, res) => {
         if (!couponCode) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Coupon code is required'
+                message: COUPON_MESSAGES.COUPON_CODE_REQUIRED
             });
         }
 
@@ -141,21 +151,21 @@ const applyCoupon = async (req, res) => {
         if (!coupon) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Invalid coupon code'
+                message: COUPON_MESSAGES.INVALID_COUPON
             });
         }
 
         if (new Date() > coupon.endDate) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Coupon has expired'
+                message: COUPON_MESSAGES.COUPON_EXPIRED
             });
         }
         
         if (new Date() < coupon.startDate) {
              return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Coupon is not yet active'
+                message: COUPON_MESSAGES.COUPON_NOT_ACTIVE
             });
         }
 
@@ -198,7 +208,7 @@ const applyCoupon = async (req, res) => {
 
         res.status(StatusCodes.OK).json({
             success: true,
-            message: 'Coupon applied successfully',
+            message: COUPON_MESSAGES.COUPON_APPLIED,
             discountAmount: Math.round(discountAmount),
             newTotal: Math.round(finalAmount),
             couponCode: coupon.code
@@ -208,7 +218,7 @@ const applyCoupon = async (req, res) => {
         console.error('Apply coupon error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to apply coupon'
+            message: COUPON_MESSAGES.COUPON_APPLY_FAILED
         });
     }
 };
@@ -216,7 +226,7 @@ const applyCoupon = async (req, res) => {
 const removeCoupon = async (req, res) => {
     res.status(StatusCodes.OK).json({
         success: true,
-        message: 'Coupon removed'
+        message: COUPON_MESSAGES.COUPON_REMOVED
     });
 };
 
@@ -240,7 +250,7 @@ const getAvailableCoupons = async (req, res) => {
         console.error('Get available coupons error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to fetch coupons'
+            message: COUPON_MESSAGES.COUPON_FETCH_FAILED
         });
     }
 };
@@ -319,7 +329,7 @@ const placeOrder=async(req,res)=>{
             if (!addressDoc) {
                 return res.status(StatusCodes.NOT_FOUND).json({
                     success: false,
-                    message: 'No addresses found'
+                    message: ADDRESS_MESSAGES.NO_ADDRESSES_FOUND
                 });
             }
             
@@ -327,7 +337,7 @@ const placeOrder=async(req,res)=>{
             if (!address) {
                 return res.status(StatusCodes.NOT_FOUND).json({
                     success: false,
-                    message: 'Invalid address selected'
+                    message: ADDRESS_MESSAGES.INVALID_ADDRESS_SELECTED
                 });
             }
 
@@ -346,7 +356,7 @@ const placeOrder=async(req,res)=>{
         } else {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Shipping address is required'
+                message: ADDRESS_MESSAGES.ADDRESS_REQUIRED
             });
         }
 
@@ -388,6 +398,14 @@ const placeOrder=async(req,res)=>{
                      totalAmount -= user.Wallet;
                  }
              }
+        }
+
+        // Validate COD limit - Orders above Rs 1000 cannot use COD
+        if (paymentMethod === 'cod' && (subtotal + shippingCost + tax - discountAmount) > 1000) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: PAYMENT_MESSAGES.COD_LIMIT_EXCEEDED
+            });
         }
 
         const orderNumber = 'ORD' + Date.now() + Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -510,7 +528,7 @@ const placeOrder=async(req,res)=>{
 
         res.status(StatusCodes.CREATED).json({
             success: true,
-            message: 'Order created',
+            message: ORDER_MESSAGES.ORDER_CREATED,
             orderNumber: order.orderNumber,
             orderId: order._id,
             totalAmount: Math.round(totalAmount),
@@ -522,7 +540,7 @@ const placeOrder=async(req,res)=>{
         console.error('Place order error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to place order'
+            message: ORDER_MESSAGES.ORDER_FAILED
         });
     }
 };
@@ -567,7 +585,7 @@ const verifyPayment = async (req, res) => {
                  
                  return res.status(StatusCodes.OK).json({
                      success: true,
-                     message: 'Payment verified successfully'
+                     message: PAYMENT_MESSAGES.PAYMENT_SUCCESS
                  });
              }
         }
@@ -592,7 +610,7 @@ const verifyPayment = async (req, res) => {
 
         return res.status(StatusCodes.BAD_REQUEST).json({
             success: false,
-            message: 'Payment verification failed'
+            message: PAYMENT_MESSAGES.PAYMENT_FAILED
         });
 
     } catch (error) {
@@ -639,7 +657,7 @@ const cancelPayment = async (req, res) => {
             // Mark all items as cancelled
             order.items.forEach(item => {
                 item.status = 'cancelled';
-                item.cancellationReason = 'Payment cancelled';
+                item.cancellationReason = PAYMENT_MESSAGES.PAYMENT_CANCELLED;
                 item.cancelledAt = new Date();
             });
             
@@ -650,7 +668,7 @@ const cancelPayment = async (req, res) => {
             
             return res.status(StatusCodes.OK).json({
                 success: true,
-                message: 'Payment cancelled'
+                message: PAYMENT_MESSAGES.PAYMENT_CANCELLED
             });
         }
         
@@ -663,7 +681,7 @@ const cancelPayment = async (req, res) => {
         console.error('Cancel payment error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to cancel payment'
+            message: PAYMENT_MESSAGES.PAYMENT_CANCEL_FAILED
         });
     }
 };

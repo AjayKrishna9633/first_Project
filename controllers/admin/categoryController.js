@@ -60,7 +60,7 @@ const addCategory = async (req, res) => {
         if (!name || !description) {
             return res.render('admin/addCategory', {
                 admin: req.session.admin,
-                message: 'All fields are required',
+                message: AUTH_MESSAGES.ALL_FIELDS_REQUIRED,
                 isError: true
             });
         }
@@ -81,7 +81,7 @@ const addCategory = async (req, res) => {
         if (description.trim().length < 10 || description.trim().length > 500) {
             return res.render('admin/addCategory', {
                 admin: req.session.admin,
-                message: 'Description must be between 10 and 500 characters',
+                message: CATEGORY_MESSAGES.CATEGORY_DESCRIPTION_LENGTH,
                 isError: true
             });
         }
@@ -134,17 +134,17 @@ const updateCategory = async (req, res) => {
         const { name, description, offerType, offerValue } = req.body;
 
         if (!name || !description) {
-            return res\.status(StatusCodes.BAD_REQUEST).json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'All fields are required'
+                message: AUTH_MESSAGES.ALL_FIELDS_REQUIRED
             });
         }
 
         // Validate description length
         if (description.trim().length < 10 || description.trim().length > 500) {
-            return res\.status(StatusCodes.BAD_REQUEST).json({
+            return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Description must be between 10 and 500 characters'
+                message: CATEGORY_MESSAGES.CATEGORY_DESCRIPTION_LENGTH
             });
         }
 
@@ -176,7 +176,7 @@ const updateCategory = async (req, res) => {
         console.log('Error in updateCategory:', error);
         res.json({
             success: false,
-            message: 'Failed to update category'
+            message: CATEGORY_MESSAGES.CATEGORY_UPDATE_FAILED
         });
     }
 };
@@ -189,7 +189,7 @@ const toggleListCategory = async (req, res) => {
         if (!category) {
             return res.json({
                 success: false,
-                message: 'Category not found'
+                message: CATEGORY_MESSAGES.CATEGORY_NOT_FOUND
             });
         }
 
@@ -219,4 +219,6 @@ export default {
     updateCategory,
     toggleListCategory
 };
+
+
 

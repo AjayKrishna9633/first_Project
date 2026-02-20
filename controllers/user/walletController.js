@@ -6,6 +6,7 @@ import razorpayInstance from '../../config/razorpay.js';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { generateReferralCode, isValidReferralCodeFormat, REFERRAL_REWARDS, WALLET_LIMITS } from '../../utils/referralUtils.js';
+import { USER_MESSAGES, PAYMENT_MESSAGES, REFERRAL_MESSAGES, formatMessage } from '../../constants/messages.js';
 dotenv.config();
 
 // Get Wallet Page
@@ -134,7 +135,7 @@ const getWallet = async (req, res) => {
     } catch (error) {
         console.error('Get wallet error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('user/error', {
-            message: 'Failed to load wallet page'
+            message: PAYMENT_MESSAGES.WALLET_LOAD_FAILED
         });
     }
 };
@@ -164,7 +165,7 @@ const addMoney = async (req, res) => {
         if (!user) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'User not found'
+                message: USER_MESSAGES.USER_NOT_FOUND
             });
         }
 
@@ -202,7 +203,7 @@ const addMoney = async (req, res) => {
         console.error('Add money error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to initiate payment'
+            message: PAYMENT_MESSAGES.PAYMENT_INITIATE_FAILED
         });
     }
 };
@@ -223,7 +224,7 @@ const verifyPayment = async (req, res) => {
         if (expectedSignature !== razorpay_signature) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Payment verification failed'
+                message: PAYMENT_MESSAGES.PAYMENT_FAILED
             });
         }
 
@@ -249,7 +250,7 @@ const verifyPayment = async (req, res) => {
 
         res.status(StatusCodes.OK).json({
             success: true,
-            message: 'Money added successfully',
+            message: PAYMENT_MESSAGES.MONEY_ADDED,
             newBalance: user.Wallet
         });
 
@@ -257,7 +258,7 @@ const verifyPayment = async (req, res) => {
         console.error('Verify payment error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Payment verification failed'
+            message: PAYMENT_MESSAGES.PAYMENT_FAILED
         });
     }
 };
@@ -271,14 +272,14 @@ const applyReferral = async (req, res) => {
         if (!referralCode || referralCode.trim().length !== 6) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Invalid referral code format'
+                message: REFERRAL_MESSAGES.INVALID_FORMAT
             });
         }
 
         if (!isValidReferralCodeFormat(referralCode)) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Referral code must be 6 alphanumeric characters'
+                message: REFERRAL_MESSAGES.INVALID_LENGTH
             });
         }
 
@@ -287,7 +288,7 @@ const applyReferral = async (req, res) => {
         if (!user) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'User not found'
+                message: USER_MESSAGES.USER_NOT_FOUND
             });
         }
 
@@ -295,7 +296,7 @@ const applyReferral = async (req, res) => {
         if (user.hasUsedReferral) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'You have already used a referral code. Only one referral code can be used per account.'
+                message: REFERRAL_MESSAGES.ALREADY_USED
             });
         }
 
@@ -303,7 +304,7 @@ const applyReferral = async (req, res) => {
         if (user.referralCode === referralCode.toUpperCase()) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'You cannot use your own referral code'
+                message: REFERRAL_MESSAGES.CANNOT_USE_OWN
             });
         }
 
@@ -313,7 +314,7 @@ const applyReferral = async (req, res) => {
         if (!referrer) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Invalid referral code'
+                message: REFERRAL_MESSAGES.INVALID_CODE
             });
         }
 
@@ -360,7 +361,7 @@ const applyReferral = async (req, res) => {
         console.error('Apply referral error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to apply referral code'
+            message: REFERRAL_MESSAGES.APPLY_FAILED
         });
     }
 };
@@ -371,3 +372,4 @@ export default {
     verifyPayment,
     applyReferral
 };
+

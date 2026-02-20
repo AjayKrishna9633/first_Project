@@ -1,5 +1,6 @@
 import Wishlist from '../../models/wishlist.js';
 import Product from '../../models/porductsModal.js';
+import { WISHLIST_MESSAGES, PRODUCT_MESSAGES, CART_MESSAGES } from '../../constants/messages.js';
 
 
 
@@ -12,7 +13,7 @@ const addToWishlist = async(req,res)=>{
         if(!product){
             return res.json({
                 success:false,
-                message:'Product not found' 
+                message:PRODUCT_MESSAGES.PRODUCT_NOT_FOUND 
             })
         }
 
@@ -34,7 +35,7 @@ const addToWishlist = async(req,res)=>{
             return res.json({ 
                 success: true, 
                 action: 'removed',
-                message: 'Removed from wishlist',
+                message: WISHLIST_MESSAGES.REMOVED_FROM_WISHLIST,
                 wishlistCount: wishlist.products.length 
             });
         } else {
@@ -45,14 +46,14 @@ const addToWishlist = async(req,res)=>{
             return res.json({ 
                 success: true, 
                 action: 'added',
-                message: 'Added to wishlist',
+                message: WISHLIST_MESSAGES.ADDED_TO_WISHLIST,
                 wishlistCount: wishlist.products.length 
             });
         }
 
     }catch(error){
         console.error('Add to wishlist error:', error);
-        res.json({ success: false, message: 'Failed to update wishlist' });
+        res.json({ success: false, message: WISHLIST_MESSAGES.WISHLIST_UPDATE_FAILED });
     }
 }
 
@@ -103,11 +104,11 @@ const removeFromWishlist = async (req, res) => {
         );
         await wishlist.save();
 
-        res.json({ success: true, message: 'Removed from wishlist' });
+        res.json({ success: true, message: WISHLIST_MESSAGES.REMOVED_FROM_WISHLIST });
 
     } catch (error) {
         console.error('Remove from wishlist error:', error);
-        res.json({ success: false, message: 'Failed to remove' });
+        res.json({ success: false, message: WISHLIST_MESSAGES.WISHLIST_REMOVE_FAILED });
     }
 };
 
@@ -124,7 +125,7 @@ const moveToCart = async (req, res) => {
         if (!product) {
             return res.json({
                 success: false,
-                message: 'Product not found'
+                message: PRODUCT_MESSAGES.PRODUCT_NOT_FOUND
             });
         }
 
@@ -132,14 +133,14 @@ const moveToCart = async (req, res) => {
         if (!variant) {
             return res.json({
                 success: false,
-                message: 'Variant not found'
+                message: PRODUCT_MESSAGES.VARIANT_NOT_FOUND
             });
         }
 
         if (variant.quantity === 0) {
             return res.json({
                 success: false,
-                message: 'Product is out of stock'
+                message: PRODUCT_MESSAGES.OUT_OF_STOCK
             });
         }
 
@@ -172,7 +173,7 @@ const moveToCart = async (req, res) => {
                 if (newQuantity > 3) {
                     return res.json({
                         success: false,
-                        message: 'Maximum 3 units allowed per product'
+                        message: PRODUCT_MESSAGES.MAX_QUANTITY_EXCEEDED
                     });
                 }
 
@@ -206,12 +207,12 @@ const moveToCart = async (req, res) => {
 
         res.json({ 
             success: true, 
-            message: 'Moved to cart successfully' 
+            message: WISHLIST_MESSAGES.MOVED_TO_CART 
         });
 
     } catch (error) {
         console.error('Move to cart error:', error);
-        res.json({ success: false, message: 'Failed to move to cart' });
+        res.json({ success: false, message: WISHLIST_MESSAGES.MOVE_TO_CART_FAILED });
     }
 };
 

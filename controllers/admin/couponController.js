@@ -1,5 +1,6 @@
 import Coupon from '../../models/couponModel.js';
 import StatusCodes from '../../utils/statusCodes.js';
+import { COUPON_MESSAGES, GENERAL_MESSAGES } from '../../constants/messages.js';
 
 // Get all coupons with pagination, search, filter, and sort
 const getCoupons = async (req, res) => {
@@ -82,7 +83,7 @@ const getCoupons = async (req, res) => {
         });
     } catch (error) {
         console.error('Get coupons error:', error);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send('Failed to fetch coupons');
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(COUPON_MESSAGES.COUPON_FETCH_FAILED);
     }
 };
 
@@ -106,7 +107,7 @@ const createCoupon = async (req, res) => {
         if (description.trim().length < 10 || description.trim().length > 200) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Description must be between 10 and 200 characters'
+                message: COUPON_MESSAGES.DESCRIPTION_LENGTH
             });
         }
 
@@ -118,14 +119,14 @@ const createCoupon = async (req, res) => {
             if (parsedOfferPrice <= 0 || parsedOfferPrice >= 100) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
-                    message: 'Percentage discount must be between 1 and 99'
+                    message: COUPON_MESSAGES.PERCENTAGE_RANGE
                 });
             }
 
             if (!parsedMaxDiscount) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
-                    message: 'Maximum discount amount is required for percentage-based coupons to prevent zero-value orders'
+                    message: COUPON_MESSAGES.MAX_DISCOUNT_REQUIRED
                 });
             }
 
@@ -148,7 +149,7 @@ const createCoupon = async (req, res) => {
         if (existingCoupon) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Coupon code already exists'
+                message: COUPON_MESSAGES.COUPON_CODE_EXISTS
             });
         }
 
@@ -172,13 +173,13 @@ const createCoupon = async (req, res) => {
 
         res.status(StatusCodes.CREATED).json({
             success: true,
-            message: 'Coupon created successfully'
+            message: COUPON_MESSAGES.COUPON_CREATED
         });
     } catch (error) {
         console.error('Create coupon error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to create coupon'
+            message: COUPON_MESSAGES.COUPON_CREATE_FAILED
         });
     }
 };
@@ -227,13 +228,13 @@ const deleteCoupon = async (req, res) => {
 
         res.status(StatusCodes.OK).json({
             success: true,
-            message: 'Coupon deleted successfully'
+            message: COUPON_MESSAGES.COUPON_DELETED
         });
     } catch (error) {
         console.error('Delete coupon error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to delete coupon'
+            message: COUPON_MESSAGES.COUPON_DELETE_FAILED
         });
     }
 };
@@ -294,7 +295,7 @@ const updateCoupon = async (req, res) => {
         if (description.trim().length < 10 || description.trim().length > 200) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Description must be between 10 and 200 characters'
+                message: COUPON_MESSAGES.DESCRIPTION_LENGTH
             });
         }
 
@@ -306,14 +307,14 @@ const updateCoupon = async (req, res) => {
             if (parsedOfferPrice <= 0 || parsedOfferPrice >= 100) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
-                    message: 'Percentage discount must be between 1 and 99'
+                    message: COUPON_MESSAGES.PERCENTAGE_RANGE
                 });
             }
 
             if (!parsedMaxDiscount) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
-                    message: 'Maximum discount amount is required for percentage-based coupons to prevent zero-value orders'
+                    message: COUPON_MESSAGES.MAX_DISCOUNT_REQUIRED
                 });
             }
 
@@ -341,7 +342,7 @@ const updateCoupon = async (req, res) => {
             if (existingCoupon) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
-                    message: 'Coupon code already exists'
+                    message: COUPON_MESSAGES.COUPON_CODE_EXISTS
                 });
             }
         }
@@ -363,13 +364,13 @@ const updateCoupon = async (req, res) => {
 
         res.status(StatusCodes.OK).json({
             success: true,
-            message: 'Coupon updated successfully'
+            message: COUPON_MESSAGES.COUPON_UPDATED
         });
     } catch (error) {
         console.error('Update coupon error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to update coupon'
+            message: COUPON_MESSAGES.COUPON_UPDATE_FAILED
         });
     }
 };
@@ -383,3 +384,4 @@ export default {
     getCouponById,
     updateCoupon
 };
+

@@ -1,5 +1,6 @@
 import Address from '../../models/AddressModal.js';
 import StatusCodes from '../../utils/statusCodes.js';
+import { ADDRESS_MESSAGES, GENERAL_MESSAGES } from '../../constants/messages.js';
 
 const AddressPage = async(req, res) => {
     try {
@@ -123,14 +124,14 @@ const addAddress = async (req, res) => {
 
         res.status(StatusCodes.CREATED).json({
             success: true,
-            message: 'Address added successfully'
+            message: ADDRESS_MESSAGES.ADDRESS_ADDED
         });
 
     } catch (error) {
         console.error('Add address error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: error.message || 'Failed to add address'
+            message: error.message || ADDRESS_MESSAGES.ADDRESS_ADD_FAILED
         });
     }
 };
@@ -143,13 +144,13 @@ const getEditAddress = async(req, res) => {
         const userAddresses = await Address.findOne({ userId });
         
         if (!userAddresses) {
-            return res.status(StatusCodes.NOT_FOUND).json({ success: false, message: 'Address not found' });
+            return res.status(StatusCodes.NOT_FOUND).json({ success: false, message: ADDRESS_MESSAGES.ADDRESS_NOT_FOUND });
         }
 
         const address = userAddresses.address.id(addressId);
         
         if (!address) {
-            return res.status(StatusCodes.NOT_FOUND).json({ success: false, message: 'Address not found' });
+            return res.status(StatusCodes.NOT_FOUND).json({ success: false, message: ADDRESS_MESSAGES.ADDRESS_NOT_FOUND });
         }
 
         res.status(StatusCodes.OK).json({
@@ -246,12 +247,12 @@ const updateAddress = async(req, res) => {
         if (result.modifiedCount > 0) {
             res.status(StatusCodes.OK).json({
                 success: true,
-                message: 'Address updated successfully'
+                message: ADDRESS_MESSAGES.ADDRESS_UPDATED
             });
         } else {
             res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Address not found'
+                message: ADDRESS_MESSAGES.ADDRESS_NOT_FOUND
             });
         }
 
@@ -259,7 +260,7 @@ const updateAddress = async(req, res) => {
         console.error('Update address error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to update address'
+            message: ADDRESS_MESSAGES.ADDRESS_UPDATE_FAILED
         });
     }
 };
@@ -277,12 +278,12 @@ const deleteAddress = async(req, res) => {
         if (result.modifiedCount > 0) {
             res.status(StatusCodes.OK).json({
                 success: true,
-                message: 'Address deleted successfully'
+                message: ADDRESS_MESSAGES.ADDRESS_DELETED
             });
         } else {
             res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Address not found'
+                message: ADDRESS_MESSAGES.ADDRESS_NOT_FOUND
             });
         }
 
@@ -290,7 +291,7 @@ const deleteAddress = async(req, res) => {
         console.error('Delete address error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to delete address'
+            message: ADDRESS_MESSAGES.ADDRESS_DELETE_FAILED
         });
     }
 };
@@ -314,7 +315,7 @@ const setDefaultAddress = async(req, res) => {
         if (!addressExists) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Address not found'
+                message: ADDRESS_MESSAGES.ADDRESS_NOT_FOUND
             });
         }
 
@@ -351,3 +352,4 @@ export default {
     deleteAddress,
     setDefaultAddress
 };
+

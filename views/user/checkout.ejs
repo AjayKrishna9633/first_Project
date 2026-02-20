@@ -169,15 +169,18 @@
 
                     <div class="space-y-4">
                         <!-- Cash on Delivery -->
-                        <div class="border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition cursor-pointer payment-option" 
+                        <div id="codOption" class="border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition cursor-pointer payment-option" 
                              data-payment="cod">
                             <div class="flex items-center gap-3">
-                                <input type="radio" name="paymentMethod" value="cod" class="text-cyan-400 focus:ring-cyan-400" checked>
+                                <input type="radio" id="codRadio" name="paymentMethod" value="cod" class="text-cyan-400 focus:ring-cyan-400" checked>
                                 <div class="flex items-center gap-3">
                                     <i class="fas fa-money-bill-wave text-green-400 text-2xl"></i>
-                                    <div>
+                                    <div class="flex-1">
                                         <h3 class="font-semibold text-white">Cash on Delivery</h3>
                                         <p class="text-gray-400 text-sm">Pay when you receive your order</p>
+                                        <p id="codLimitWarning" class="text-yellow-400 text-xs mt-1 hidden">
+                                            <i class="fas fa-exclamation-triangle"></i> Not available for orders above ₹1000
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -393,6 +396,16 @@
         let appliedCouponCode = null;
         let currentDiscount = 0;
 
+        // Calculate Final Total (before wallet deduction)
+        function calculateFinalTotal() {
+            return cartTotal - currentDiscount;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTotal();
+        });
+
         // Show Available Coupons
         async function showAvailableCoupons() {
             try {
@@ -575,6 +588,32 @@
                 document.getElementById('walletRow').classList.add('hidden');
             }
 
+            // Check COD availability based on order total (before wallet deduction)
+            const orderTotalBeforeWallet = cartTotal - currentDiscount;
+            const codOption = document.getElementById('codOption');
+            const codRadio = document.getElementById('codRadio');
+            const codWarning = document.getElementById('codLimitWarning');
+            const onlineRadio = document.querySelector('input[name="paymentMethod"][value="online"]');
+            
+            if (orderTotalBeforeWallet > 1000) {
+                // Disable COD
+                codRadio.disabled = true;
+                codOption.classList.add('opacity-50', 'cursor-not-allowed');
+                codOption.classList.remove('hover:border-gray-600', 'cursor-pointer');
+                codWarning.classList.remove('hidden');
+                
+                // If COD is currently selected, switch to online payment
+                if (codRadio.checked) {
+                    onlineRadio.checked = true;
+                }
+            } else {
+                // Enable COD
+                codRadio.disabled = false;
+                codOption.classList.remove('opacity-50', 'cursor-not-allowed');
+                codOption.classList.add('hover:border-gray-600', 'cursor-pointer');
+                codWarning.classList.add('hidden');
+            }
+
             document.getElementById('totalDisplay').textContent = `₹${Math.round(total).toLocaleString()}`;
         }
 
@@ -600,6 +639,19 @@
 
             if (!paymentMethodInput) {
                 Swal.fire('Error', 'Please select a payment method', 'error');
+                return;
+            }
+
+            // Validate COD limit - Orders above Rs 1000 cannot use COD
+            const finalTotal = calculateFinalTotal();
+            if (paymentMethodInput.value === 'cod' && finalTotal > 1000) {
+                Swal.fire({
+                    title: 'COD Not Available',
+                    text: 'Cash on Delivery is not available for orders above ₹1000. Please choose online payment or use wallet.',
+                    icon: 'warning',
+                    confirmButtonColor: '#22d3ee',
+                    confirmButtonText: 'OK'
+                });
                 return;
             }
 

@@ -3,6 +3,7 @@ import User from '../../models/userModal.js';
 import Product from '../../models/porductsModal.js';
 import { formatNumber, formatCurrency, getFullNumber } from '../../utils/numberFormatter.js';
 import StatusCodes from '../../utils/statusCodes.js';
+import { ORDER_MESSAGES, ADMIN_MESSAGES, PAYMENT_MESSAGES } from '../../constants/messages.js';
 
 const getOrders = async (req, res) => {
     try {
@@ -86,7 +87,7 @@ const getOrders = async (req, res) => {
         
     } catch (error) {
         console.error('Get orders error:', error);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('admin/error', { message: 'Failed to load orders' });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('admin/error', { message: ADMIN_MESSAGES.ORDERS_LOAD_FAILED });
     }
 };
 
@@ -113,7 +114,7 @@ const getOrders = async (req, res) => {
              })
 
              if(!order){
-                return res.status(StatusCodes.NOT_FOUND).render('admin/error',{message:'order not found'})
+                return res.status(StatusCodes.NOT_FOUND).render('admin/error',{message:ORDER_MESSAGES.ORDER_NOT_FOUND})
              }
              
               res.render('admin/orderDetails', { 
@@ -125,7 +126,7 @@ const getOrders = async (req, res) => {
 
         }catch(error){
 console.error('Get order details error:', error);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('admin/error', { message: 'Failed to load order details' });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('admin/error', { message: ADMIN_MESSAGES.ORDER_DETAILS_FAILED });
    
         }
     }
@@ -138,14 +139,14 @@ console.error('Get order details error:', error);
         const currentOrder = await Order.findById(id);
         
         if (!currentOrder) {
-            return res.json({ success: false, message: 'Order not found' });
+            return res.json({ success: false, message: ORDER_MESSAGES.ORDER_NOT_FOUND });
         }
         
         // Prevent status updates for cancelled orders
         if (currentOrder.orderStatus === 'cancelled') {
             return res.json({ 
                 success: false, 
-                message: 'Cannot update status of a cancelled order' 
+                message: ORDER_MESSAGES.CANNOT_UPDATE_CANCELLED 
             });
         }
         
@@ -158,7 +159,7 @@ console.error('Get order details error:', error);
             if (orderStatus === 'cancelled') {
                 return res.json({ 
                     success: false, 
-                    message: 'Orders can only be cancelled by customers' 
+                    message: ORDER_MESSAGES.CANNOT_CANCEL_FROM_ADMIN 
                 });
             }
             updateData.orderStatus = orderStatus;
@@ -171,7 +172,7 @@ console.error('Get order details error:', error);
                 paymentStatus !== 'paid') {  // Only block if trying to CHANGE from paid
                 return res.json({ 
                     success: false, 
-                    message: 'Cannot change payment status for online/wallet payments that are already paid' 
+                    message: PAYMENT_MESSAGES.CANNOT_CHANGE_PAYMENT_STATUS 
                 });
             }
             updateData.paymentStatus = paymentStatus;
@@ -189,7 +190,7 @@ console.error('Get order details error:', error);
         
         res.json({
             success: true,
-            message: 'Order updated successfully',
+            message: ORDER_MESSAGES.ORDER_UPDATED,
             order: {
                 orderStatus: order.orderStatus,
                 paymentStatus: order.paymentStatus,
@@ -199,7 +200,7 @@ console.error('Get order details error:', error);
         
     } catch (error) {
         console.error('Update order status error:', error);
-        res.json({ success: false, message: 'Failed to update order' });
+        res.json({ success: false, message: ORDER_MESSAGES.ORDER_UPDATE_FAILED });
     }
 };
 
@@ -341,7 +342,7 @@ const updateReturnStatus = async (req, res) => {
             console.log('Order not found:', orderId);
             return res.json({
                 success: false,
-                message: 'Order not found'
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
             });
         }
 
@@ -409,7 +410,7 @@ const updateReturnStatus = async (req, res) => {
         console.log('Saving order with new status:', order.returnStatus);
         await order.save();
 
-        console.log('Return status updated successfully');
+        console.log(ORDER_MESSAGES.RETURN_STATUS_UPDATED);
         res.json({
             success: true,
             message: `Return ${action}d successfully`
@@ -447,7 +448,7 @@ const downloadInvoice = async (req, res) => {
         if (!order) {
             return res.status(StatusCodes.NOT_FOUND).json({ 
                 success: false, 
-                message: 'Order not found' 
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND 
             });
         }
         
@@ -455,7 +456,7 @@ const downloadInvoice = async (req, res) => {
         if (!['confirmed', 'processing', 'shipped', 'delivered'].includes(order.orderStatus)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ 
                 success: false, 
-                message: 'Invoice is not available for this order status' 
+                message: ORDER_MESSAGES.INVOICE_NOT_AVAILABLE 
             });
         }
         
@@ -478,7 +479,7 @@ const downloadInvoice = async (req, res) => {
         console.error('Admin download invoice error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
             success: false, 
-            message: 'Failed to generate invoice' 
+            message: ORDER_MESSAGES.INVOICE_FAILED 
         });
     }
 };

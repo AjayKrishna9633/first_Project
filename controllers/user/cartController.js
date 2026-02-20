@@ -2,6 +2,7 @@ import Cart from '../../models/cartSchema.js';
 import Product from "../../models/porductsModal.js";
 import StatusCodes from '../../utils/statusCodes.js';
 import { applyBestDiscountToProduct } from '../../utils/discountCalculator.js';
+import { CART_MESSAGES, PRODUCT_MESSAGES } from '../../constants/messages.js';
 
 const addToCart = async (req, res) => {
     try {
@@ -19,7 +20,7 @@ const addToCart = async (req, res) => {
         if (quantity > 3) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Maximum 3 units allowed per product'
+                message: PRODUCT_MESSAGES.MAX_QUANTITY_EXCEEDED
             });
         }
 
@@ -39,7 +40,7 @@ const addToCart = async (req, res) => {
         if (!variant) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Variant not found'
+                message: PRODUCT_MESSAGES.VARIANT_NOT_FOUND
             });
         }
 
@@ -196,7 +197,7 @@ const updateCartItem = async (req, res) => {
         if (quantity > 3) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Maximum 3 units allowed per product'
+                message: PRODUCT_MESSAGES.MAX_QUANTITY_EXCEEDED
             });
         }
 
@@ -235,7 +236,7 @@ const updateCartItem = async (req, res) => {
         if (!product) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Product not found'
+                message: PRODUCT_MESSAGES.PRODUCT_NOT_FOUND
             });
         }
 
@@ -245,7 +246,7 @@ const updateCartItem = async (req, res) => {
         if (!variant) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Variant not found'
+                message: PRODUCT_MESSAGES.VARIANT_NOT_FOUND
             });
         }
 
@@ -285,14 +286,14 @@ const updateCartItem = async (req, res) => {
 
         res.status(StatusCodes.OK).json({
             success: true,
-            message: 'Cart updated successfully'
+            message: CART_MESSAGES.CART_UPDATED
         });
 
     } catch (error) {
         console.error('Update cart error:', error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to update cart'
+            message: CART_MESSAGES.CART_UPDATE_FAILED
         });
     }
 };

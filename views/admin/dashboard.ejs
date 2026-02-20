@@ -33,11 +33,95 @@
         <!-- Main Content -->
         <main class="flex-1 p-8">
             <!-- Breadcrumb -->
-            <div class="flex items-center text-sm text-gray-600 mb-8">
-                <span>Admin</span>
-                <i class="fas fa-chevron-right mx-2 text-xs"></i>
-                <span class="text-gray-900 font-medium">Dashboard</span>
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center text-sm text-gray-600">
+                    <span>Admin</span>
+                    <i class="fas fa-chevron-right mx-2 text-xs"></i>
+                    <span class="text-gray-900 font-medium">Dashboard</span>
+                </div>
             </div>
+
+            <!-- Filters -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+                <form method="GET" action="/admin/dashboard" id="filterForm" class="flex flex-wrap items-end gap-4">
+                    <!-- Period Filter -->
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Period</label>
+                        <select name="period" id="periodSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="daily" <%= filters.period === 'daily' ? 'selected' : '' %>>Daily</option>
+                            <option value="weekly" <%= filters.period === 'weekly' ? 'selected' : '' %>>Weekly</option>
+                            <option value="monthly" <%= filters.period === 'monthly' ? 'selected' : '' %>>Monthly</option>
+                            <option value="yearly" <%= filters.period === 'yearly' ? 'selected' : '' %>>Yearly</option>
+                        </select>
+                    </div>
+
+                    <!-- Date Picker (for Daily) -->
+                    <div class="flex-1 min-w-[180px]" id="dateFilter" style="display: <%= filters.period === 'daily' ? 'block' : 'none' %>">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
+                        <input type="date" name="date" value="<%= filters.currentDate %>" 
+                               max="<%= new Date().toISOString().split('T')[0] %>"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Month Picker (for Monthly) -->
+                    <div class="flex-1 min-w-[180px]" id="monthFilter" style="display: <%= filters.period === 'monthly' ? 'block' : 'none' %>">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Month</label>
+                        <input type="month" name="month" value="<%= filters.currentMonth %>" 
+                               max="<%= new Date().toISOString().slice(0, 7) %>"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Year Picker (for Yearly) -->
+                    <div class="flex-1 min-w-[150px]" id="yearFilter" style="display: <%= filters.period === 'yearly' ? 'block' : 'none' %>">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Year</label>
+                        <select name="year" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <% filters.yearOptions.forEach(y => { %>
+                                <option value="<%= y %>" <%= filters.currentYear == y ? 'selected' : '' %>><%= y %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <!-- Apply Button -->
+                    <div>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                            <i class="fas fa-filter mr-2"></i>Apply Filters
+                        </button>
+                    </div>
+
+                    <!-- Reset Button -->
+                    <div>
+                        <a href="/admin/dashboard" class="inline-block px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors">
+                            <i class="fas fa-redo mr-2"></i>Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <script>
+                // Show/hide date/month/year filters based on period selection
+                const periodSelect = document.getElementById('periodSelect');
+                const dateFilter = document.getElementById('dateFilter');
+                const monthFilter = document.getElementById('monthFilter');
+                const yearFilter = document.getElementById('yearFilter');
+                
+                periodSelect.addEventListener('change', function() {
+                    const period = this.value;
+                    
+                    // Hide all filters first
+                    dateFilter.style.display = 'none';
+                    monthFilter.style.display = 'none';
+                    yearFilter.style.display = 'none';
+                    
+                    // Show relevant filter
+                    if (period === 'daily') {
+                        dateFilter.style.display = 'block';
+                    } else if (period === 'monthly') {
+                        monthFilter.style.display = 'block';
+                    } else if (period === 'yearly') {
+                        yearFilter.style.display = 'block';
+                    }
+                });
+            </script>
 
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -46,7 +130,7 @@
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <p class="text-sm font-medium text-gray-600 mb-1">Total Sales</p>
-                            <p class="text-xs text-gray-400 uppercase tracking-wide">THIS MONTH</p>
+                            <p class="text-xs text-gray-400 uppercase tracking-wide"><%= filters.periodLabel %></p>
                         </div>
                         <div class="text-right">
                             <p class="text-3xl font-bold text-gray-900">₹ <%= (stats.totalSales).toLocaleString('en-IN') %></p>
@@ -62,10 +146,10 @@
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <p class="text-sm font-medium text-gray-600 mb-1">Customers</p>
-                            <p class="text-xs text-gray-400 uppercase tracking-wide">THIS MONTH</p>
+                            <p class="text-xs text-gray-400 uppercase tracking-wide"><%= filters.periodLabel %></p>
                         </div>
                         <div class="text-right">
-                            <p class="text-3xl font-bold text-gray-900"><%= stats.customersThisMonth.toLocaleString() %></p>
+                            <p class="text-3xl font-bold text-gray-900"><%= stats.customersInPeriod.toLocaleString() %></p>
                             <p class="text-xs text-gray-500 mt-1">Total: <%= stats.totalCustomers.toLocaleString() %></p>
                         </div>
                     </div>
@@ -79,15 +163,15 @@
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <p class="text-sm font-medium text-gray-600 mb-1">Orders</p>
-                            <p class="text-xs text-gray-400 uppercase tracking-wide">MONTHLY GOALS: <%= stats.monthlyGoal.toLocaleString() %></p>
+                            <p class="text-xs text-gray-400 uppercase tracking-wide"><%= filters.periodLabel %></p>
                         </div>
                         <div class="text-right">
-                            <p class="text-3xl font-bold text-gray-900"><%= stats.ordersThisMonth.toLocaleString() %></p>
+                            <p class="text-3xl font-bold text-gray-900"><%= stats.ordersInPeriod.toLocaleString() %></p>
                         </div>
                     </div>
                     <div class="mt-6">
                         <div class="flex justify-between items-center mb-2">
-                            <p class="text-xs font-medium text-gray-600"><%= stats.ordersLeft %> Left</p>
+                            <p class="text-xs font-medium text-gray-600">Monthly Goal: <%= stats.monthlyGoal %></p>
                             <p class="text-xs font-medium text-blue-600"><%= stats.progressPercentage %>%</p>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2.5">
@@ -165,7 +249,7 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100">
                     <div class="p-6 border-b border-gray-100">
                         <h2 class="text-lg font-semibold text-gray-900">Best Selling</h2>
-                        <p class="text-xs text-gray-400 uppercase tracking-wide mt-1">THIS MONTH</p>
+                        <p class="text-xs text-gray-400 uppercase tracking-wide mt-1"><%= filters.periodLabel %></p>
                     </div>
                     
                     <div class="p-6">
@@ -214,6 +298,90 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Best Selling Products -->
+            <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-100">
+                <div class="p-6 border-b border-gray-100">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Best Selling Products</h2>
+                            <p class="text-xs text-gray-400 uppercase tracking-wide mt-1"><%= filters.periodLabel %></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Rank</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Product</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+                                <th class="text-center px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Units Sold</th>
+                                <th class="text-right px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Revenue</th>
+                                <th class="text-center px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Orders</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <% if (bestSellingProducts && bestSellingProducts.length > 0) { %>
+                                <% bestSellingProducts.forEach((product, index) => { 
+                                    const rankColors = ['text-yellow-500', 'text-gray-400', 'text-orange-600'];
+                                    const rankIcons = ['fa-trophy', 'fa-medal', 'fa-award'];
+                                %>
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center justify-center w-8 h-8 rounded-full <%= index < 3 ? 'bg-gray-100' : '' %>">
+                                                <% if (index < 3) { %>
+                                                    <i class="fas <%= rankIcons[index] %> <%= rankColors[index] %>"></i>
+                                                <% } else { %>
+                                                    <span class="text-sm font-semibold text-gray-600"><%= index + 1 %></span>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <% if (product.image && product.image[0]) { %>
+                                                    <img src="<%= product.image[0] %>" alt="<%= product.productName %>" 
+                                                         class="w-12 h-12 rounded-lg object-cover border border-gray-200">
+                                                <% } else { %>
+                                                    <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                                                        <i class="fas fa-image text-gray-400"></i>
+                                                    </div>
+                                                <% } %>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900 line-clamp-1"><%= product.productName %></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <%= product.categoryName %>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <div class="text-sm font-semibold text-gray-900"><%= product.totalQuantity.toLocaleString() %></div>
+                                            <div class="text-xs text-gray-500">units</div>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <div class="text-sm font-semibold text-gray-900">₹<%= product.totalRevenue.toLocaleString('en-IN') %></div>
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <div class="text-sm text-gray-600"><%= product.orderCount %></div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                        <i class="fas fa-box-open text-4xl mb-3 text-gray-300"></i>
+                                        <p>No product sales data yet</p>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -221,27 +389,16 @@
         // Sales Chart (Bar Chart)
         const salesCtx = document.getElementById('salesChart');
         if (salesCtx) {
-            const salesData = <%- JSON.stringify(dailySales) %>;
-            const last30Days = [];
-            const salesValues = [];
-            
-            // Generate last 30 days
-            for (let i = 29; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
-                last30Days.push(dateStr);
-                
-                const dayData = salesData.find(d => d._id === dateStr);
-                salesValues.push(dayData ? dayData.sales : 0);
-            }
+            const salesData = <%- JSON.stringify(chartSales) %>;
+            const labels = salesData.map(d => d._id);
+            const values = salesData.map(d => d.sales);
             
             new Chart(salesCtx, {
                 type: 'bar',
                 data: {
-                    labels: last30Days,
+                    labels: labels,
                     datasets: [{
-                        data: salesValues,
+                        data: values,
                         backgroundColor: 'rgba(59, 130, 246, 0.8)',
                         borderRadius: 4,
                         barThickness: 4
@@ -269,26 +426,16 @@
         // Customers Chart (Line Chart)
         const customersCtx = document.getElementById('customersChart');
         if (customersCtx) {
-            const customersData = <%- JSON.stringify(dailyCustomers) %>;
-            const last30Days = [];
-            const customerValues = [];
-            
-            for (let i = 29; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
-                last30Days.push(dateStr);
-                
-                const dayData = customersData.find(d => d._id === dateStr);
-                customerValues.push(dayData ? dayData.count : 0);
-            }
+            const customersData = <%- JSON.stringify(chartCustomers) %>;
+            const labels = customersData.map(d => d._id);
+            const values = customersData.map(d => d.count);
             
             new Chart(customersCtx, {
                 type: 'line',
                 data: {
-                    labels: last30Days,
+                    labels: labels,
                     datasets: [{
-                        data: customerValues,
+                        data: values,
                         borderColor: 'rgb(99, 102, 241)',
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         borderWidth: 2,

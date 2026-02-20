@@ -9,6 +9,7 @@ import { formatNumber, formatCurrency, getFullNumber } from '../../utils/numberF
 import razorpayInstance from '../../config/razorpay.js';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
+import { ORDER_MESSAGES, PAYMENT_MESSAGES, GENERAL_MESSAGES } from '../../constants/messages.js';
 dotenv.config();
 
 const getUserOrders = async (req, res) => {
@@ -67,7 +68,7 @@ const getUserOrders = async (req, res) => {
         
     } catch (error) {
         console.error('Get user orders error:', error);
-       res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('user/error', { message: 'Failed to load orders' });
+       res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('user/error', { message: GENERAL_MESSAGES.FAILED });
     }
 };
 
@@ -127,14 +128,14 @@ const getOrderDetails = async (req, res) => {
         const order = await Order.findOne({ _id: id, userId });
         
         if (!order) {
-            return res.status(StatusCodes.NOT_FOUND).json({ success: false, message: 'Order not found' });
+            return res.status(StatusCodes.NOT_FOUND).json({ success: false, message: ORDER_MESSAGES.ORDER_NOT_FOUND });
         }
         
         
         if (!['pending', 'confirmed','processing'].includes(order.orderStatus)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ 
                 success: false, 
-                message: 'Order cannot be cancelled at this stage' 
+                message: ORDER_MESSAGES.ORDER_CANNOT_CANCEL 
             });
         }
         
@@ -188,12 +189,12 @@ const getOrderDetails = async (req, res) => {
         
         res.json({
             success: true,
-            message: 'Order cancelled successfully'
+            message: ORDER_MESSAGES.ORDER_CANCELLED
         });
         
     } catch (error) {
         console.error('Cancel order error:', error);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to cancel order' });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: ORDER_MESSAGES.ORDER_CANCEL_FAILED });
     }
 };
 
@@ -350,7 +351,7 @@ const requestReturn = async (req, res) => {
         if (!order) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Order not found'
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
             });
         }
 
@@ -408,7 +409,7 @@ const updateReturnStatus = async (req, res) => {
         if (!order) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Order not found'
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
             });
         }
 
@@ -464,7 +465,7 @@ const cancelOrderItem = async (req, res) => {
         if (!order) {
             return res.status(StatusCodes.NOT_FOUND).json({ 
                 success: false, 
-                message: 'Order not found' 
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND 
             });
         }
         
@@ -618,7 +619,7 @@ const payCODOrder = async (req, res) => {
         if (!order) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Order not found'
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
             });
         }
         
@@ -691,7 +692,7 @@ const verifyCODPayment = async (req, res) => {
         if (!order) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
-                message: 'Order not found'
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
             });
         }
         

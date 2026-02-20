@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer';
 import env from "dotenv";
 import user from "../../models/userModal.js";
 import StatusCodes from '../../utils/statusCodes.js';
+import { AUTH_MESSAGES, USER_MESSAGES } from '../../constants/messages.js';
 
 
 
@@ -96,7 +97,7 @@ export const loginUser = async (req, res) => {
 
         if (!email || !password) {
             return res.render('user/login', {
-                message: 'Email and password are required.',
+                message: AUTH_MESSAGES.EMAIL_PASSWORD_REQUIRED,
                 isError: true,
                 oldInput: { email }
             });
@@ -111,7 +112,7 @@ export const loginUser = async (req, res) => {
 
         if (!findUser) {
             return res.render("user/login", {
-                message: "Invalid email or password",
+                message: AUTH_MESSAGES.INVALID_CREDENTIALS,
                 isError: true,
                 oldInput: { email }
             });
@@ -119,7 +120,7 @@ export const loginUser = async (req, res) => {
 
         if (findUser.isBlocked) {
             return res.render('user/login', {
-                message: 'Your account has been blocked. Please contact support.',
+                message: AUTH_MESSAGES.ACCOUNT_BLOCKED,
                 isError: true,
                 oldInput: { email }
             });
@@ -127,7 +128,7 @@ export const loginUser = async (req, res) => {
 
         if (findUser.googleId && !findUser.password) {
             return res.render('user/login', {
-                message: 'Please sign in with Google',
+                message: AUTH_MESSAGES.USE_GOOGLE_LOGIN,
                 isError: true,
                 oldInput: { email }
             });
@@ -137,7 +138,7 @@ export const loginUser = async (req, res) => {
         
         if (!passwordMatch) {
             return res.render('user/login', {
-                message: 'Invalid email or password',
+                message: AUTH_MESSAGES.INVALID_CREDENTIALS,
                 isError: true,
                 oldInput: { email }
             });
@@ -154,7 +155,7 @@ export const loginUser = async (req, res) => {
             if (err) {
                 console.error('Session save error:', err);
                 return res.render('user/login', {
-                    message: 'Login successful but session error occurred. Please try again.',
+                    message: AUTH_MESSAGES.LOGIN_SESSION_ERROR,
                     isError: true,
                     oldInput: { email }
                 });
@@ -165,7 +166,7 @@ export const loginUser = async (req, res) => {
     } catch (error) {
         console.error("Error in loginUser:", error);
         res.render('user/login', {
-            message: "Login failed. Please try again later.",
+            message: AUTH_MESSAGES.LOGIN_FAILED,
             isError: true,
             oldInput: { email: req.body.email || '' }
         });
@@ -189,7 +190,7 @@ export const registerUser = async (req, res) => {
 
         if (!name || !email || !password || !confirmPassword) {
             return res.render('user/signup', {
-                message: 'All fields are required.',
+                message: AUTH_MESSAGES.ALL_FIELDS_REQUIRED,
                 isError: true,
                 oldInput: { name, email, referralCode }
             });
@@ -197,7 +198,7 @@ export const registerUser = async (req, res) => {
 
         if (name.trim().length < 3) {
             return res.render('user/signup', {
-                message: 'Name must be at least 3 characters long.',
+                message: AUTH_MESSAGES.NAME_TOO_SHORT,
                 isError: true,
                 oldInput: { name, email, referralCode }
             });
@@ -206,7 +207,7 @@ export const registerUser = async (req, res) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.render('user/signup', {
-                message: 'Please enter a valid email address.',
+                message: AUTH_MESSAGES.INVALID_EMAIL,
                 isError: true,
                 oldInput: { name, email, referralCode }
             });
@@ -214,7 +215,7 @@ export const registerUser = async (req, res) => {
 
         if (password.length < 8) {
             return res.render('user/signup', {
-                message: 'Password must be at least 8 characters long.',
+                message: AUTH_MESSAGES.PASSWORD_TOO_SHORT,
                 isError: true,
                 oldInput: { name, email, referralCode }
             });
@@ -222,7 +223,7 @@ export const registerUser = async (req, res) => {
 
         if (password !== confirmPassword) {
             return res.render('user/signup', {
-                message: 'Passwords do not match.',
+                message: AUTH_MESSAGES.PASSWORDS_NOT_MATCH,
                 isError: true,
                 oldInput: { name, email, referralCode }
             });
@@ -234,7 +235,7 @@ export const registerUser = async (req, res) => {
         
         if (existingUser) {
             return res.render("user/signup", {
-                message: "An account with this email already exists.",
+                message: AUTH_MESSAGES.EMAIL_EXISTS,
                 isError: true,
                 oldInput: { name, email, referralCode }
             });
@@ -244,7 +245,7 @@ export const registerUser = async (req, res) => {
             const validReferrer = await User.findOne({ referralCode: referralCode });
             if (!validReferrer) {
                 return res.render("user/signup", {
-                    message: "Invalid Referral Code.",
+                    message: AUTH_MESSAGES.INVALID_REFERRAL_CODE,
                     isError: true,
                     oldInput: { name, email, referralCode }
                 });
@@ -258,7 +259,7 @@ export const registerUser = async (req, res) => {
         
         if (!emailSent) {
             return res.render("user/signup", {
-                message: "Failed to send verification email. Please try again.",
+                message: AUTH_MESSAGES.VERIFICATION_EMAIL_FAILED,
                 isError: true,
                 oldInput: { name, email, referralCode }
             });
@@ -283,7 +284,7 @@ export const registerUser = async (req, res) => {
             if (err) {
                 console.error('Session save error:', err);
                 return res.render('user/signup', {
-                    message: 'Server error. Please try again.',
+                    message: AUTH_MESSAGES.SERVER_ERROR,
                     isError: true,
                     oldInput: { name, email }
                 });
@@ -294,7 +295,7 @@ export const registerUser = async (req, res) => {
     } catch (error) {
         console.error("Error in registerUser:", error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).render("user/signup", {
-            message: "Server error. Please try again later.",
+            message: AUTH_MESSAGES.SERVER_ERROR,
             isError: true,
             oldInput: { 
                 name: req.body.name || '', 
