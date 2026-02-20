@@ -1,4 +1,5 @@
 import User from '../models/userModal.js';
+import StatusCodes from '../utils/statusCodes.js';
 
 export const protectUser = async (req, res, next) => {
     if (!req.session?.user) {
@@ -61,7 +62,7 @@ export const preventCrossAccess = (req, res, next) => {
     const hasAdminSession = req.session?.admin;
 
     if (isAdminRoute && hasUserSession && !hasAdminSession) {
-        return res.status(403).render('error/error', {
+        return res.status(StatusCodes.FORBIDDEN).render('error/error', {
             title: '403 - Access Denied',
             message: 'You need admin privileges to access this area.',
             user: req.session.user,

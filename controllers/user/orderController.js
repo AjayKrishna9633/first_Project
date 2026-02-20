@@ -4,7 +4,7 @@ import User from '../../models/userModal.js';
 import WalletTransaction from '../../models/WalletTransaction.js';
 import InvoiceService from '../../config/invoiceService.js';
 import { ObjectId } from 'mongodb';
-import { StatusCodes } from 'http-status-codes';
+import StatusCodes from '../../utils/statusCodes.js';
 import { formatNumber, formatCurrency, getFullNumber } from '../../utils/numberFormatter.js';
 import razorpayInstance from '../../config/razorpay.js';
 import crypto from 'crypto';
@@ -144,7 +144,14 @@ const getOrderDetails = async (req, res) => {
         order.cancelledAt = new Date();
         order.updatedAt = new Date();
         
-       
+        // Mark all items as cancelled
+        order.items.forEach(item => {
+            item.status = 'cancelled';
+            item.cancellationReason = reason || 'Order cancelled';
+            item.cancelledAt = new Date();
+            item.cancelledBy = 'user';
+        });
+        
         let refundAmount = 0;
         
         if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {

@@ -2,6 +2,7 @@ import Order from '../../models/orderModel.js';
 import User from '../../models/userModal.js';
 import Product from '../../models/porductsModal.js';
 import { formatNumber, formatCurrency, getFullNumber } from '../../utils/numberFormatter.js';
+import StatusCodes from '../../utils/statusCodes.js';
 
 const getOrders = async (req, res) => {
     try {
@@ -85,7 +86,7 @@ const getOrders = async (req, res) => {
         
     } catch (error) {
         console.error('Get orders error:', error);
-        res.status(500).render('admin/error', { message: 'Failed to load orders' });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('admin/error', { message: 'Failed to load orders' });
     }
 };
 
@@ -112,7 +113,7 @@ const getOrders = async (req, res) => {
              })
 
              if(!order){
-                return res.status(404).render('admin/error',{message:'order not found'})
+                return res.status(StatusCodes.NOT_FOUND).render('admin/error',{message:'order not found'})
              }
              
               res.render('admin/orderDetails', { 
@@ -124,7 +125,7 @@ const getOrders = async (req, res) => {
 
         }catch(error){
 console.error('Get order details error:', error);
-        res.status(500).render('admin/error', { message: 'Failed to load order details' });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('admin/error', { message: 'Failed to load order details' });
    
         }
     }
@@ -444,7 +445,7 @@ const downloadInvoice = async (req, res) => {
             });
         
         if (!order) {
-            return res.status(404).json({ 
+            return res.status(StatusCodes.NOT_FOUND).json({ 
                 success: false, 
                 message: 'Order not found' 
             });
@@ -452,7 +453,7 @@ const downloadInvoice = async (req, res) => {
         
         // Only allow invoice download for confirmed, processing, shipped, or delivered orders
         if (!['confirmed', 'processing', 'shipped', 'delivered'].includes(order.orderStatus)) {
-            return res.status(400).json({ 
+            return res.status(StatusCodes.BAD_REQUEST).json({ 
                 success: false, 
                 message: 'Invoice is not available for this order status' 
             });
@@ -475,7 +476,7 @@ const downloadInvoice = async (req, res) => {
         
     } catch (error) {
         console.error('Admin download invoice error:', error);
-        res.status(500).json({ 
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
             success: false, 
             message: 'Failed to generate invoice' 
         });

@@ -5,7 +5,7 @@ import Product from '../../models/porductsModal.js';
 import Coupon from '../../models/couponModel.js';
 import User from '../../models/userModal.js';
 import WalletTransaction from '../../models/WalletTransaction.js';
-import { StatusCodes } from 'http-status-codes';
+import StatusCodes from '../../utils/statusCodes.js';
 import razorpayInstance from '../../config/razorpay.js';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
@@ -576,7 +576,18 @@ const verifyPayment = async (req, res) => {
         if (order) {
              order.paymentStatus = 'failed';
              order.orderStatus = 'failed';
+             
+             // Mark all items as cancelled
+             order.items.forEach(item => {
+                 item.status = 'cancelled';
+                 item.cancellationReason = 'Payment failed';
+                 item.cancelledAt = new Date();
+             });
+             
              await order.save();
+             
+             // Restore product stock
+             await restoreProductStock(order.items);
         }
 
         return res.status(StatusCodes.BAD_REQUEST).json({
@@ -592,7 +603,18 @@ const verifyPayment = async (req, res) => {
              if (order) {
                  order.paymentStatus = 'failed';
                  order.orderStatus = 'failed';
+                 
+                 // Mark all items as cancelled
+                 order.items.forEach(item => {
+                     item.status = 'cancelled';
+                     item.cancellationReason = 'Payment failed';
+                     item.cancelledAt = new Date();
+                 });
+                 
                  await order.save();
+                 
+                 // Restore product stock
+                 await restoreProductStock(order.items);
              }
          } catch (err) {
              console.error('Error updating order status:', err);
@@ -613,7 +635,18 @@ const cancelPayment = async (req, res) => {
         if (order) {
             order.paymentStatus = 'cancelled';
             order.orderStatus = 'cancelled';
+            
+            // Mark all items as cancelled
+            order.items.forEach(item => {
+                item.status = 'cancelled';
+                item.cancellationReason = 'Payment cancelled';
+                item.cancelledAt = new Date();
+            });
+            
             await order.save();
+            
+            // Restore product stock
+            await restoreProductStock(order.items);
             
             return res.status(StatusCodes.OK).json({
                 success: true,
@@ -802,6 +835,34 @@ const getOrderFailure = async (req, res) => {
     } catch (error) {
         console.error('Order failure error:', error);
         res.redirect('/orders');
+    }
+};
+
+// Helper function to restore product stock
+const restoreProductStock = async (orderItems) => {
+    try {
+        const Variant = (await import('../../models/variantModel.js')).default;
+        
+        for (let item of orderItems) {
+            const productId = item.productId._id || item.productId;
+            const variantId = item.variantId._id || item.variantId;
+            
+            console.log('Restoring stock for:', { productId, variantId, quantity: item.quantity });
+            
+            const updateResult = await Variant.findByIdAndUpdate(
+                variantId,
+                { $inc: { quantity: item.quantity } },
+                { new: true }
+            );
+            
+            if (!updateResult) {
+                console.error(`Failed to restore stock for variant ${variantId}`);
+            } else {
+                console.log(`Successfully restored ${item.quantity} units for variant ${variantId}`);
+            }
+        }
+    } catch (error) {
+        console.error('Error restoring product stock:', error);
     }
 };
 

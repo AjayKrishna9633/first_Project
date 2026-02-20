@@ -1,6 +1,8 @@
 import user from "../../models/userModal.js";
+import Order from "../../models/orderModel.js";
+import Category from "../../models/categoryModel.js";
 import { comparePassword } from "../../utils/hashUtils.js";
-import { StatusCodes } from 'http-status-codes';
+import StatusCodes from '../../utils/statusCodes.js';
 
 const getLogin =(req,res)=>{
     res.render('admin/login',{
@@ -75,16 +77,175 @@ const passwordMatch = await comparePassword(password,admin.password)
  }
 
 const getDashboard = async (req,res)=>{
-
     try{
-        const admin =req.session.admin;
+        const admin = req.session.admin;
         
-        res.render('admin/dashboard',{
-            admin
-        })
+        // Get current month start and end dates
+        const now = new Date();
+        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        
+        // 1. Total Sales This Month (from active items only)
+        const salesData = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: currentMonthStart, $lte: currentMonthEnd },
+                    orderStatus: { $nin: ['cancelled', 'failed'] }
+                }
+            },
+            { $unwind: '$items' },
+            {
+                $match: {
+                    'items.status': { $ne: 'cancelled' }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalSales: { $sum: '$items.totalPrice' },
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+        
+        const totalSales = salesData.length > 0 ? salesData[0].totalSales : 0;
+        
+        // Get daily sales for chart (last 30 days) - from active items only
+        const last30Days = new Date(now);
+        last30Days.setDate(last30Days.getDate() - 30);
+        
+        const dailySales = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: last30Days },
+                    orderStatus: { $nin: ['cancelled', 'failed'] }
+                }
+            },
+            { $unwind: '$items' },
+            {
+                $match: {
+                    'items.status': { $ne: 'cancelled' }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    sales: { $sum: '$items.totalPrice' }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+        
+        // 2. Customers Count This Month
+        const customersThisMonth = await user.countDocuments({
+            isAdmin: false,
+            createdOn: { $gte: currentMonthStart, $lte: currentMonthEnd }
+        });
+        
+        const totalCustomers = await user.countDocuments({ isAdmin: false });
+        
+        // Get daily customer registrations for chart (last 30 days)
+        const dailyCustomers = await user.aggregate([
+            {
+                $match: {
+                    isAdmin: false,
+                    createdOn: { $gte: last30Days }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdOn" } },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+        
+        // 3. Orders Count This Month
+        const ordersThisMonth = await Order.countDocuments({
+            createdAt: { $gte: currentMonthStart, $lte: currentMonthEnd },
+            orderStatus: { $nin: ['cancelled', 'failed'] }
+        });
+        
+        const monthlyGoal = 100;
+        const ordersLeft = Math.max(0, monthlyGoal - ordersThisMonth);
+        const progressPercentage = Math.min(100, (ordersThisMonth / monthlyGoal) * 100);
+        
+        // 4. Recent Orders (last 8)
+        const recentOrders = await Order.find()
+            .populate('userId', 'fullName')
+            .populate('items.productId', 'productName')
+            .sort({ createdAt: -1 })
+            .limit(8)
+            .lean();
+        
+        // 5. Best Selling Categories
+        const bestSellingCategories = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: currentMonthStart, $lte: currentMonthEnd },
+                    orderStatus: { $nin: ['cancelled', 'failed'] }
+                }
+            },
+            { $unwind: '$items' },
+            // Filter out cancelled items
+            {
+                $match: {
+                    'items.status': { $ne: 'cancelled' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'items.productId',
+                    foreignField: '_id',
+                    as: 'product'
+                }
+            },
+            { $unwind: '$product' },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'product.category',
+                    foreignField: '_id',
+                    as: 'category'
+                }
+            },
+            { $unwind: '$category' },
+            {
+                $group: {
+                    _id: '$category._id',
+                    categoryName: { $first: '$category.name' },
+                    totalSales: { $sum: '$items.totalPrice' },
+                    itemCount: { $sum: '$items.quantity' }
+                }
+            },
+            { $sort: { totalSales: -1 } },
+            { $limit: 5 }
+        ]);
+        
+        const totalCategorySales = bestSellingCategories.reduce((sum, cat) => sum + cat.totalSales, 0);
+        
+        res.render('admin/dashboard', {
+            admin,
+            stats: {
+                totalSales: Math.round(totalSales),
+                customersThisMonth,
+                totalCustomers,
+                ordersThisMonth,
+                monthlyGoal,
+                ordersLeft,
+                progressPercentage: progressPercentage.toFixed(1)
+            },
+            dailySales,
+            dailyCustomers,
+            recentOrders,
+            bestSellingCategories,
+            totalCategorySales: Math.round(totalCategorySales)
+        });
     
     }catch(error){
-        console.log(error)
+        console.log('Dashboard error:', error);
         res.redirect('/admin/login');
     }
 }

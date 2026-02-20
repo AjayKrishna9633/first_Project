@@ -1,5 +1,5 @@
 import Address from '../../models/AddressModal.js';
-import { StatusCodes } from 'http-status-codes';
+import StatusCodes from '../../utils/statusCodes.js';
 
 const AddressPage = async(req, res) => {
     try {

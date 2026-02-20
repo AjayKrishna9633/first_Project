@@ -1,5 +1,5 @@
 import Order from '../../models/orderModel.js';
-import { StatusCodes } from 'http-status-codes';
+import StatusCodes from '../../utils/statusCodes.js';
 import SalesReportPdfService from '../../services/salesReportPdfService.js';
 import SalesReportExcelService from '../../services/salesReportExcelService.js';
 

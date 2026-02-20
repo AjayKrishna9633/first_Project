@@ -1,6 +1,6 @@
 import Cart from '../../models/cartSchema.js';
 import Product from "../../models/porductsModal.js";
-import { StatusCodes } from 'http-status-codes';
+import StatusCodes from '../../utils/statusCodes.js';
 import { applyBestDiscountToProduct } from '../../utils/discountCalculator.js';
 
 const addToCart = async (req, res) => {

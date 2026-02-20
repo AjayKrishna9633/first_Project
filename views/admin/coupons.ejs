@@ -290,16 +290,19 @@
 
                         <div>
                             <label class="block text-left text-sm font-medium text-gray-700 mb-1">Discount Type *</label>
-                            <select name="discountType" 
+                            <select name="discountType" id="createDiscountType" onchange="updateDiscountValueConstraints('create')"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 <option value="percentage">Percentage (%)</option>
                                 <option value="fixed">Fixed Amount (₹)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">Discount Value *</label>
-                            <input type="number" name="offerPrice" placeholder="Value" required min="1"
+                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">
+                                <span id="createDiscountLabel">Discount Value *</span>
+                            </label>
+                            <input type="number" name="offerPrice" id="createOfferPrice" placeholder="Value" required min="1" max="99" step="0.01"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <p class="text-xs text-gray-500 mt-1" id="createDiscountHint">Maximum 99% for percentage discounts</p>
                         </div>
 
                         <div>
@@ -381,16 +384,19 @@
 
                         <div>
                             <label class="block text-left text-sm font-medium text-gray-700 mb-1">Discount Type *</label>
-                            <select id="editDiscountType" name="discountType" 
+                            <select id="editDiscountType" name="discountType" onchange="updateDiscountValueConstraints('edit')"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 <option value="percentage">Percentage (%)</option>
                                 <option value="fixed">Fixed Amount (₹)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">Discount Value *</label>
-                            <input type="number" id="editOfferPrice" name="offerPrice" required min="1"
+                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">
+                                <span id="editDiscountLabel">Discount Value *</span>
+                            </label>
+                            <input type="number" id="editOfferPrice" name="offerPrice" required min="1" max="99" step="0.01"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <p class="text-xs text-gray-500 mt-1" id="editDiscountHint">Maximum 99% for percentage discounts</p>
                         </div>
 
                         <div>
@@ -443,6 +449,30 @@
     </div>
 
     <script>
+        // Update discount value constraints based on discount type
+        function updateDiscountValueConstraints(formType) {
+            const discountType = document.getElementById(`${formType}DiscountType`).value;
+            const offerPriceInput = document.getElementById(`${formType}OfferPrice`);
+            const discountLabel = document.getElementById(`${formType}DiscountLabel`);
+            const discountHint = document.getElementById(`${formType}DiscountHint`);
+            
+            if (discountType === 'percentage') {
+                offerPriceInput.max = '99';
+                offerPriceInput.step = '0.01';
+                offerPriceInput.placeholder = 'e.g., 10 for 10%';
+                discountLabel.textContent = 'Discount Percentage * (Max 99%)';
+                discountHint.textContent = 'Maximum 99% for percentage discounts';
+                discountHint.classList.remove('hidden');
+            } else {
+                offerPriceInput.removeAttribute('max');
+                offerPriceInput.step = '1';
+                offerPriceInput.placeholder = 'e.g., 100 for ₹100';
+                discountLabel.textContent = 'Discount Amount * (₹)';
+                discountHint.textContent = 'Fixed amount in rupees';
+                discountHint.classList.remove('hidden');
+            }
+        }
+        
         // Filter and Search functionality
         let searchTimeout;
         

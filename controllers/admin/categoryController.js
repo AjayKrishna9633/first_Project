@@ -1,5 +1,6 @@
 import Category from "../../models/categoryModel.js";
 import product from "../../models/porductsModal.js";
+import StatusCodes from '../../utils/statusCodes.js';
 
 const getCategories = async (req, res) => {
     try {
@@ -133,7 +134,7 @@ const updateCategory = async (req, res) => {
         const { name, description, offerType, offerValue } = req.body;
 
         if (!name || !description) {
-            return res.status(400).json({
+            return res\.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'All fields are required'
             });
@@ -141,7 +142,7 @@ const updateCategory = async (req, res) => {
 
         // Validate description length
         if (description.trim().length < 10 || description.trim().length > 500) {
-            return res.status(400).json({
+            return res\.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
                 message: 'Description must be between 10 and 500 characters'
             });
@@ -218,3 +219,4 @@ export default {
     updateCategory,
     toggleListCategory
 };
+

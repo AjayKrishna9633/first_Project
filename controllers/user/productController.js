@@ -2,7 +2,7 @@ import Product from "../../models/porductsModal.js";
 import Category from "../../models/categoryModel.js";
 import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
-import { StatusCodes } from 'http-status-codes';
+import StatusCodes from '../../utils/statusCodes.js';
 import { applyBestDiscountToProduct } from '../../utils/discountCalculator.js';
 
 const getShopPage = async (req, res) => {

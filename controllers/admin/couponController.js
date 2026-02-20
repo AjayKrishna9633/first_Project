@@ -1,5 +1,5 @@
 import Coupon from '../../models/couponModel.js';
-import { StatusCodes } from 'http-status-codes';
+import StatusCodes from '../../utils/statusCodes.js';
 
 // Get all coupons with pagination, search, filter, and sort
 const getCoupons = async (req, res) => {
@@ -115,17 +115,10 @@ const createCoupon = async (req, res) => {
         const parsedMaxDiscount = maxDiscountAmount ? parseFloat(maxDiscountAmount) : null;
 
         if (discountType === 'percentage') {
-            if (parsedOfferPrice <= 0 || parsedOfferPrice > 100) {
+            if (parsedOfferPrice <= 0 || parsedOfferPrice >= 100) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
-                    message: 'Percentage discount must be between 1 and 100'
-                });
-            }
-
-            if (parsedOfferPrice >= 100) {
-                return res.status(StatusCodes.BAD_REQUEST).json({
-                    success: false,
-                    message: 'Percentage discount cannot be 100% or more. Maximum allowed is 99%'
+                    message: 'Percentage discount must be between 1 and 99'
                 });
             }
 
@@ -310,17 +303,10 @@ const updateCoupon = async (req, res) => {
         const parsedMaxDiscount = maxDiscountAmount ? parseFloat(maxDiscountAmount) : null;
 
         if (discountType === 'percentage') {
-            if (parsedOfferPrice <= 0 || parsedOfferPrice > 100) {
+            if (parsedOfferPrice <= 0 || parsedOfferPrice >= 100) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
-                    message: 'Percentage discount must be between 1 and 100'
-                });
-            }
-
-            if (parsedOfferPrice >= 100) {
-                return res.status(StatusCodes.BAD_REQUEST).json({
-                    success: false,
-                    message: 'Percentage discount cannot be 100% or more. Maximum allowed is 99%'
+                    message: 'Percentage discount must be between 1 and 99'
                 });
             }
 

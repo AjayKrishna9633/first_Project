@@ -1,7 +1,7 @@
 import User from '../../models/userModal.js';
 import WalletTransaction from '../../models/WalletTransaction.js';
 import Orders from '../../models/orderModel.js';
-import { StatusCodes } from 'http-status-codes';
+import StatusCodes from '../../utils/statusCodes.js';
 import razorpayInstance from '../../config/razorpay.js';
 import crypto from 'crypto';
 import dotenv from 'dotenv';

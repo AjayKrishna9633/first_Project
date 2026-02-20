@@ -3,7 +3,7 @@ import { comparePassword, hashPassword } from "../../utils/hashUtils.js";
 import nodemailer from 'nodemailer';
 import env from "dotenv";
 import user from "../../models/userModal.js";
-import { StatusCodes } from 'http-status-codes';
+import StatusCodes from '../../utils/statusCodes.js';
 
 
 
@@ -778,7 +778,7 @@ export const loadhomePage = async (req, res) => {
         return res.render("user/home", { user });
     } catch (err) {
         console.log(err);
-        res.status(500).send("Server error");
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send("Server error");
     }
 };
 
@@ -817,7 +817,7 @@ const updateProfile = async(req,res)=>{
 
     }catch(error){
         console.log(error);
-        return res.status(500).render('user/profile',{
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('user/profile',{
             user:{
                 fullName:req.body.fullName || '',
                 email:req.session.user.email || '',
@@ -1142,3 +1142,4 @@ export default {
     updateProfileImage,
 
 };
+

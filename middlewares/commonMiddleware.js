@@ -3,6 +3,8 @@
  * Contains middleware extracted from app.js
  */
 
+import StatusCodes from '../utils/statusCodes.js';
+
 /**
  * No Cache Middleware
  * Prevents browser caching of responses
@@ -19,7 +21,7 @@ export const noCache = (req, res, next) => {
  * Handles requests to non-existent routes
  */
 export const notFoundHandler = (req, res) => {
-    res.status(404).render('error/error', {
+    res.status(StatusCodes.NOT_FOUND).render('error/error', {
         title: '404 - Page Not Found',
         message: 'The page you are looking for does not exist.',
         user: req.session.user || null,
@@ -34,7 +36,7 @@ export const notFoundHandler = (req, res) => {
  */
 export const globalErrorHandler = (err, req, res, next) => {
     console.error('Global Error Handler:', err);
-    res.status(500).render('error/error', {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).render('error/error', {
         title: '500 - Internal Server Error',
         message: 'Something went wrong on our end. Please try again later.',
         user: req.session.user || null,
