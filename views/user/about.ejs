@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - GEARGRID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/text-wrap.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #0a0a0a 100%);
+        }
+        
+        .feature-card {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(6, 182, 212, 0.2);
+        }
+        
+        .value-card {
+            transition: all 0.3s ease;
+        }
+        
+        .value-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .cyber-accent {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+    <!-- Header -->
+    <%- include('../partials/header') %>
+
+    <!-- Breadcrumb -->
+    <div class="bg-gray-900 border-b border-gray-800 mt-20">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center text-sm">
+                <a href="/" class="text-gray-300 hover:text-white transition">Home</a>
+                <i class="fas fa-chevron-right mx-2 text-xs text-gray-500"></i>
+                <span class="text-white font-medium">About Us</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient py-20 px-6">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6">
+                About <span class="cyber-accent">GearGrid</span>
+            </h1>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                Transforming the way you work, play, and create with high-quality PC accessories
+            </p>
+        </div>
+    </section>
+
+    <!-- Mission Section -->
+    <section class="py-20 px-6 bg-zinc-900">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <!-- Left: Image/Icon -->
+                <div class="relative">
+                    <div class="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-2xl p-12 backdrop-blur-sm border border-cyan-500/30">
+                        <div class="text-center">
+                            <i class="fas fa-rocket text-8xl text-cyan-400 mb-6"></i>
+                            <h3 class="text-2xl font-bold text-white">Our Mission</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Content -->
+                <div>
+                    <h2 class="text-4xl font-bold mb-6 text-white">
+                        Powering Your <span class="text-cyan-400">Digital Lifestyle</span>
+                    </h2>
+                    <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                        At GearGrid, we believe the right gear can transform the way you work, play, and create. 
+                        Our mission is simple: to bring high-quality PC accessories to enthusiasts, gamers, students, 
+                        and professionals who value performance, comfort, and style.
+                    </p>
+                    <p class="text-gray-300 text-lg leading-relaxed">
+                        From precision gaming mice and responsive mechanical keyboards to everyday productivity essentials, 
+                        every product in our collection is carefully selected to deliver reliability and satisfaction.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- What We Offer -->
+    <section class="py-20 px-6 bg-black">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">What We <span class="text-cyan-400">Offer</span></h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                    Carefully curated products that combine modern design with practical functionality
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="feature-card rounded-2xl p-8 border border-gray-800">
+                    <div class="w-16 h-16 bg-cyan-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-gamepad text-3xl text-cyan-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-white">Gaming Gear</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Precision gaming mice, responsive mechanical keyboards, and high-performance accessories 
+                        designed for competitive gamers and enthusiasts.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="feature-card rounded-2xl p-8 border border-gray-800">
+                    <div class="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-laptop-code text-3xl text-blue-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-white">Productivity Tools</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Everyday essentials for students and professionals who need reliable, comfortable, 
+                        and efficient tools to enhance their workflow.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="feature-card rounded-2xl p-8 border border-gray-800">
+                    <div class="w-16 h-16 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-palette text-3xl text-purple-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-white">Style & Design</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Modern aesthetics that complement any setup, combining sleek design with 
+                        durability and functionality for the perfect desk environment.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Values -->
+    <section class="py-20 px-6 bg-zinc-900">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Our <span class="text-cyan-400">Values</span></h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                    The principles that guide everything we do at GearGrid
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-4 gap-6">
+                <!-- Value 1 -->
+                <div class="value-card bg-gray-800/50 rounded-xl p-6 text-center border border-gray-700">
+                    <div class="w-12 h-12 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-star text-2xl text-cyan-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white">Quality</h3>
+                    <p class="text-gray-400 text-sm">
+                        Every product is carefully selected for reliability and performance
+                    </p>
+                </div>
+
+                <!-- Value 2 -->
+                <div class="value-card bg-gray-800/50 rounded-xl p-6 text-center border border-gray-700">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-users text-2xl text-blue-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white">Community</h3>
+                    <p class="text-gray-400 text-sm">
+                        Building a community of tech lovers who appreciate great hardware
+                    </p>
+                </div>
+
+                <!-- Value 3 -->
+                <div class="value-card bg-gray-800/50 rounded-xl p-6 text-center border border-gray-700">
+                    <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shield-alt text-2xl text-purple-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white">Reliability</h3>
+                    <p class="text-gray-400 text-sm">
+                        Durable products that stand the test of time and heavy use
+                    </p>
+                </div>
+
+                <!-- Value 4 -->
+                <div class="value-card bg-gray-800/50 rounded-xl p-6 text-center border border-gray-700">
+                    <div class="w-12 h-12 bg-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-smile text-2xl text-pink-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white">Satisfaction</h3>
+                    <p class="text-gray-400 text-sm">
+                        Delivering seamless experiences and customer happiness
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Community Section -->
+    <section class="py-20 px-6 bg-black">
+        <div class="max-w-6xl mx-auto">
+            <div class="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-3xl p-12 border border-cyan-500/20 text-center">
+                <i class="fas fa-heart text-5xl text-cyan-400 mb-6"></i>
+                <h2 class="text-4xl font-bold mb-6 text-white">
+                    More Than Just a <span class="text-cyan-400">Store</span>
+                </h2>
+                <p class="text-gray-300 text-lg leading-relaxed max-w-3xl mx-auto mb-8">
+                    GearGrid is a growing community of tech lovers who appreciate great hardware and seamless experiences. 
+                    We focus on combining modern design with practical functionality, ensuring that each accessory 
+                    enhances your setup without compromising durability.
+                </p>
+                <p class="text-xl font-semibold text-white mb-8">
+                    Whether you're building your dream desk setup or upgrading your daily tools, 
+                    <span class="text-cyan-400">GearGrid is here to power your digital lifestyle.</span>
+                </p>
+                <a href="/shop" class="inline-block px-8 py-4 bg-cyan-400 text-black rounded-lg hover:bg-cyan-500 transition font-bold text-lg">
+                    <i class="fas fa-shopping-bag mr-2"></i>Explore Our Products
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-20 px-6 bg-zinc-900">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-5xl font-bold text-cyan-400 mb-2">500+</div>
+                    <p class="text-gray-400">Products</p>
+                </div>
+                <div>
+                    <div class="text-5xl font-bold text-blue-400 mb-2">10K+</div>
+                    <p class="text-gray-400">Happy Customers</p>
+                </div>
+                <div>
+                    <div class="text-5xl font-bold text-purple-400 mb-2">50+</div>
+                    <p class="text-gray-400">Brands</p>
+                </div>
+                <div>
+                    <div class="text-5xl font-bold text-pink-400 mb-2">24/7</div>
+                    <p class="text-gray-400">Support</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <%- include('../partials/footer') %>
+</body>
+</html>

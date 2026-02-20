@@ -87,7 +87,10 @@ router.get('/logout', userCtrl.logout);
 //  ERROR ROUTES 
 router.get('/pageNotFound', userCtrl.pageNotFound);
 
-
+//  ABOUT US ROUTE
+router.get('/about', (req, res) => {
+    res.render('user/about', { user: req.session?.user || null });
+});
 
 //shop page
 router.get('/shop', productCtrl.getShopPage)
