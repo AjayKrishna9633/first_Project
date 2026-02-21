@@ -57,6 +57,15 @@ const addCategory = async (req, res) => {
     try {
         const { name, description, offerType, offerValue } = req.body;
 
+        if(name.length>30){
+            return res.render('admin/addCategory',{
+                 admin: req.session.admin,
+                message: "Name length should be lessthan 30",
+                isError: true
+            })
+        }
+
+
         if (!name || !description) {
             return res.render('admin/addCategory', {
                 admin: req.session.admin,

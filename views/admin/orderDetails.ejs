@@ -77,7 +77,7 @@
                         <i class="fas fa-download mr-2"></i>Download Invoice
                     </a>
                 <% } %>
-                <button onclick="updateOrderStatus('<%= order._id %>')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                <button onclick="updateOrderStatus('<%= order._id %>', '<%= order.orderStatus %>', '<%= order.paymentStatus %>')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                     <i class="fas fa-edit mr-2"></i>Update Status
                 </button>
             </div>
@@ -380,7 +380,37 @@
     </div>
 
     <script>
-        async function updateOrderStatus(orderId) {
+        async function updateOrderStatus(orderId, currentStatus, currentPaymentStatus) {
+            // Define status hierarchy
+            const statusHierarchy = {
+                'pending': 1,
+                'confirmed': 2,
+                'processing': 3,
+                'shipped': 4,
+                'delivered': 5,
+                'returned': 6
+            };
+            
+            const currentLevel = statusHierarchy[currentStatus] || 0;
+            
+            // Build status options with disabled attribute for backward statuses
+            const statusOptions = [
+                { value: 'pending', label: 'Pending', level: 1 },
+                { value: 'confirmed', label: 'Confirmed', level: 2 },
+                { value: 'processing', label: 'Processing', level: 3 },
+                { value: 'shipped', label: 'Shipped', level: 4 },
+                { value: 'delivered', label: 'Delivered', level: 5 }
+            ];
+            
+            const statusOptionsHtml = statusOptions.map(option => {
+                const isDisabled = option.level < currentLevel;
+                const isSelected = option.value === currentStatus;
+                return `<option value="${option.value}" ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}>${option.label}${isDisabled ? ' (Cannot go backward)' : ''}</option>`;
+            }).join('');
+            
+            // Check if payment is already paid
+            const isPaid = currentPaymentStatus === 'paid';
+            
             const { value: formValues } = await Swal.fire({
                 title: 'Update Order Status',
                 html: `
@@ -388,30 +418,34 @@
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Order Status</label>
                             <select id="orderStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                                <option value="pending" <%= order.orderStatus === 'pending' ? 'selected' : '' %>>Pending</option>
-                                <option value="confirmed" <%= order.orderStatus === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
-                                <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>Processing</option>
-                                <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
-                                <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
-                                <option value="cancelled" <%= order.orderStatus === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                ${statusOptionsHtml}
                             </select>
+                            <p class="text-xs text-gray-500 mt-1">Note: Orders can only progress forward</p>
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
-                            <% if ((order.paymentMethod === 'online' || order.paymentMethod === 'wallet') && order.paymentStatus === 'paid') { %>
-                                <select id="paymentStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed" disabled>
-                                    <option value="paid" selected>Paid (Locked for online/wallet payments)</option>
-                                </select>
-                                <p class="text-xs text-gray-500 mt-1">
-                                    <i class="fas fa-lock mr-1"></i>Payment status cannot be changed for online/wallet payments
-                                </p>
-                            <% } else { %>
-                                <select id="paymentStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                                    <option value="pending" <%= order.paymentStatus === 'pending' ? 'selected' : '' %>>Pending</option>
-                                    <option value="paid" <%= order.paymentStatus === 'paid' ? 'selected' : '' %>>Paid</option>
-                                    <option value="failed" <%= order.paymentStatus === 'failed' ? 'selected' : '' %>>Failed</option>
-                                </select>
-                            <% } %>
+                            ${isPaid 
+                                ? `<select id="paymentStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed" disabled>
+                                    <option value="paid" selected>Paid (Locked)</option>
+                                   </select>
+                                   <p class="text-xs text-gray-500 mt-1">
+                                       <i class="fas fa-lock mr-1"></i>Payment status cannot be changed once paid
+                                   </p>`
+                                : `<% if ((order.paymentMethod === 'online' || order.paymentMethod === 'wallet') && order.paymentStatus === 'paid') { %>
+                                    <select id="paymentStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed" disabled>
+                                        <option value="paid" selected>Paid (Locked for online/wallet payments)</option>
+                                    </select>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        <i class="fas fa-lock mr-1"></i>Payment status cannot be changed for online/wallet payments
+                                    </p>
+                                   <% } else { %>
+                                    <select id="paymentStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                        <option value="pending" <%= order.paymentStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+                                        <option value="paid" <%= order.paymentStatus === 'paid' ? 'selected' : '' %>>Paid</option>
+                                        <option value="failed" <%= order.paymentStatus === 'failed' ? 'selected' : '' %>>Failed</option>
+                                    </select>
+                                   <% } %>`
+                            }
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Admin Notes</label>

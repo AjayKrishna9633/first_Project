@@ -54,171 +54,120 @@
     <!-- Navigation -->
     <%-include("../../views/partials/header.ejs")%>
 
-    <!-- Hero Section -->
+    <!-- Hero Section - Latest Keyboard -->
     <section class="hero-section pt-24 pb-12 min-h-screen flex items-center">
         <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-8 items-center">
             <div>
-                <h1 class="text-6xl font-bold mb-6 leading-tight">
-                    THE CHAMPION OF PRO<br>
-                    KEYBOARDS HAS ARRIVED
-                </h1>
-                <p class="text-gray-400 mb-8 text-lg leading-relaxed">
-                    Elevate your game with tenkeyless cutting-edge switches,<br>
-                    lightning-fast response, and precision.
-                </p>
-                <button class="btn-cyan text-black font-bold px-8 py-3 rounded text-sm">
-                    SHOP APEX 5 TKL SERIES
-                </button>
+                <% if (latestKeyboard) { %>
+                    <h1 class="text-6xl font-bold mb-6 leading-tight">
+                        THE CHAMPION OF PRO<br>
+                        KEYBOARDS HAS ARRIVED
+                    </h1>
+                    <p class="text-gray-400 mb-4 text-2xl font-semibold">
+                        <%= latestKeyboard.productName %>
+                    </p>
+                    <p class="text-gray-400 mb-8 text-lg leading-relaxed">
+                        Elevate your game with tenkeyless cutting-edge switches,<br>
+                        lightning-fast response, and precision.
+                    </p>
+                    <% if (latestKeyboard.variants && latestKeyboard.variants[0]) { %>
+                        <p class="text-cyan-400 text-3xl font-bold mb-6">
+                            ₹<%= latestKeyboard.variants[0].finalPrice.toLocaleString('en-IN') %>
+                        </p>
+                    <% } %>
+                    <a href="/product/<%= latestKeyboard._id %>" class="btn-cyan text-black font-bold px-8 py-3 rounded text-sm inline-block">
+                        SHOP NOW
+                    </a>
+                <% } else { %>
+                    <h1 class="text-6xl font-bold mb-6 leading-tight">
+                        THE CHAMPION OF PRO<br>
+                        KEYBOARDS HAS ARRIVED
+                    </h1>
+                    <p class="text-gray-400 mb-8 text-lg leading-relaxed">
+                        Elevate your game with cutting-edge switches,<br>
+                        lightning-fast response, and precision.
+                    </p>
+                    <a href="/shop" class="btn-cyan text-black font-bold px-8 py-3 rounded text-sm inline-block">
+                        SHOP NOW
+                    </a>
+                <% } %>
             </div>
             
             <div class="relative">
-                <div class="w-full h-99 bg-gray-800 rounded-lg flex items-center justify-center text-gray-600">
-                    <img class="w-full h-99 bg-gray-800 rounded-lg flex items-center justify-center text-gray-600" src="https://kreo-tech.com/cdn/shop/files/KREOHIVE65WHITEPDP-OWNMATERIALS.1376.png?v=1760333936&width=1200" alt="" srcset="">
+                <div class="w-full h-99 bg-gray-800 rounded-lg flex items-center justify-center text-gray-600 overflow-hidden">
+                    <% if (latestKeyboard && latestKeyboard.variants && latestKeyboard.variants[0] && latestKeyboard.variants[0].images && latestKeyboard.variants[0].images[0]) { %>
+                        <img class="w-full h-full object-contain" src="<%= latestKeyboard.variants[0].images[0] %>" alt="<%= latestKeyboard.productName %>">
+                    <% } else { %>
+                        <img class="w-full h-full object-contain" src="https://kreo-tech.com/cdn/shop/files/KREOHIVE65WHITEPDP-OWNMATERIALS.1376.png?v=1760333936&width=1200" alt="Gaming Keyboard">
+                    <% } %>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Shop Section -->
+    <!-- Shop Section - Best Sellers -->
     <section class="py-12 bg-zinc-900">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex items-center justify-center mb-8">
-                <button class="text-sm font-medium flex items-center gap-2">
-                    SHOP NEW & BEST SELLERS <span>▼</span>
-                </button>
+                <h2 class="text-2xl font-bold flex items-center gap-2">
+                    SHOP BEST SELLERS
+                </h2>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <!-- Product Card 1 -->
-                <div class="product-card rounded-lg overflow-hidden">
-                    <div class="bg-white p-6 flex items-center justify-center h-48">
-                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
-                            [Keyboard]
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <% if (bestSellers && bestSellers.length > 0) { %>
+                    <% bestSellers.forEach((product, index) => { %>
+                        <a href="/product/<%= product._id %>" class="product-card rounded-lg overflow-hidden block">
+                            <div class="bg-white p-6 flex items-center justify-center h-64 relative">
+                                <% if (product.variants && product.variants[0] && product.variants[0].images && product.variants[0].images[0]) { %>
+                                    <img src="<%= product.variants[0].images[0] %>" alt="<%= product.productName %>" class="w-full h-full object-contain">
+                                <% } else { %>
+                                    <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+                                        [<%= product.category.name %>]
+                                    </div>
+                                <% } %>
+                                <div class="absolute top-4 left-4 bg-cyan-400 text-black px-3 py-1 rounded-full text-xs font-bold">
+                                    #<%= index + 1 %> BEST SELLER
+                                </div>
+                            </div>
+                            <div class="p-4 bg-white text-black">
+                                <% if (product.variants && product.variants.length > 0) { %>
+                                    <div class="flex gap-2 mb-2">
+                                        <% product.variants.slice(0, 3).forEach(variant => { %>
+                                            <span class="w-3 h-3 rounded-full border border-gray-300" 
+                                                  style="background-color: <%= variant.color.toLowerCase() %>;"></span>
+                                        <% }); %>
+                                        <% if (product.variants.length > 3) { %>
+                                            <span class="text-xs text-gray-500">+<%= product.variants.length - 3 %></span>
+                                        <% } %>
+                                    </div>
+                                <% } %>
+                                <h3 class="font-bold text-sm mb-1 line-clamp-2"><%= product.productName %></h3>
+                                <p class="text-xs text-gray-500 mb-2"><%= product.category.name %></p>
+                                <% if (product.variants && product.variants[0]) { %>
+                                    <p class="text-2xl font-bold mb-1">₹<%= product.variants[0].finalPrice.toLocaleString('en-IN') %></p>
+                                <% } %>
+                                <div class="flex items-center gap-1 text-xs mt-2">
+                                    <span class="text-yellow-500">★★★★★</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">
+                                    <%= product.totalQuantity %> sold
+                                </p>
+                            </div>
+                        </a>
+                    <% }); %>
+                <% } else { %>
+                    <div class="col-span-3 text-center py-12">
+                        <p class="text-gray-400">No best sellers yet. Check back soon!</p>
+                        <a href="/shop" class="btn-cyan text-black font-bold px-8 py-3 rounded text-sm inline-block mt-4">
+                            BROWSE ALL PRODUCTS
+                        </a>
                     </div>
-                    <div class="p-4 bg-white text-black">
-                        <div class="flex gap-2 mb-2">
-                            <span class="w-3 h-3 bg-black rounded-full border border-gray-300"></span>
-                            <span class="w-3 h-3 bg-gray-300 rounded-full border border-gray-300"></span>
-                        </div>
-                        <h3 class="font-bold text-sm mb-1">G515 TKL</h3>
-                        <p class="text-2xl font-bold mb-1">$249</p>
-                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
-                        <div class="flex items-center gap-1 text-xs mt-2">
-                            <span class="text-yellow-500">★★★★★</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Card 2 -->
-                <div class="product-card rounded-lg overflow-hidden">
-                    <div class="bg-white p-6 flex items-center justify-center h-48">
-                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
-                            [Keyboard]
-                        </div>
-                    </div>
-                    <div class="p-4 bg-white text-black relative">
-                        <div class="flex gap-2 mb-2">
-                            <span class="w-3 h-3 bg-black rounded-full border border-gray-300"></span>
-                            <span class="w-3 h-3 bg-gray-300 rounded-full border border-gray-300"></span>
-                        </div>
-                        <h3 class="font-bold text-sm mb-1">G915 X LIGHTSPEED</h3>
-                        <p class="text-2xl font-bold mb-1">$199.99</p>
-                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
-                        <div class="flex items-center gap-1 text-xs mt-2">
-                            <span class="text-yellow-500">★★★★★</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Card 3 -->
-                <div class="product-card rounded-lg overflow-hidden">
-                    <div class="bg-white p-6 flex items-center justify-center h-48">
-                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
-                            [Headset]
-                        </div>
-                    </div>
-                    <div class="p-4 bg-white text-black relative">
-                        <div class="flex gap-2 mb-2">
-                            <span class="w-3 h-3 bg-black rounded-full border border-gray-300"></span>
-                            <span class="w-3 h-3 bg-gray-300 rounded-full border border-gray-300"></span>
-                        </div>
-                        <h3 class="font-bold text-sm mb-1">PRO X2G (GEN 5)</h3>
-                        <p class="text-2xl font-bold mb-1">$199.99</p>
-                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
-                        <div class="flex items-center gap-1 text-xs mt-2">
-                            <span class="text-yellow-500">★★★★★</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Card 4 -->
-                <div class="product-card rounded-lg overflow-hidden">
-                    <div class="bg-white p-6 flex items-center justify-center h-48">
-                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
-                            [Keyboard]
-                        </div>
-                    </div>
-                    <div class="p-4 bg-white text-black relative">
-                        <div class="flex gap-2 mb-2">
-                            <span class="w-3 h-3 bg-pink-500 rounded-full"></span>
-                            <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
-                            <span class="w-3 h-3 bg-gray-300 rounded-full"></span>
-                        </div>
-                        <h3 class="font-bold text-sm mb-1">G915 X</h3>
-                        <p class="text-2xl font-bold mb-1">$219</p>
-                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
-                        <div class="flex items-center gap-1 text-xs mt-2">
-                            <span class="text-yellow-500">★★★★★</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Card 5 -->
-                <div class="product-card rounded-lg overflow-hidden">
-                    <div class="bg-white p-6 flex items-center justify-center h-48">
-                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
-                            [Mouse]
-                        </div>
-                    </div>
-                    <div class="p-4 bg-white text-black relative">
-                        <div class="flex gap-2 mb-2">
-                            <span class="w-3 h-3 bg-black rounded-full border border-gray-300"></span>
-                            <span class="w-3 h-3 bg-gray-300 rounded-full border border-gray-300"></span>
-                        </div>
-                        <h3 class="font-bold text-sm mb-1">PRO X SUPERLIGHT 2 DEX</h3>
-                        <p class="text-2xl font-bold mb-1">$199.99</p>
-                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
-                        <div class="flex items-center gap-1 text-xs mt-2">
-                            <span class="text-yellow-500">★★★★★</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Card 6 -->
-                <div class="product-card rounded-lg overflow-hidden">
-                    <div class="bg-white p-6 flex items-center justify-center h-48">
-                        <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
-                            [Mouse]
-                        </div>
-                    </div>
-                    <div class="p-4 bg-white text-black relative">
-                        <div class="flex gap-2 mb-2">
-                            <span class="w-3 h-3 bg-black rounded-full border border-gray-300"></span>
-                            <span class="w-3 h-3 bg-pink-500 rounded-full"></span>
-                            <span class="w-3 h-3 bg-gray-300 rounded-full"></span>
-                        </div>
-                        <h3 class="font-bold text-sm mb-1">G502 X PLUS</h3>
-                        <p class="text-lg"><span class="font-bold">$99.99</span> <span class="line-through text-gray-400">$159.99</span></p>
-                        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500">♡</button>
-                        <div class="flex items-center gap-1 text-xs mt-2">
-                            <span class="text-yellow-500">★★★★★</span>
-                        </div>
-                    </div>
-                </div>
+                <% } %>
             </div>
         </div>
     </section>
+
 
     <!-- Cyber Monday Banner -->
     <section class="relative overflow-hidden">
@@ -307,49 +256,68 @@
         </div>
     </section>
 
-    <!-- Featured Gaming PC -->
+    <!-- Featured Latest Mouse -->
     <section class="bg-black py-20">
         <div class="max-w-7xl mx-auto px-6">
-            <div class="grid md:grid-cols-2 gap-16 items-center">
-                <!-- Product Image -->
-                <div class="relative">
-                    <div class="w-full h-[500px] bg-zinc-900 rounded-2xl flex items-center justify-center text-gray-600">
-                        [Gaming PC with RGB Image]
+            <% if (latestMouse) { %>
+                <div class="grid md:grid-cols-2 gap-16 items-center">
+                    <!-- Product Image -->
+                    <div class="relative">
+                        <div class="w-full h-[500px] bg-zinc-900 rounded-2xl flex items-center justify-center overflow-hidden">
+                            <% if (latestMouse.variants && latestMouse.variants[0] && latestMouse.variants[0].images && latestMouse.variants[0].images[0]) { %>
+                                <img src="<%= latestMouse.variants[0].images[0] %>" alt="<%= latestMouse.productName %>" class="w-full h-full object-contain p-8">
+                            <% } else { %>
+                                <span class="text-gray-600">[Latest Mouse Image]</span>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <!-- Product Info -->
+                    <div>
+                        <h2 class="text-4xl font-bold mb-6 uppercase"><%= latestMouse.productName %></h2>
+                        <p class="text-gray-400 mb-6 text-lg">Latest Addition to Our Collection</p>
+                        
+                        <% if (latestMouse.variants && latestMouse.variants[0]) { %>
+                            <p class="text-cyan-400 mb-2 text-sm">STARTING AT ₹<%= latestMouse.variants[0].finalPrice.toLocaleString('en-IN') %></p>
+                        <% } %>
+                        
+                        <p class="text-gray-400 text-sm mb-6">
+                            <%= latestMouse.description || 'Experience precision and performance with our latest gaming mouse.' %><br><br>
+                            <% if (latestMouse.variants && latestMouse.variants.length > 0) { %>
+                                • Available in <%= latestMouse.variants.length %> color variant<%= latestMouse.variants.length > 1 ? 's' : '' %><br>
+                            <% } %>
+                            • Premium build quality and ergonomic design<br>
+                            • Perfect for gaming and productivity<br>
+                            • Latest technology for ultimate performance
+                        </p>
+                        
+                        <div class="flex text-yellow-400 text-lg mb-6">★★★★★</div>
+                        
+                        <% if (latestMouse.variants && latestMouse.variants[0]) { %>
+                            <div class="mb-8">
+                                <span class="text-5xl font-bold">₹<%= latestMouse.variants[0].finalPrice.toLocaleString('en-IN') %></span>
+                            </div>
+                        <% } %>
+                        
+                        <div class="flex gap-4">
+                            <a href="/product/<%= latestMouse._id %>" class="bg-cyan-500 hover:bg-cyan-600 text-black font-bold px-10 py-4 rounded text-sm transition flex-1 text-center">
+                                VIEW PRODUCT
+                            </a>
+                            <a href="/shop" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold px-10 py-4 rounded text-sm transition flex-1 text-center">
+                                BROWSE MORE
+                            </a>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- Product Info -->
-                <div>
-                    <h2 class="text-4xl font-bold mb-6">ENIGMATIC. CONTENDER. PROTECTOR.</h2>
-                    <p class="text-gray-400 mb-6 text-lg">Experience a New Speed of Gaming Desktop</p>
-                    
-                    <p class="text-cyan-400 mb-2 text-sm">STARTING AT $599</p>
-                    <p class="text-gray-400 text-sm mb-6">
-                        Or from $50.00/mo with credit or debit card.<br><br>
-                        Powered by Up to AMD Ryzen™ 5000 series, GeForce RTX™ 30 Series Graphics Options<br>
-                        • Up to Intel® i9-12900K / NVIDIA® GeForce RTX™ 3090<br>
-                        • Up to 128GB of Vengeance® RGB PRO DDR4 Memory<br>
-                        • Up to 3TB M.2 SSD (PCIe Gen 4) + 2TB 2.5" SSD for more storage<br>
-                        • VENGEANCE a5500 Series 850 Watt with 80+ Gold Efficiency
-                    </p>
-                    
-                    <div class="flex text-yellow-400 text-lg mb-6">★★★★★</div>
-                    
-                    <div class="mb-8">
-                        <span class="text-5xl font-bold">$599</span>
-                        <span class="text-sm align-top">00</span>
-                    </div>
-                    
-                    <div class="flex gap-4">
-                        <button class="bg-red-600 hover:bg-red-700 text-white font-bold px-10 py-4 rounded text-sm transition flex-1">
-                            CUSTOMIZE
-                        </button>
-                        <button class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold px-10 py-4 rounded text-sm transition flex-1">
-                            LEARN MORE
-                        </button>
-                    </div>
+            <% } else { %>
+                <div class="text-center py-12">
+                    <h2 class="text-4xl font-bold mb-6">DISCOVER OUR LATEST PRODUCTS</h2>
+                    <p class="text-gray-400 mb-8 text-lg">Check out our full collection of gaming peripherals</p>
+                    <a href="/shop" class="btn-cyan text-black font-bold px-10 py-4 rounded text-sm inline-block">
+                        SHOP NOW
+                    </a>
                 </div>
-            </div>
+            <% } %>
         </div>
     </section>
 

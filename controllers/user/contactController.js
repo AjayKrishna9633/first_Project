@@ -2,10 +2,7 @@ import ContactMessage from '../../models/contactMessageModel.js';
 import { sendContactNotificationEmail, sendAutoReplyEmail } from '../../services/contactEmailService.js';
 import StatusCodes from '../../utils/statusCodes.js';
 
-/**
- * Handle contact form submission
- * Flow: Validate -> Save to DB -> Send emails -> Return response
- */
+
 const submitContactForm = async (req, res) => {
     try {
         const { fullName, email, phone, subject, message } = req.body;
@@ -56,8 +53,7 @@ const submitContactForm = async (req, res) => {
         
         console.log('Contact message saved to database:', savedMessage._id);
         
-        // Step 2: Send notification email to admin (non-blocking)
-        // We don't await this to avoid blocking the response
+      
         sendContactNotificationEmail(contactData)
             .then(result => {
                 if (result.success) {
@@ -107,83 +103,9 @@ const submitContactForm = async (req, res) => {
     }
 };
 
-/**
- * Get all contact messages (Admin only - for future use)
- */
-const getAllContactMessages = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 20;
-        const skip = (page - 1) * limit;
-        
-        const messages = await ContactMessage.find()
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
-        
-        const total = await ContactMessage.countDocuments();
-        
-        return res.status(StatusCodes.OK).json({
-            success: true,
-            data: {
-                messages,
-                pagination: {
-                    currentPage: page,
-                    totalPages: Math.ceil(total / limit),
-                    totalMessages: total,
-                    hasMore: skip + messages.length < total
-                }
-            }
-        });
-        
-    } catch (error) {
-        console.error('Error in getAllContactMessages:', error);
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            message: 'Failed to fetch contact messages'
-        });
-    }
-};
 
-/**
- * Mark message as read (Admin only - for future use)
- */
-const markAsRead = async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        const message = await ContactMessage.findByIdAndUpdate(
-            id,
-            { isRead: true },
-            { new: true }
-        );
-        
-        if (!message) {
-            return res.status(StatusCodes.NOT_FOUND).json({
-                success: false,
-                message: 'Message not found'
-            });
-        }
-        
-        return res.status(StatusCodes.OK).json({
-            success: true,
-            message: 'Message marked as read',
-            data: message
-        });
-        
-    } catch (error) {
-        console.error('Error in markAsRead:', error);
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            message: 'Failed to update message'
-        });
-    }
-};
 
-/**
- * Delete old messages (cleanup utility)
- * Can be called manually or via cron job
- */
+
 const cleanupOldMessages = async (req, res) => {
     try {
         const daysOld = parseInt(req.query.days) || 30;
@@ -216,7 +138,6 @@ const cleanupOldMessages = async (req, res) => {
 
 export default {
     submitContactForm,
-    getAllContactMessages,
-    markAsRead,
+
     cleanupOldMessages
 };

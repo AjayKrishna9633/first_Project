@@ -776,9 +776,97 @@ export const logout = (req, res) => {
 export const loadhomePage = async (req, res) => {
     try {
         const user = req.session?.user || null;
-        return res.render("user/home", { user });
+        
+        // Import models
+        const Product = (await import('../../models/porductsModal.js')).default;
+        const Category = (await import('../../models/categoryModel.js')).default;
+        const Order = (await import('../../models/orderModel.js')).default;
+        
+        // 1. Get latest keyboard (most recently added)
+        const keyboardCategory = await Category.findOne({ name: /keyboard/i });
+        const latestKeyboard = await Product.findOne({
+            category: keyboardCategory?._id,
+            isBlocked: false
+        })
+        .sort({ createdOn: -1 })
+        .populate('category')
+        .lean();
+        
+        // 2. Get top 3 best-selling products
+        const bestSellers = await Order.aggregate([
+            {
+                $match: {
+                    orderStatus: { $nin: ['cancelled', 'failed'] }
+                }
+            },
+            { $unwind: '$items' },
+            {
+                $match: {
+                    'items.status': { $ne: 'cancelled' }
+                }
+            },
+            {
+                $group: {
+                    _id: '$items.productId',
+                    totalQuantity: { $sum: '$items.quantity' },
+                    totalRevenue: { $sum: '$items.totalPrice' }
+                }
+            },
+            { $sort: { totalQuantity: -1 } },
+            { $limit: 3 },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'product'
+                }
+            },
+            { $unwind: '$product' },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'product.category',
+                    foreignField: '_id',
+                    as: 'category'
+                }
+            },
+            { $unwind: '$category' },
+            {
+                $match: {
+                    'product.isBlocked': false
+                }
+            },
+            {
+                $project: {
+                    _id: '$product._id',
+                    productName: '$product.productName',
+                    category: '$category',
+                    variants: '$product.variants',
+                    totalQuantity: 1,
+                    totalRevenue: 1
+                }
+            }
+        ]);
+        
+        // 3. Get latest mouse product
+        const mouseCategory = await Category.findOne({ name: /mouse/i });
+        const latestMouse = await Product.findOne({
+            category: mouseCategory?._id,
+            isBlocked: false
+        })
+        .sort({ createdOn: -1 })
+        .populate('category')
+        .lean();
+        
+        return res.render("user/home", { 
+            user,
+            latestKeyboard,
+            bestSellers,
+            latestMouse
+        });
     } catch (err) {
-        console.log(err);
+        console.log('Error loading home page:', err);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).send("Server error");
     }
 };

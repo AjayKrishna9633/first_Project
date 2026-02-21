@@ -323,7 +323,7 @@
                                                     <i class="fas fa-file-pdf"></i>
                                                 </a>
                                             <% } %>
-                                            <button onclick="updateOrderStatus('<%= order._id %>')" 
+                                            <button onclick="updateOrderStatus('<%= order._id %>', '<%= order.orderStatus %>', '<%= order.paymentStatus %>')" 
                                                     class="text-orange-600 hover:text-orange-900" title="Update Status">
                                                 <i class="fas fa-edit"></i>
                                             </button>
@@ -384,7 +384,49 @@
     </div>
 
     <script>
-        async function updateOrderStatus(orderId) {
+        async function updateOrderStatus(orderId, currentStatus, currentPaymentStatus) {
+            // Define status hierarchy
+            const statusHierarchy = {
+                'pending': 1,
+                'confirmed': 2,
+                'processing': 3,
+                'shipped': 4,
+                'delivered': 5,
+                'returned': 6
+            };
+            
+            const currentLevel = statusHierarchy[currentStatus] || 0;
+            
+            // Build status options with disabled attribute for backward statuses
+            const statusOptions = [
+                { value: 'pending', label: 'Pending', level: 1 },
+                { value: 'confirmed', label: 'Confirmed', level: 2 },
+                { value: 'processing', label: 'Processing', level: 3 },
+                { value: 'shipped', label: 'Shipped', level: 4 },
+                { value: 'delivered', label: 'Delivered', level: 5 }
+            ];
+            
+            const statusOptionsHtml = statusOptions.map(option => {
+                const isDisabled = option.level < currentLevel;
+                const isSelected = option.value === currentStatus;
+                return `<option value="${option.value}" ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}>${option.label}${isDisabled ? ' (Cannot go backward)' : ''}</option>`;
+            }).join('');
+            
+            // Build payment status options
+            const isPaid = currentPaymentStatus === 'paid';
+            const paymentStatusHtml = isPaid 
+                ? `<select id="paymentStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed" disabled>
+                    <option value="paid" selected>Paid (Locked)</option>
+                   </select>
+                   <p class="text-xs text-gray-500 mt-1">
+                       <i class="fas fa-lock mr-1"></i>Payment status cannot be changed once paid
+                   </p>`
+                : `<select id="paymentStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <option value="pending" ${currentPaymentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="paid" ${currentPaymentStatus === 'paid' ? 'selected' : ''}>Paid</option>
+                    <option value="failed" ${currentPaymentStatus === 'failed' ? 'selected' : ''}>Failed</option>
+                   </select>`;
+            
             const { value: formValues } = await Swal.fire({
                 title: 'Update Order Status',
                 html: `
@@ -392,21 +434,13 @@
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Order Status</label>
                             <select id="orderStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                                <option value="pending">Pending</option>
-                                <option value="confirmed">Confirmed</option>
-                                <option value="processing">Processing</option>
-                                <option value="shipped">Shipped</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="cancelled">Cancelled</option>
+                                ${statusOptionsHtml}
                             </select>
+                            <p class="text-xs text-gray-500 mt-1">Note: Orders can only progress forward</p>
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
-                            <select id="paymentStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                                <option value="pending">Pending</option>
-                                <option value="paid">Paid</option>
-                                <option value="failed">Failed</option>
-                            </select>
+                            ${paymentStatusHtml}
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Admin Notes</label>
@@ -416,11 +450,18 @@
                 `,
                 focusConfirm: false,
                 preConfirm: () => {
-                    return {
+                    const paymentStatusField = document.getElementById('paymentStatus');
+                    const result = {
                         orderStatus: document.getElementById('orderStatus').value,
-                        paymentStatus: document.getElementById('paymentStatus').value,
                         notes: document.getElementById('adminNotes').value
+                    };
+                    
+                    // Only include paymentStatus if the field is not disabled
+                    if (!paymentStatusField.disabled) {
+                        result.paymentStatus = paymentStatusField.value;
                     }
+                    
+                    return result;
                 }
             });
 

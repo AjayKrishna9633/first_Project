@@ -12,11 +12,7 @@ const createTransporter = () => {
     });
 };
 
-/**
- * Send contact form notification email to admin
- * @param {Object} contactData - Contact form data
- * @returns {Promise<Object>} Email send result
- */
+
 export const sendContactNotificationEmail = async (contactData) => {
     try {
         const transporter = createTransporter();
@@ -132,7 +128,7 @@ export const sendContactNotificationEmail = async (contactData) => {
             </html>
         `;
         
-        // Plain text version for email clients that don't support HTML
+        
         const textBody = `
 New Contact Message Received - GEARGRID
 
@@ -175,11 +171,7 @@ Received at: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
     }
 };
 
-/**
- * Send auto-reply confirmation email to the user
- * @param {Object} contactData - Contact form data
- * @returns {Promise<Object>} Email send result
- */
+
 export const sendAutoReplyEmail = async (contactData) => {
     try {
         const transporter = createTransporter();

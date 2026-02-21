@@ -162,19 +162,49 @@ console.error('Get order details error:', error);
                     message: ORDER_MESSAGES.CANNOT_CANCEL_FROM_ADMIN 
                 });
             }
+            
+            // Define status hierarchy (lower number = earlier stage)
+            const statusHierarchy = {
+                'pending': 1,
+                'confirmed': 2,
+                'processing': 3,
+                'shipped': 4,
+                'delivered': 5,
+                'returned': 6
+            };
+            
+            const currentStatusLevel = statusHierarchy[currentOrder.orderStatus];
+            const newStatusLevel = statusHierarchy[orderStatus];
+            
+            // Prevent backward status changes
+            if (newStatusLevel < currentStatusLevel) {
+                return res.json({ 
+                    success: false, 
+                    message: `Cannot change status backward from ${currentOrder.orderStatus} to ${orderStatus}. Orders can only progress forward.`
+                });
+            }
+            
             updateData.orderStatus = orderStatus;
         }
         
         if (paymentStatus) {
-            // Prevent changing payment status for online/wallet payments that are already paid
+            // Prevent changing payment status backward from paid to pending/failed
+            if (currentOrder.paymentStatus === 'paid' && paymentStatus !== 'paid') {
+                return res.json({ 
+                    success: false, 
+                    message: 'Cannot change payment status from paid to unpaid. Payment status can only progress forward.'
+                });
+            }
+            
+            // Additional check for online/wallet payments
             if ((currentOrder.paymentMethod === 'online' || currentOrder.paymentMethod === 'wallet') && 
-                currentOrder.paymentStatus === 'paid' && 
-                paymentStatus !== 'paid') {  // Only block if trying to CHANGE from paid
+                currentOrder.paymentStatus === 'paid') {
                 return res.json({ 
                     success: false, 
                     message: PAYMENT_MESSAGES.CANNOT_CHANGE_PAYMENT_STATUS 
                 });
             }
+            
             updateData.paymentStatus = paymentStatus;
         }
         
