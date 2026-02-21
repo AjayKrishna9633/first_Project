@@ -10,6 +10,7 @@ import cartCtrl from "../controllers/user/cartController.js";
 import checkoutCtrl from "../controllers/user/checkoutController.js";
 import orderCtrl from "../controllers/user/orderController.js";
 import walletCtrl from "../controllers/user/walletController.js";
+import contactCtrl from "../controllers/user/contactController.js";
 const router = Router();
 
 //  HOME ROUTE 
@@ -91,6 +92,18 @@ router.get('/pageNotFound', userCtrl.pageNotFound);
 router.get('/about', (req, res) => {
     res.render('user/about', { user: req.session?.user || null });
 });
+
+//  CONTACT US ROUTES
+router.get('/contact', (req, res) => {
+    res.render('user/contact', { user: req.session?.user || null });
+});
+
+router.post('/contact/send', contactCtrl.submitContactForm);
+
+// Admin routes for contact messages (for future use)
+// router.get('/admin/contact-messages', protectAdmin, contactCtrl.getAllContactMessages);
+// router.patch('/admin/contact-messages/:id/read', protectAdmin, contactCtrl.markAsRead);
+// router.delete('/admin/contact-messages/cleanup', protectAdmin, contactCtrl.cleanupOldMessages);
 
 //shop page
 router.get('/shop', productCtrl.getShopPage)
