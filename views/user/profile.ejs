@@ -70,32 +70,10 @@
 </head>
 <body class="bg-black text-white">
     <!-- Header -->
-    <nav class="bg-black text-white py-4 px-6">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="text-2xl font-bold">
-                <a href="/">GEARGRID</a>
-            </div>
-            <div class="flex items-center space-x-6 text-sm">
-                <a href="/" class="hover:text-gray-300">HOME</a>
-                <a href="#" class="hover:text-gray-300">BEST SELLERS</a>
-                <a href="#" class="hover:text-gray-300">SHOP</a>
-                <a href="#" class="hover:text-gray-300">CONTACT</a>
-            </div>
-            <div class="flex items-center space-x-4">
-                <input type="text" placeholder="Search..." class="bg-gray-800 px-4 py-2 rounded-full text-sm focus:outline-none">
-                <button>♡</button>
-                <button>🛒</button>
-                <a href="/profile">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                </a>
-            </div>
-        </div>
-    </nav>
+    <%- include('../partials/header') %>
 
     <!-- Breadcrumb -->
-    <div class="bg-gray-900 border-b border-gray-800">
+    <div class="bg-gray-900 border-b border-gray-800 mt-20">
         <div class="max-w-7xl mx-auto px-6 py-3">
             <div class="flex items-center text-sm text-gray-400">
                 <a href="/" class="hover:text-white">Home</a>
