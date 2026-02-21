@@ -2,55 +2,80 @@
     <footer class="bg-black border-t border-zinc-800 py-16">
         <div class="max-w-7xl mx-auto px-6">
             <div class="grid md:grid-cols-4 gap-12 mb-12">
-                <!-- Brand -->
+                <!-- Brand & About -->
                 <div>
-                    <h3 class="text-2xl font-bold mb-6">GEARGRID</h3>
-                    <div>
-                        <h4 class="font-bold mb-3 text-sm">Products</h4>
-                        <ul class="space-y-2 text-sm text-gray-400">
-                            <li><a href="#" class="hover:text-cyan-400 transition">Headphones</a></li>
-                            <li><a href="#" class="hover:text-cyan-400 transition">Keyboards</a></li>
-                            <li><a href="#" class="hover:text-cyan-400 transition">Desktops</a></li>
-                            <li><a href="#" class="hover:text-cyan-400 transition">Accessories</a></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <!-- Support -->
-                <div>
-                    <h4 class="font-bold mb-3 text-sm">Support</h4>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-cyan-400 transition">Product Help</a></li>
-                        <li><a href="#" class="hover:text-cyan-400 transition">Warranty</a></li>
-                        <li><a href="#" class="hover:text-cyan-400 transition">Updates</a></li>
-                        <li><a href="#" class="hover:text-cyan-400 transition">Provides</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Account -->
-                <div>
-                    <h4 class="font-bold mb-3 text-sm">Account</h4>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-cyan-400 transition">My Account</a></li>
-                        <li><a href="#" class="hover:text-cyan-400 transition">Login / Register</a></li>
-                        <li><a href="#" class="hover:text-cyan-400 transition">---</a></li>
-                        <li><a href="#" class="hover:text-cyan-400 transition">About</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Follow Us -->
-                <div>
-                    <h4 class="font-bold mb-3 text-sm">Follow us</h4>
+                    <h3 class="text-2xl font-bold mb-4">GEARGRID</h3>
+                    <p class="text-sm text-gray-400 mb-4">
+                        Powering your digital lifestyle with premium PC accessories.
+                    </p>
                     <div class="flex space-x-4 text-xl">
-                        <a href="#" class="hover:text-cyan-400 transition">f</a>
-                        <a href="#" class="hover:text-cyan-400 transition">📷</a>
-                        <a href="#" class="hover:text-cyan-400 transition">in</a>
+                        <a href="https://www.instagram.com/_4jxy_x/?hl=en" class="hover:text-cyan-400 transition" title="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.instagram.com/_4jxy_x/?hl=en" class="hover:text-cyan-400 transition" title="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://x.com/Achu12605219" class="hover:text-cyan-400 transition" title="Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="https://www.linkedin.com/in/ajay-krishna-b19025350/" class="hover:text-cyan-400 transition" title="LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
                     </div>
+                </div>
+                
+                <!-- Shop -->
+                <div>
+                    <h4 class="font-bold mb-4 text-sm">Shop</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="/shop" class="hover:text-cyan-400 transition">All Products</a></li>
+                        <li><a href="/shop?sort=newest" class="hover:text-cyan-400 transition">New Arrivals</a></li>
+                        <li><a href="/shop?sort=price-low" class="hover:text-cyan-400 transition">Best Deals</a></li>
+                        <li><a href="/wishlist" class="hover:text-cyan-400 transition">Wishlist</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Customer Service -->
+                <div>
+                    <h4 class="font-bold mb-4 text-sm">Customer Service</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="/contact" class="hover:text-cyan-400 transition">Contact Us</a></li>
+                        <li><a href="/orders" class="hover:text-cyan-400 transition">Track Order</a></li>
+                        <li><a href="/about" class="hover:text-cyan-400 transition">About Us</a></li>
+                        <% if (typeof user !== 'undefined' && user) { %>
+                            <li><a href="/profile" class="hover:text-cyan-400 transition">My Account</a></li>
+                        <% } else { %>
+                            <li><a href="/login" class="hover:text-cyan-400 transition">Login / Register</a></li>
+                        <% } %>
+                    </ul>
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-bold mb-4 text-sm">Quick Links</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <% if (typeof user !== 'undefined' && user) { %>
+                            <li><a href="/cart" class="hover:text-cyan-400 transition">Shopping Cart</a></li>
+                            <li><a href="/wallet" class="hover:text-cyan-400 transition">My Wallet</a></li>
+                            <li><a href="/address" class="hover:text-cyan-400 transition">Addresses</a></li>
+                            <li><a href="/logout" class="hover:text-cyan-400 transition">Logout</a></li>
+                        <% } else { %>
+                            <li><a href="/" class="hover:text-cyan-400 transition">Home</a></li>
+                            <li><a href="/shop" class="hover:text-cyan-400 transition">Shop Now</a></li>
+                            <li><a href="/about" class="hover:text-cyan-400 transition">About</a></li>
+                            <li><a href="/contact" class="hover:text-cyan-400 transition">Contact</a></li>
+                        <% } %>
+                    </ul>
                 </div>
             </div>
             
-            <div class="border-t border-zinc-800 pt-8 text-center text-xs text-gray-600">
-                <p>© 2021 GEARGRID.</p>
+            <div class="border-t border-zinc-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-600">
+                <p>© <%= new Date().getFullYear() %> GEARGRID. All rights reserved.</p>
+                <div class="flex gap-4 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-cyan-400 transition">Privacy Policy</a>
+                    <a href="#" class="hover:text-cyan-400 transition">Terms of Service</a>
+                    <a href="/contact" class="hover:text-cyan-400 transition">Support</a>
+                </div>
             </div>
         </div>
     </footer>
