@@ -469,6 +469,14 @@ const cancelOrderItem = async (req, res) => {
             });
         }
         
+        // Check if order was placed with a coupon - prevent individual item cancellation
+        if (order.couponCode) {
+            return res.status(StatusCodes.BAD_REQUEST).json({ 
+                success: false, 
+                message: ORDER_MESSAGES.COUPON_ORDER_NO_ITEM_CANCEL
+            });
+        }
+        
         // Check if order can be modified
         if (!['pending', 'confirmed', 'processing'].includes(order.orderStatus)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ 

@@ -524,14 +524,25 @@
                     
                     updateTotal();
                     
-                    couponMessage.innerHTML = '';
+                    // Show warning message about coupon order cancellation policy
+                    couponMessage.innerHTML = '<div class="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-3 mt-3"><p class="text-xs text-yellow-300"><i class="fas fa-exclamation-triangle mr-2"></i><strong>Important:</strong> Orders placed with a coupon cannot have individual items cancelled. You can only cancel the entire order if needed.</p></div>';
                     
                     Swal.fire({
                         icon: 'success',
                         title: 'Coupon Applied!',
-                        text: `You saved ₹${result.discountAmount}`,
-                        timer: 2000,
-                        showConfirmButton: false
+                        html: `
+                            <div class="text-center">
+                                <p class="text-lg mb-3">You saved ₹${result.discountAmount}!</p>
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-left">
+                                    <p class="text-sm text-gray-700">
+                                        <i class="fas fa-info-circle text-yellow-500 mr-2"></i>
+                                        <strong>Note:</strong> Orders with coupons cannot have individual items cancelled. You can only cancel the entire order.
+                                    </p>
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonColor: '#06b6d4',
+                        confirmButtonText: 'I Understand'
                     });
                 } else {
                     couponMessage.innerHTML = `<span class="text-red-400"><i class="fas fa-times-circle"></i> ${result.message}</span>`;

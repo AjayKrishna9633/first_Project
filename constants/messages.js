@@ -121,6 +121,7 @@ export const ORDER_MESSAGES = {
     ITEMS_CANNOT_CANCEL: 'Items cannot be cancelled at this stage',
     ITEM_NOT_FOUND: 'Item not found in order',
     ITEM_ALREADY_CANCELLED: 'Item is already cancelled',
+    COUPON_ORDER_NO_ITEM_CANCEL: 'Individual items cannot be cancelled for orders placed with a coupon. Please cancel the entire order instead.',
     NO_PERMISSION: 'Order not found or you do not have permission to view this order',
     
     // Return
