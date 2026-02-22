@@ -246,15 +246,24 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <% if (orders && orders.length > 0) { %>
-                            <% orders.forEach(order => { %>
-                                <tr class="hover:bg-gray-50">
+                            <% orders.forEach(order => { 
+                                // Check if order has any item-level return requests
+                                const hasItemReturns = order.items && order.items.some(item => item.returnStatus === 'requested');
+                                const itemReturnCount = order.items ? order.items.filter(item => item.returnStatus === 'requested').length : 0;
+                            %>
+                                <tr class="hover:bg-gray-50 <%= (order.returnStatus === 'requested' || hasItemReturns) ? 'bg-orange-50' : '' %>">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div>
                                             <div class="text-sm font-medium text-gray-900">
                                                 <%= order.orderNumber %>
                                                 <% if (order.returnStatus === 'requested') { %>
-                                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
-                                                        <i class="fas fa-exclamation-triangle mr-1"></i>Return
+                                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 border border-orange-300">
+                                                        <i class="fas fa-exclamation-triangle mr-1"></i>Full Return
+                                                    </span>
+                                                <% } %>
+                                                <% if (hasItemReturns) { %>
+                                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
+                                                        <i class="fas fa-undo mr-1"></i><%= itemReturnCount %> Item<%= itemReturnCount > 1 ? 's' : '' %>
                                                     </span>
                                                 <% } %>
                                             </div>

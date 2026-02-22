@@ -120,6 +120,7 @@ const getOrders = async (req, res) => {
              
               res.render('admin/orderDetails', { 
                   order,
+                  admin: req.session.admin,
                   formatNumber,
                   formatCurrency,
                   getFullNumber
@@ -267,7 +268,14 @@ const getOrderStats = async () => {
             }
         ]);
         
-        return stats[0] || {
+        // Count individual item return requests
+        const itemReturnRequests = await Order.aggregate([
+            { $unwind: '$items' },
+            { $match: { 'items.returnStatus': 'requested' } },
+            { $count: 'count' }
+        ]);
+        
+        const baseStats = stats[0] || {
             totalOrders: 0,
             totalRevenue: 0,
             pendingOrders: 0,
@@ -277,6 +285,13 @@ const getOrderStats = async () => {
             cancelledOrders: 0,
             returnRequests: 0
         };
+        
+        // Add item return requests to total return requests
+        const itemReturnCount = itemReturnRequests[0]?.count || 0;
+        baseStats.returnRequests += itemReturnCount;
+        baseStats.itemReturnRequests = itemReturnCount;
+        
+        return baseStats;
         
     } catch (error) {
         console.error('Get order stats error:', error);
@@ -288,7 +303,8 @@ const getOrderStats = async () => {
             shippedOrders: 0,
             deliveredOrders: 0,
             cancelledOrders: 0,
-            returnRequests: 0
+            returnRequests: 0,
+            itemReturnRequests: 0
         };
     }
 };
@@ -465,6 +481,118 @@ const updateReturnStatus = async (req, res) => {
     }
 };
 
+// Update Individual Item Return Status
+const updateItemReturnStatus = async (req, res) => {
+    try {
+        const { orderId, itemId, action, adminNotes } = req.body;
+
+        console.log('Update item return status request:', { orderId, itemId, action, adminNotes });
+
+        const order = await Order.findById(orderId).populate('userId');
+
+        if (!order) {
+            console.log('Order not found:', orderId);
+            return res.json({
+                success: false,
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
+            });
+        }
+
+        // Find the specific item
+        const itemIndex = order.items.findIndex(item => item._id.toString() === itemId);
+
+        if (itemIndex === -1) {
+            return res.json({
+                success: false,
+                message: ORDER_MESSAGES.ITEM_NOT_FOUND
+            });
+        }
+
+        const item = order.items[itemIndex];
+
+        console.log('Item found, current return status:', item.returnStatus);
+
+        if (action === 'approve') {
+            order.items[itemIndex].returnStatus = 'approved';
+            order.items[itemIndex].returnApprovedDate = new Date();
+            order.items[itemIndex].adminReturnNotes = adminNotes;
+        } else if (action === 'reject') {
+            order.items[itemIndex].returnStatus = 'rejected';
+            order.items[itemIndex].adminReturnNotes = adminNotes;
+        } else if (action === 'complete') {
+            order.items[itemIndex].returnStatus = 'completed';
+            order.items[itemIndex].returnCompletedDate = new Date();
+            order.items[itemIndex].status = 'returned';
+            order.items[itemIndex].adminReturnNotes = adminNotes;
+            
+            // Calculate refund amount for this item
+            const refundAmount = item.totalPrice;
+            order.items[itemIndex].refundAmount = refundAmount;
+            
+            // Credit User Wallet with refund
+            if (refundAmount > 0) {
+                const user = await User.findById(order.userId._id);
+                if (user) {
+                    // Add refund to wallet
+                    user.Wallet = (user.Wallet || 0) + refundAmount;
+                    await user.save();
+                    
+                    // Create wallet transaction record
+                    await WalletTransaction.create({
+                        userId: user._id,
+                        amount: refundAmount,
+                        type: 'credit',
+                        balance: user.Wallet,
+                        paymentMethod: 'wallet',
+                        status: 'success',
+                        description: `Refund for Returned Item from Order #${order.orderNumber}`,
+                        orderId: order._id
+                    });
+                    
+                    console.log(`Refunded ₹${refundAmount} to user ${user._id} wallet for item. New balance: ₹${user.Wallet}`);
+                }
+            }
+
+            // Restore stock for returned item
+            console.log('Restoring stock for item:', item.productId, 'variant:', item.variantId, 'quantity:', item.quantity);
+            try {
+                const result = await Product.findOneAndUpdate(
+                    { _id: item.productId, 'variants._id': item.variantId },
+                    { $inc: { 'variants.$.quantity': item.quantity } },
+                    { new: true }
+                );
+                
+                if (!result) {
+                    console.log('Failed to update stock for product:', item.productId, 'variant:', item.variantId);
+                } else {
+                    console.log('Stock updated successfully for product:', item.productId);
+                }
+            } catch (stockError) {
+                console.error('Stock update error for item:', item, stockError);
+            }
+
+            // Update order total refund amount
+            order.refundAmount = (order.refundAmount || 0) + refundAmount;
+        }
+
+        console.log('Saving order with updated item return status');
+        await order.save();
+
+        console.log('Item return status updated successfully');
+        res.json({
+            success: true,
+            message: `Item return ${action}d successfully`
+        });
+
+    } catch (error) {
+        console.error('Update item return status error:', error);
+        res.json({
+            success: false,
+            message: 'Failed to update item return status: ' + error.message
+        });
+    }
+};
+
 // Admin invoice download function
 const downloadInvoice = async (req, res) => {
     try {
@@ -530,5 +658,6 @@ export default {
     updateOrderStatus,
     exportOrders,
     updateReturnStatus,
+    updateItemReturnStatus,
     downloadInvoice
 };

@@ -100,6 +100,80 @@
                 </div>
             </div>
 
+            <!-- Return Request Alerts -->
+            <% 
+                const hasFullOrderReturn = order.returnStatus === 'requested';
+                const itemReturns = order.items.filter(item => item.returnStatus === 'requested');
+                const hasItemReturns = itemReturns.length > 0;
+            %>
+            
+            <% if (hasFullOrderReturn || hasItemReturns) { %>
+                <div class="mb-6 space-y-4">
+                    <% if (hasFullOrderReturn) { %>
+                        <div class="bg-orange-50 border-l-4 border-orange-500 p-6 rounded-lg shadow-md">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle text-orange-500 text-2xl"></i>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <h3 class="text-lg font-semibold text-orange-800 mb-2">
+                                        <i class="fas fa-undo mr-2"></i>Full Order Return Request Pending
+                                    </h3>
+                                    <p class="text-orange-700 mb-3">
+                                        Customer has requested to return the entire order. Please review and take action.
+                                    </p>
+                                    <div class="flex gap-3">
+                                        <button onclick="updateReturnStatus('<%= order._id %>', 'approve')" 
+                                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                                            <i class="fas fa-check mr-2"></i>Approve Return
+                                        </button>
+                                        <button onclick="updateReturnStatus('<%= order._id %>', 'reject')" 
+                                            class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium">
+                                            <i class="fas fa-times mr-2"></i>Reject Return
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <% if (hasItemReturns) { %>
+                        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-lg shadow-md">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-box-open text-yellow-600 text-2xl"></i>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <h3 class="text-lg font-semibold text-yellow-800 mb-2">
+                                        <i class="fas fa-undo mr-2"></i><%= itemReturns.length %> Individual Item Return Request<%= itemReturns.length > 1 ? 's' : '' %> Pending
+                                    </h3>
+                                    <p class="text-yellow-700 mb-3">
+                                        Customer has requested to return <%= itemReturns.length %> specific item<%= itemReturns.length > 1 ? 's' : '' %> from this order. Review the items below and take action.
+                                    </p>
+                                    <div class="bg-yellow-100 rounded-lg p-3">
+                                        <p class="text-sm text-yellow-800">
+                                            <i class="fas fa-info-circle mr-2"></i>
+                                            <strong>Items with return requests:</strong>
+                                        </p>
+                                        <ul class="mt-2 space-y-1">
+                                            <% itemReturns.forEach(item => { %>
+                                                <li class="text-sm text-yellow-700">
+                                                    • <%= item.productId.productName %> (Qty: <%= item.quantity %>) - 
+                                                    <span class="font-medium"><%= item.returnReason ? item.returnReason.replace(/_/g, ' ') : 'No reason provided' %></span>
+                                                </li>
+                                            <% }); %>
+                                        </ul>
+                                    </div>
+                                    <p class="text-xs text-yellow-600 mt-3">
+                                        <i class="fas fa-arrow-down mr-1"></i>Scroll down to the order items section to approve/reject individual returns
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Order Information -->
             <div class="lg:col-span-2 space-y-6">
@@ -126,6 +200,23 @@
                                                 <i class="fas fa-times mr-1"></i>Cancelled
                                             </span>
                                         <% } %>
+                                        <% if (item.returnStatus === 'requested') { %>
+                                            <span class="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
+                                                <i class="fas fa-undo mr-1"></i>Return Requested
+                                            </span>
+                                        <% } else if (item.returnStatus === 'approved') { %>
+                                            <span class="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                                <i class="fas fa-check mr-1"></i>Return Approved
+                                            </span>
+                                        <% } else if (item.returnStatus === 'completed') { %>
+                                            <span class="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                                <i class="fas fa-check-circle mr-1"></i>Returned
+                                            </span>
+                                        <% } else if (item.returnStatus === 'rejected') { %>
+                                            <span class="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                                                <i class="fas fa-times mr-1"></i>Return Rejected
+                                            </span>
+                                        <% } %>
                                     </h3>
                                     <p class="text-sm text-gray-500">
                                         Color: <%= item.variantId?.color || 'N/A' %> | 
@@ -140,11 +231,34 @@
                                             Cancelled by <%= item.cancelledBy %>: <%= item.cancellationReason %>
                                         </p>
                                     <% } %>
+                                    <% if (item.returnStatus !== 'none' && item.returnReason) { %>
+                                        <p class="text-xs text-orange-600 mt-1">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Return Reason: <%= item.returnReason.replace(/_/g, ' ') %>
+                                        </p>
+                                    <% } %>
                                 </div>
-                                <div class="text-right">
+                                <div class="text-right flex flex-col gap-2">
                                     <p class="font-semibold text-gray-900 <%= item.status === 'cancelled' ? 'line-through text-gray-500' : '' %>" title="₹<%= getFullNumber(item.totalPrice) %>">
                                         <%= formatCurrency(item.totalPrice) %>
                                     </p>
+                                    <% if (item.returnStatus === 'requested') { %>
+                                        <div class="flex gap-1">
+                                            <button onclick="updateItemReturnStatus('<%= order._id %>', '<%= item._id %>', 'approve')" 
+                                                class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button onclick="updateItemReturnStatus('<%= order._id %>', '<%= item._id %>', 'reject')" 
+                                                class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    <% } else if (item.returnStatus === 'approved') { %>
+                                        <button onclick="updateItemReturnStatus('<%= order._id %>', '<%= item._id %>', 'complete')" 
+                                            class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600">
+                                            <i class="fas fa-check-circle mr-1"></i>Complete
+                                        </button>
+                                    <% } %>
                                 </div>
                             </div>
                         <% }); %>
@@ -632,6 +746,75 @@
                 } catch (error) {
                     console.error('Error:', error);
                     Swal.fire('Error', 'Failed to update return status', 'error');
+                }
+            }
+        }
+
+        // Update Individual Item Return Status
+        async function updateItemReturnStatus(orderId, itemId, action) {
+            let title, inputLabel, confirmText;
+            
+            if (action === 'approve') {
+                title = 'Approve Item Return Request';
+                inputLabel = 'Approval notes (optional):';
+                confirmText = 'Approve Return';
+            } else if (action === 'reject') {
+                title = 'Reject Item Return Request';
+                inputLabel = 'Rejection reason:';
+                confirmText = 'Reject Return';
+            } else if (action === 'complete') {
+                title = 'Complete Item Return & Process Refund';
+                inputLabel = 'Completion notes:';
+                confirmText = 'Complete Return & Process Refund';
+            }
+
+            const { value: notes } = await Swal.fire({
+                title: title,
+                input: 'textarea',
+                inputLabel: inputLabel,
+                inputPlaceholder: 'Enter notes...',
+                showCancelButton: true,
+                confirmButtonText: confirmText,
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: action === 'reject' ? '#ef4444' : action === 'complete' ? '#10b981' : '#3b82f6'
+            });
+
+            if (notes !== undefined) {
+                try {
+                    const response = await fetch('/admin/returns/item-update', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            orderId: orderId,
+                            itemId: itemId,
+                            action: action,
+                            adminNotes: notes
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        if (action === 'complete') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Item Return Completed!',
+                                text: 'The item return has been processed and refund credited to customer wallet.',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Success!', result.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        }
+                    } else {
+                        Swal.fire('Error', result.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'Failed to update item return status', 'error');
                 }
             }
         }

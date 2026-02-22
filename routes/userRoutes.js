@@ -157,6 +157,7 @@ router.patch('/orders/:id/cancel', protectUser, orderCtrl.cancelOrder);
 router.patch('/orders/:orderId/items/:itemId/cancel', protectUser, orderCtrl.cancelOrderItem);
 router.get('/orders/:id/invoice', protectUser, orderCtrl.downloadInvoice);
 router.post('/orders/return/request', protectUser, orderCtrl.requestReturn);
+router.post('/orders/return/item-request', protectUser, orderCtrl.requestItemReturn);
 router.post('/orders/:id/pay-cod', protectUser, orderCtrl.payCODOrder);
 router.post('/orders/:id/verify-cod-payment', protectUser, orderCtrl.verifyCODPayment);
 

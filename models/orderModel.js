@@ -46,6 +46,35 @@ const orderSchema = new Schema({
         cancelledBy: {
             type: String,
             enum: ['user', 'admin']
+        },
+        // Individual item return fields
+        returnStatus: {
+            type: String,
+            enum: ['none', 'requested', 'approved', 'rejected', 'completed'],
+            default: 'none'
+        },
+        returnReason: {
+            type: String,
+            enum: [
+                'DEFECTIVE',
+                'DAMAGED_SHIPPING',
+                'WRONG_ITEM',
+                'NO_LONGER_NEEDED',
+                'BETTER_PRICE',
+                'ORDERED_MISTAKE',
+                'LATE_ARRIVAL',
+                'OTHER'
+            ],
+            default: null
+        },
+        returnRequestDate: Date,
+        returnApprovedDate: Date,
+        returnCompletedDate: Date,
+        returnNotes: String,
+        adminReturnNotes: String,
+        refundAmount: {
+            type: Number,
+            default: 0
         }
     }],
     shippingAddress: {

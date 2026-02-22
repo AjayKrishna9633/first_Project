@@ -61,6 +61,7 @@ router.get('/orders/:id/invoice', isAdminAuthenticated, orderCtrl.downloadInvoic
 router.patch('/orders/:id/update', isAdminAuthenticated, orderCtrl.updateOrderStatus);
 router.get('/orders/export', isAdminAuthenticated, orderCtrl.exportOrders);
 router.patch('/returns/update', isAdminAuthenticated, orderCtrl.updateReturnStatus);
+router.patch('/returns/item-update', isAdminAuthenticated, orderCtrl.updateItemReturnStatus);
 
 //logout route
 router.get('/logout', isAdminAuthenticated, adminCtrl.logout)

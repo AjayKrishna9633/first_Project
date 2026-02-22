@@ -131,6 +131,12 @@ export const ORDER_MESSAGES = {
     RETURN_NOT_ELIGIBLE: 'This order is not eligible for return',
     RETURN_STATUS_UPDATED: 'Return status updated successfully',
     RETURN_UPDATE_FAILED: 'Failed to update return status',
+    ITEM_RETURN_REQUESTED: 'Item return request submitted successfully',
+    ITEM_RETURN_REQUEST_FAILED: 'Failed to submit item return request',
+    ITEM_ALREADY_RETURNED: 'This item has already been returned or has a pending return request',
+    ITEM_NOT_DELIVERED: 'Only delivered items can be returned',
+    COUPON_ORDER_NO_ITEM_RETURN: 'Individual items cannot be returned for orders placed with a coupon. Please return the entire order instead.',
+    RETURN_WINDOW_EXPIRED: 'Return window has expired. Returns are only allowed within 7 days of delivery.',
     
     // Invoice
     INVOICE_NOT_AVAILABLE: 'Invoice is not available for this order status',

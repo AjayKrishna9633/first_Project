@@ -400,6 +400,100 @@ const requestReturn = async (req, res) => {
         });
     }
 };
+
+// Request Individual Item Return
+const requestItemReturn = async (req, res) => {
+    try {
+        const { orderId, itemId, returnReason, returnNotes } = req.body;
+        const userId = req.session.user.id;
+
+        const order = await Order.findOne({ _id: orderId, userId });
+
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
+            });
+        }
+
+        // Check if order was placed with a coupon - prevent individual item returns
+        if (order.couponCode) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: ORDER_MESSAGES.COUPON_ORDER_NO_ITEM_RETURN
+            });
+        }
+
+        // Check if order is delivered
+        if (order.orderStatus !== 'delivered') {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: ORDER_MESSAGES.ITEM_NOT_DELIVERED
+            });
+        }
+
+        // Find the specific item
+        const itemIndex = order.items.findIndex(item => item._id.toString() === itemId);
+
+        if (itemIndex === -1) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ITEM_NOT_FOUND
+            });
+        }
+
+        const item = order.items[itemIndex];
+
+        // Check if item is already returned or has pending return
+        if (item.returnStatus !== 'none') {
+            return res.status(StatusCodes.CONFLICT).json({
+                success: false,
+                message: ORDER_MESSAGES.ITEM_ALREADY_RETURNED
+            });
+        }
+
+        // Check if item is cancelled
+        if (item.status === 'cancelled') {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Cancelled items cannot be returned'
+            });
+        }
+
+        // Check return window (7 days from delivery)
+        const deliveryDate = order.updatedAt;
+        const returnWindow = 7 * 24 * 60 * 60 * 1000;
+        const currentDate = new Date();
+
+        if (currentDate - deliveryDate > returnWindow) {
+            return res.status(StatusCodes.GONE).json({
+                success: false,
+                message: ORDER_MESSAGES.RETURN_WINDOW_EXPIRED
+            });
+        }
+
+        // Update item return status
+        order.items[itemIndex].returnStatus = 'requested';
+        order.items[itemIndex].returnReason = returnReason;
+        order.items[itemIndex].returnNotes = returnNotes;
+        order.items[itemIndex].returnRequestDate = new Date();
+
+        await order.save();
+
+        res.status(StatusCodes.ACCEPTED).json({
+            success: true,
+            message: ORDER_MESSAGES.ITEM_RETURN_REQUESTED
+        });
+
+    } catch (error) {
+        console.error('Request item return error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: ORDER_MESSAGES.ITEM_RETURN_REQUEST_FAILED
+        });
+    }
+};
+
 const updateReturnStatus = async (req, res) => {
     try {
         const { orderId, action, adminNotes } = req.body;
@@ -748,6 +842,7 @@ export default {
     downloadInvoice,
     updateReturnStatus,
     requestReturn,
+    requestItemReturn,
     cancelOrderItem,
     payCODOrder,
     verifyCODPayment
