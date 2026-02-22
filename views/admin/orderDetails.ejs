@@ -60,30 +60,47 @@
         }
     </style>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-6 py-8">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">Order Details</h1>
-                <p class="text-gray-600 mt-2">Order #<%= order.orderNumber %></p>
-            </div>
-            <div class="flex gap-3">
-                <a href="/admin/orders" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
-                    <i class="fas fa-arrow-left mr-2"></i>Back to Orders
-                </a>
-                <% if (order.orderStatus === 'confirmed' || order.orderStatus === 'processing' || order.orderStatus === 'shipped' || order.orderStatus === 'delivered') { %>
-                    <a href="/admin/orders/<%= order._id %>/invoice" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-                        <i class="fas fa-download mr-2"></i>Download Invoice
-                    </a>
-                <% } %>
-                <button onclick="updateOrderStatus('<%= order._id %>', '<%= order.orderStatus %>', '<%= order.paymentStatus %>')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                    <i class="fas fa-edit mr-2"></i>Update Status
-                </button>
-            </div>
-        </div>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <%- include('../partials/adminHeader') %>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="flex">
+        <!-- Sidebar -->
+        <%- include('../partials/adminSidebar', { currentPage: 'Orders' }) %>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <!-- Breadcrumb -->
+            <div class="flex items-center text-sm text-gray-600 mb-6">
+                <a href="/admin/dashboard" class="hover:text-gray-900">Admin</a>
+                <i class="fas fa-chevron-right mx-2 text-xs"></i>
+                <a href="/admin/orders" class="hover:text-gray-900">Orders</a>
+                <i class="fas fa-chevron-right mx-2 text-xs"></i>
+                <span class="text-gray-900">Order Details</span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Order Details</h1>
+                    <p class="text-gray-600 mt-2">Order #<%= order.orderNumber %></p>
+                </div>
+                <div class="flex gap-3">
+                    <a href="/admin/orders" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Orders
+                    </a>
+                    <% if (order.orderStatus === 'confirmed' || order.orderStatus === 'processing' || order.orderStatus === 'shipped' || order.orderStatus === 'delivered') { %>
+                        <a href="/admin/orders/<%= order._id %>/invoice" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                            <i class="fas fa-download mr-2"></i>Download Invoice
+                        </a>
+                    <% } %>
+                    <button onclick="updateOrderStatus('<%= order._id %>', '<%= order.orderStatus %>', '<%= order.paymentStatus %>')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        <i class="fas fa-edit mr-2"></i>Update Status
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Order Information -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- Order Items -->
@@ -619,5 +636,7 @@
             }
         }
     </script>
+        </main>
+    </div>
 </body>
 </html>
