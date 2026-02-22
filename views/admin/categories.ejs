@@ -168,15 +168,45 @@
                 <!-- Pagination -->
                 <% if (totalPages > 1) { %>
                     <div class="mt-6 flex justify-center items-center gap-2">
+                        <!-- Previous Button -->
                         <% if (currentPage > 1) { %>
                             <a href="/admin/categories?page=<%= currentPage - 1 %>&search=<%= search %>" class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                                 </svg>
                             </a>
+                        <% } else { %>
+                            <span class="px-3 py-2 rounded-lg border border-gray-300 text-gray-300 cursor-not-allowed">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                            </span>
                         <% } %>
                         
-                        <% for (let i = 1; i <= totalPages; i++) { %>
+                        <%
+                            
+                            const maxPagesToShow = 5;
+                            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+                            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+                            
+                            // Adjust start if we're near the end
+                            if (endPage - startPage < maxPagesToShow - 1) {
+                                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+                            }
+                        %>
+                        
+                        <!-- First Page -->
+                        <% if (startPage > 1) { %>
+                            <a href="/admin/categories?page=1&search=<%= search %>" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                                1
+                            </a>
+                            <% if (startPage > 2) { %>
+                                <span class="px-4 py-2 text-gray-500">...</span>
+                            <% } %>
+                        <% } %>
+                        
+                        <!-- Page Numbers -->
+                        <% for (let i = startPage; i <= endPage; i++) { %>
                             <a 
                                 href="/admin/categories?page=<%= i %>&search=<%= search %>"
                                 class="px-4 py-2 rounded-lg <%= i === currentPage ? 'bg-gray-900 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50' %>"
@@ -185,12 +215,29 @@
                             </a>
                         <% } %>
                         
+                        <!-- Last Page -->
+                        <% if (endPage < totalPages) { %>
+                            <% if (endPage < totalPages - 1) { %>
+                                <span class="px-4 py-2 text-gray-500">...</span>
+                            <% } %>
+                            <a href="/admin/categories?page=<%= totalPages %>&search=<%= search %>" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                                <%= totalPages %>
+                            </a>
+                        <% } %>
+                        
+                        <!-- Next Button -->
                         <% if (currentPage < totalPages) { %>
                             <a href="/admin/categories?page=<%= currentPage + 1 %>&search=<%= search %>" class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
                             </a>
+                        <% } else { %>
+                            <span class="px-3 py-2 rounded-lg border border-gray-300 text-gray-300 cursor-not-allowed">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </span>
                         <% } %>
                     </div>
                 <% } %>

@@ -285,6 +285,22 @@
                             <span class="text-gray-600">Payment Method:</span>
                             <span class="font-medium"><%= order.paymentMethod.toUpperCase() %></span>
                         </div>
+                        <% if (order.refundStatus && order.refundStatus !== 'none') { %>
+                            <div class="flex justify-between pt-2 border-t border-gray-200">
+                                <span class="text-gray-600">Refund Status:</span>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                    <%= order.refundStatus === 'processed' ? 'bg-green-100 text-green-800' : 
+                                        'bg-yellow-100 text-yellow-800' %>">
+                                    <%= order.refundStatus.toUpperCase() %>
+                                </span>
+                            </div>
+                            <% if (order.refundAmount > 0) { %>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Refund Amount:</span>
+                                    <span class="font-medium text-green-600">₹<%= order.refundAmount.toLocaleString('en-IN') %></span>
+                                </div>
+                            <% } %>
+                        <% } %>
                     </div>
                 </div>
 
@@ -493,7 +509,7 @@
         }
 
         async function updateReturnStatus(orderId, action) {
-            let title, inputLabel, confirmText;
+            let title, inputLabel, confirmText, confirmHtml;
             
             if (action === 'approve') {
                 title = 'Approve Return Request';
@@ -504,21 +520,55 @@
                 inputLabel = 'Rejection reason:';
                 confirmText = 'Reject Return';
             } else if (action === 'complete') {
-                title = 'Complete Return';
-                inputLabel = 'Completion notes:';
+                title = 'Complete Return & Process Refund';
+                confirmHtml = `
+                    <div class="text-left mb-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                                <div>
+                                    <p class="text-sm text-gray-700 mb-2">
+                                        <strong>This action will:</strong>
+                                    </p>
+                                    <ul class="text-sm text-gray-600 space-y-1 ml-4">
+                                        <li>• Mark the return as completed</li>
+                                        <li>• Credit <strong>₹<%= order.totalAmount.toLocaleString('en-IN') %></strong> to customer's wallet</li>
+                                        <li>• Restore product stock</li>
+                                        <li>• Update order status to "Returned"</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Completion notes:</label>
+                        <textarea id="returnNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Enter completion notes..."></textarea>
+                    </div>
+                `;
                 confirmText = 'Complete Return & Process Refund';
             }
 
-            const { value: notes } = await Swal.fire({
+            const swalConfig = {
                 title: title,
-                input: 'textarea',
-                inputLabel: inputLabel,
-                inputPlaceholder: 'Enter notes...',
                 showCancelButton: true,
                 confirmButtonText: confirmText,
                 cancelButtonText: 'Cancel',
-                confirmButtonColor: action === 'reject' ? '#ef4444' : '#3b82f6'
-            });
+                confirmButtonColor: action === 'reject' ? '#ef4444' : action === 'complete' ? '#10b981' : '#3b82f6',
+                preConfirm: () => {
+                    if (action === 'complete') {
+                        return document.getElementById('returnNotes').value;
+                    }
+                }
+            };
+
+            if (action === 'complete') {
+                swalConfig.html = confirmHtml;
+                swalConfig.focusConfirm = false;
+            } else {
+                swalConfig.input = 'textarea';
+                swalConfig.inputLabel = inputLabel;
+                swalConfig.inputPlaceholder = 'Enter notes...';
+            }
+
+            const { value: notes } = await Swal.fire(swalConfig);
 
             if (notes !== undefined) {
                 try {
@@ -535,9 +585,30 @@
                     const result = await response.json();
 
                     if (result.success) {
-                        Swal.fire('Success!', result.message, 'success').then(() => {
-                            location.reload();
-                        });
+                        if (action === 'complete') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Return Completed!',
+                                html: `
+                                    <div class="text-left">
+                                        <p class="mb-2">The return has been processed successfully.</p>
+                                        <div class="bg-green-50 border border-green-200 rounded p-3">
+                                            <p class="text-sm text-green-800">
+                                                <i class="fas fa-wallet mr-2"></i>
+                                                <strong>₹<%= order.totalAmount.toLocaleString('en-IN') %></strong> has been credited to the customer's wallet
+                                            </p>
+                                        </div>
+                                    </div>
+                                `,
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Success!', result.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        }
                     } else {
                         Swal.fire('Error', result.message, 'error');
                     }

@@ -150,7 +150,7 @@ Received at: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
             subject: `New Contact Message: ${subject}`,
             text: textBody,
             html: htmlBody,
-            replyTo: email // Allow direct reply to the sender
+            replyTo: email 
         };
         
         const info = await transporter.sendMail(mailOptions);
@@ -163,7 +163,7 @@ Received at: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
         
     } catch (error) {
         console.error('Error sending contact notification email:', error);
-        // Don't throw error - we want to save the message even if email fails
+       
         return {
             success: false,
             error: error.message
@@ -266,7 +266,7 @@ export const sendAutoReplyEmail = async (contactData) => {
                             </ul>
                             
                             <center>
-                                <a href="${process.env.SITE_URL || 'http://localhost:5000'}/shop" class="button">
+                                <a href="${'http://localhost:5000'}/shop" class="button">
                                     Explore Our Products
                                 </a>
                             </center>

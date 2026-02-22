@@ -1,6 +1,7 @@
 import ContactMessage from '../../models/contactMessageModel.js';
 import { sendContactNotificationEmail, sendAutoReplyEmail } from '../../services/contactEmailService.js';
 import StatusCodes from '../../utils/statusCodes.js';
+import { CONTACT_MESSAGES, formatMessage } from '../../constants/messages.js';
 
 
 const submitContactForm = async (req, res) => {
@@ -11,7 +12,7 @@ const submitContactForm = async (req, res) => {
         if (!fullName || !email || !subject || !message) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Please fill in all required fields (name, email, subject, and message)'
+                message: CONTACT_MESSAGES.ALL_FIELDS_REQUIRED
             });
         }
         
@@ -20,7 +21,7 @@ const submitContactForm = async (req, res) => {
         if (!emailRegex.test(email)) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Please provide a valid email address'
+                message: CONTACT_MESSAGES.INVALID_EMAIL
             });
         }
         
@@ -28,18 +29,18 @@ const submitContactForm = async (req, res) => {
         if (message.length < 10) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Message must be at least 10 characters long'
+                message: CONTACT_MESSAGES.MESSAGE_TOO_SHORT
             });
         }
         
         if (message.length > 2000) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'Message must not exceed 2000 characters'
+                message: CONTACT_MESSAGES.MESSAGE_TOO_LONG
             });
         }
         
-        // Step 1: Save to database first (most critical step)
+     
         const contactData = {
             fullName: fullName.trim(),
             email: email.trim().toLowerCase(),
@@ -57,7 +58,7 @@ const submitContactForm = async (req, res) => {
         sendContactNotificationEmail(contactData)
             .then(result => {
                 if (result.success) {
-                    // Update the emailSent flag
+                    
                     ContactMessage.findByIdAndUpdate(
                         savedMessage._id,
                         { emailSent: true },
@@ -69,16 +70,16 @@ const submitContactForm = async (req, res) => {
                 console.error('Failed to send admin notification:', error);
             });
         
-        // Step 3: Send auto-reply to user (non-blocking)
+       
         sendAutoReplyEmail(contactData)
             .catch(error => {
                 console.error('Failed to send auto-reply:', error);
             });
         
-        // Step 4: Return success response immediately
+       
         return res.status(StatusCodes.OK).json({
             success: true,
-            message: 'Thank you for contacting us! We\'ll get back to you soon.',
+            message: CONTACT_MESSAGES.SUBMIT_SUCCESS,
             data: {
                 id: savedMessage._id,
                 createdAt: savedMessage.createdAt
@@ -88,17 +89,17 @@ const submitContactForm = async (req, res) => {
     } catch (error) {
         console.error('Error in submitContactForm:', error);
         
-        // Check for duplicate submission (if email was sent very recently)
+       
         if (error.code === 11000) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 success: false,
-                message: 'You have already submitted a message recently. Please wait before submitting again.'
+                message: CONTACT_MESSAGES.DUPLICATE_SUBMISSION
             });
         }
         
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to send message. Please try again later.'
+            message: CONTACT_MESSAGES.SUBMIT_FAILED
         });
     }
 };
@@ -120,7 +121,7 @@ const cleanupOldMessages = async (req, res) => {
         
         return res.status(StatusCodes.OK).json({
             success: true,
-            message: `Successfully deleted ${result.deletedCount} old messages`,
+            message: formatMessage(CONTACT_MESSAGES.CLEANUP_SUCCESS, { count: result.deletedCount }),
             data: {
                 deletedCount: result.deletedCount,
                 cutoffDate: cutoffDate
@@ -131,7 +132,7 @@ const cleanupOldMessages = async (req, res) => {
         console.error('Error in cleanupOldMessages:', error);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             success: false,
-            message: 'Failed to cleanup old messages'
+            message: CONTACT_MESSAGES.CLEANUP_FAILED
         });
     }
 };

@@ -1,6 +1,7 @@
 import Order from '../../models/orderModel.js';
 import User from '../../models/userModal.js';
 import Product from '../../models/porductsModal.js';
+import WalletTransaction from '../../models/WalletTransaction.js';
 import { formatNumber, formatCurrency, getFullNumber } from '../../utils/numberFormatter.js';
 import StatusCodes from '../../utils/statusCodes.js';
 import { ORDER_MESSAGES, ADMIN_MESSAGES, PAYMENT_MESSAGES } from '../../constants/messages.js';
@@ -382,6 +383,8 @@ const updateReturnStatus = async (req, res) => {
             order.returnStatus = 'approved';
             order.returnApprovedDate = new Date();
             order.adminReturnNotes = adminNotes;
+            order.refundStatus = 'pending'; // Set refund as pending when approved
+            order.refundAmount = order.totalAmount; // Set expected refund amount
         } else if (action === 'reject') {
             order.returnStatus = 'rejected';
             order.adminReturnNotes = adminNotes;
@@ -389,20 +392,25 @@ const updateReturnStatus = async (req, res) => {
             order.returnStatus = 'completed';
             order.returnCompletedDate = new Date();
             order.orderStatus = 'returned';
-            order.refundAmount = order.totalAmount;
+            
+            // Calculate refund amount (total amount paid by user)
+            const refundAmount = order.totalAmount;
+            order.refundAmount = refundAmount;
             order.refundStatus = 'processed';
             order.adminReturnNotes = adminNotes;
             
-            // Credit User Wallet
-             if (order.totalAmount > 0) {
-                 const user = await User.findById(order.userId._id);
-                 if (user) {
-                     user.Wallet += order.totalAmount;
-                     await user.save();
-                     
-                     await WalletTransaction.create({
+            // Credit User Wallet with refund
+            if (refundAmount > 0) {
+                const user = await User.findById(order.userId._id);
+                if (user) {
+                    // Add refund to wallet
+                    user.Wallet = (user.Wallet || 0) + refundAmount;
+                    await user.save();
+                    
+                    // Create wallet transaction record
+                    await WalletTransaction.create({
                         userId: user._id,
-                        amount: order.totalAmount,
+                        amount: refundAmount,
                         type: 'credit',
                         balance: user.Wallet,
                         paymentMethod: 'wallet',
@@ -410,8 +418,10 @@ const updateReturnStatus = async (req, res) => {
                         description: `Refund for Returned Order #${order.orderNumber}`,
                         orderId: order._id
                     });
-                 }
-             }
+                    
+                    console.log(`Refunded ₹${refundAmount} to user ${user._id} wallet. New balance: ₹${user.Wallet}`);
+                }
+            }
 
             // Restore stock for returned items
             console.log('Restoring stock for items:', order.items.length);

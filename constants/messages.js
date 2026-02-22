@@ -291,6 +291,26 @@ export const CHECKOUT_MESSAGES = {
     CHECKOUT_LOAD_FAILED: 'Failed to load checkout',
 };
 
+// ============================================
+// CONTACT MESSAGES
+// ============================================
+export const CONTACT_MESSAGES = {
+    // Success
+    SUBMIT_SUCCESS: 'Thank you for contacting us! We\'ll get back to you soon.',
+    CLEANUP_SUCCESS: 'Successfully deleted {count} old messages',
+    
+    // Validation
+    ALL_FIELDS_REQUIRED: 'Please fill in all required fields (name, email, subject, and message)',
+    INVALID_EMAIL: 'Please provide a valid email address',
+    MESSAGE_TOO_SHORT: 'Message must be at least 10 characters long',
+    MESSAGE_TOO_LONG: 'Message must not exceed 2000 characters',
+    DUPLICATE_SUBMISSION: 'You have already submitted a message recently. Please wait before submitting again.',
+    
+    // Errors
+    SUBMIT_FAILED: 'Failed to send message. Please try again later.',
+    CLEANUP_FAILED: 'Failed to cleanup old messages',
+};
+
 // Helper function to replace placeholders in messages
 export const formatMessage = (message, replacements = {}) => {
     let formatted = message;
