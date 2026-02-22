@@ -1,6 +1,7 @@
 import user from "../../models/userModal.js";
 import Order from "../../models/orderModel.js";
 import Category from "../../models/categoryModel.js";
+import Product from "../../models/porductsModal.js";
 import { comparePassword } from "../../utils/hashUtils.js";
 import StatusCodes from '../../utils/statusCodes.js';
 import { ADMIN_MESSAGES } from '../../constants/messages.js';
@@ -306,7 +307,7 @@ const getDashboard = async (req, res) => {
         const totalCategorySales = bestSellingCategories.reduce((sum, cat) => sum + cat.totalSales, 0);
         
         // 6. Best Selling Products
-        const bestSellingProducts = await Order.aggregate([
+        const bestSellingProductsRaw = await Order.aggregate([
             {
                 $match: {
                     createdAt: { $gte: startDate, $lte: endDate },
@@ -327,37 +328,26 @@ const getDashboard = async (req, res) => {
                     orderCount: { $sum: 1 }
                 }
             },
-            {
-                $lookup: {
-                    from: 'products',
-                    localField: '_id',
-                    foreignField: '_id',
-                    as: 'product'
-                }
-            },
-            { $unwind: '$product' },
-            {
-                $lookup: {
-                    from: 'categories',
-                    localField: 'product.category',
-                    foreignField: '_id',
-                    as: 'category'
-                }
-            },
-            { $unwind: '$category' },
-            {
-                $project: {
-                    productName: '$product.productName',
-                    categoryName: '$category.name',
-                    totalQuantity: 1,
-                    totalRevenue: 1,
-                    orderCount: 1,
-                    image: { $arrayElemAt: ['$product.variants.images', 0] }
-                }
-            },
             { $sort: { totalQuantity: -1 } },
             { $limit: 10 }
         ]);
+        
+        // Fetch full product details for each best-selling product
+        const formattedBestSelling = await Promise.all(
+            bestSellingProductsRaw.map(async (item) => {
+                const product = await Product.findById(item._id)
+                    .populate('category', 'name')
+                    .lean();
+                
+                return {
+                    productName: product?.productName || 'Unknown Product',
+                    categoryName: product?.category?.name || 'Unknown Category',
+                    totalQuantity: item.totalQuantity,
+                    totalRevenue: item.totalRevenue,
+                    orderCount: item.orderCount
+                };
+            })
+        );
         
         // Generate year options for filter (last 5 years + next year)
         const thisYear = new Date().getFullYear();
@@ -384,7 +374,7 @@ const getDashboard = async (req, res) => {
             recentOrders,
             bestSellingCategories,
             totalCategorySales: Math.round(totalCategorySales),
-            bestSellingProducts,
+            bestSellingProducts: formattedBestSelling,
             filters: {
                 period,
                 periodLabel,
