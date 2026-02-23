@@ -777,20 +777,28 @@ export const loadhomePage = async (req, res) => {
     try {
         const user = req.session?.user || null;
         
-        // Import models
+        // Import models and mongoose
+        const mongoose = (await import('mongoose')).default;
         const Product = (await import('../../models/porductsModal.js')).default;
         const Category = (await import('../../models/categoryModel.js')).default;
         const Order = (await import('../../models/orderModel.js')).default;
+        const { applyBestDiscountToProduct, calculateBestDiscount } = await import('../../utils/discountCalculator.js');
         
         // 1. Get latest keyboard (most recently added)
         const keyboardCategory = await Category.findOne({ name: /keyboard/i });
-        const latestKeyboard = await Product.findOne({
+        let latestKeyboard = await Product.findOne({
             category: keyboardCategory?._id,
-            isBlocked: false
+            IsBlocked: false
         })
         .sort({ createdOn: -1 })
         .populate('category')
+        .populate('variants')
         .lean();
+        
+        // Apply discount calculation to keyboard
+        if (latestKeyboard) {
+            latestKeyboard = applyBestDiscountToProduct(latestKeyboard);
+        }
         
         // 2. Get top 3 best-selling products
         const bestSellers = await Order.aggregate([
@@ -833,8 +841,16 @@ export const loadhomePage = async (req, res) => {
             },
             { $unwind: '$category' },
             {
+                $lookup: {
+                    from: 'variants',
+                    localField: 'product.variants',
+                    foreignField: '_id',
+                    as: 'variants'
+                }
+            },
+            {
                 $match: {
-                    'product.isBlocked': false
+                    'product.IsBlocked': false
                 }
             },
             {
@@ -842,22 +858,45 @@ export const loadhomePage = async (req, res) => {
                     _id: '$product._id',
                     productName: '$product.productName',
                     category: '$category',
-                    variants: '$product.variants',
+                    variants: '$variants',
                     totalQuantity: 1,
                     totalRevenue: 1
                 }
             }
         ]);
         
+        // Apply discount calculation to each bestseller
+        bestSellers.forEach(product => {
+            if (product.variants && product.variants.length > 0) {
+                product.variants = product.variants.map(variant => {
+                    const discountInfo = calculateBestDiscount(
+                        variant.regularPrice,
+                        variant.salePrice,
+                        product.category
+                    );
+                    return {
+                        ...variant,
+                        ...discountInfo
+                    };
+                });
+            }
+        });
+        
         // 3. Get latest mouse product
         const mouseCategory = await Category.findOne({ name: /mouse/i });
-        const latestMouse = await Product.findOne({
+        let latestMouse = await Product.findOne({
             category: mouseCategory?._id,
-            isBlocked: false
+            IsBlocked: false
         })
         .sort({ createdOn: -1 })
         .populate('category')
+        .populate('variants')
         .lean();
+        
+        // Apply discount calculation to mouse
+        if (latestMouse) {
+            latestMouse = applyBestDiscountToProduct(latestMouse);
+        }
         
         return res.render("user/home", { 
             user,

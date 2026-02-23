@@ -633,7 +633,17 @@
         }
 
         // Form submission handling with validation
+        let isSubmitting = false; // Flag to prevent double submission
+        
         function submitEditForm() {
+            // Prevent double submission
+            if (isSubmitting) {
+                console.log('Form is already being submitted, ignoring duplicate call');
+                return;
+            }
+            
+            isSubmitting = true;
+            
             const form = document.querySelector('#editProductForm');
             const formData = new FormData(form);
             const submitBtn = document.getElementById('submitBtn');
@@ -680,6 +690,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
+                isSubmitting = false; // Reset flag on error
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 Swal.fire({
