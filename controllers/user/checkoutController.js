@@ -176,6 +176,25 @@ const applyCoupon = async (req, res) => {
             });
         }
 
+        // Check total usage limit
+        if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: COUPON_MESSAGES.COUPON_LIMIT_REACHED
+            });
+        }
+
+        // Check per-user usage limit
+        const userUsage = coupon.usedBy.find(u => u.userId.toString() === userId);
+        const userUsageCount = userUsage ? userUsage.usageCount : 0;
+        
+        if (coupon.usagePerUser !== null && userUsageCount >= coupon.usagePerUser) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: COUPON_MESSAGES.COUPON_USER_LIMIT_REACHED
+            });
+        }
+
         let discountAmount = 0;
         if (coupon.discountType === 'percentage') {
             discountAmount = (cartTotal * coupon.offerPrice) / 100;
@@ -481,6 +500,30 @@ const placeOrder=async(req,res)=>{
 
         await order.save();
 
+        // Increment coupon usage if coupon was applied
+        if (couponApplied) {
+            const coupon = await Coupon.findOne({ code: couponApplied });
+            if (coupon) {
+                // Increment total usage count
+                coupon.usedCount = (coupon.usedCount || 0) + 1;
+                
+                // Update user-specific usage
+                const userUsageIndex = coupon.usedBy.findIndex(u => u.userId.toString() === userId);
+                if (userUsageIndex >= 0) {
+                    coupon.usedBy[userUsageIndex].usageCount += 1;
+                    coupon.usedBy[userUsageIndex].lastUsed = new Date();
+                } else {
+                    coupon.usedBy.push({
+                        userId,
+                        usageCount: 1,
+                        lastUsed: new Date()
+                    });
+                }
+                
+                await coupon.save();
+            }
+        }
+
         if (walletAmountUsed > 0) {
             const user = await User.findById(userId);
              user.Wallet -= walletAmountUsed;
@@ -662,6 +705,30 @@ const cancelPayment = async (req, res) => {
             });
             
             await order.save();
+            
+            // Rollback coupon usage if coupon was applied
+            if (order.couponCode) {
+                const coupon = await Coupon.findOne({ code: order.couponCode });
+                if (coupon) {
+                    // Decrement total usage count
+                    if (coupon.usedCount > 0) {
+                        coupon.usedCount -= 1;
+                    }
+                    
+                    // Decrement user-specific usage
+                    const userUsageIndex = coupon.usedBy.findIndex(u => u.userId.toString() === order.userId.toString());
+                    if (userUsageIndex >= 0) {
+                        if (coupon.usedBy[userUsageIndex].usageCount > 1) {
+                            coupon.usedBy[userUsageIndex].usageCount -= 1;
+                        } else {
+                            // Remove user from usedBy array if count becomes 0
+                            coupon.usedBy.splice(userUsageIndex, 1);
+                        }
+                    }
+                    
+                    await coupon.save();
+                }
+            }
             
             // Restore product stock
             await restoreProductStock(order.items);

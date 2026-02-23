@@ -185,6 +185,31 @@ const getOrderDetails = async (req, res) => {
 
         await order.save();
         
+        // Rollback coupon usage if coupon was applied
+        if (order.couponCode) {
+            const Coupon = (await import('../../models/couponModel.js')).default;
+            const coupon = await Coupon.findOne({ code: order.couponCode });
+            if (coupon) {
+                // Decrement total usage count
+                if (coupon.usedCount > 0) {
+                    coupon.usedCount -= 1;
+                }
+                
+                // Decrement user-specific usage
+                const userUsageIndex = coupon.usedBy.findIndex(u => u.userId.toString() === userId);
+                if (userUsageIndex >= 0) {
+                    if (coupon.usedBy[userUsageIndex].usageCount > 1) {
+                        coupon.usedBy[userUsageIndex].usageCount -= 1;
+                    } else {
+                        // Remove user from usedBy array if count becomes 0
+                        coupon.usedBy.splice(userUsageIndex, 1);
+                    }
+                }
+                
+                await coupon.save();
+            }
+        }
+        
         await restoreProductStock(order.items);
         
         res.json({
@@ -684,6 +709,31 @@ const cancelOrderItem = async (req, res) => {
         
         order.updatedAt = new Date();
         await order.save();
+        
+        // Rollback coupon usage if entire order was cancelled
+        if (order.orderStatus === 'cancelled' && order.couponCode) {
+            const Coupon = (await import('../../models/couponModel.js')).default;
+            const coupon = await Coupon.findOne({ code: order.couponCode });
+            if (coupon) {
+                // Decrement total usage count
+                if (coupon.usedCount > 0) {
+                    coupon.usedCount -= 1;
+                }
+                
+                // Decrement user-specific usage
+                const userUsageIndex = coupon.usedBy.findIndex(u => u.userId.toString() === userId);
+                if (userUsageIndex >= 0) {
+                    if (coupon.usedBy[userUsageIndex].usageCount > 1) {
+                        coupon.usedBy[userUsageIndex].usageCount -= 1;
+                    } else {
+                        // Remove user from usedBy array if count becomes 0
+                        coupon.usedBy.splice(userUsageIndex, 1);
+                    }
+                }
+                
+                await coupon.save();
+            }
+        }
         
         // Restore stock for the cancelled item
         const Variant = (await import('../../models/variantModel.js')).default;

@@ -268,8 +268,8 @@ async function handleFormSubmit(event) {
     };
     
     try {
-        const response = await fetch('/change-password', {
-            method: 'POST',
+        const response = await fetch('/changePassword', {
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'
             },

@@ -234,6 +234,7 @@ function validateDiscountTypeField(formPrefix) {
 function validateDiscountValueField(formPrefix) {
     const discountTypeInput = document.querySelector(`#${formPrefix}DiscountType`);
     const discountValueInput = document.querySelector(`#${formPrefix}OfferPrice`);
+    const minPurchaseInput = document.querySelector(`#${formPrefix}CouponForm input[name="minimumPrice"]`);
     
     if (!discountTypeInput || !discountValueInput) return true;
     
@@ -247,6 +248,12 @@ function validateDiscountValueField(formPrefix) {
             showError(discountValueInput, result.message);
             return false;
         }
+        
+        // Check if percentage is 100% or more
+        if (result.value >= 100) {
+            showError(discountValueInput, 'Percentage discount cannot be 100% or more. Maximum allowed is 99%');
+            return false;
+        }
     } else if (discountType === 'fixed') {
         const result = validateNumeric(discountValue, 'Discount amount', 0.01);
         
@@ -254,10 +261,20 @@ function validateDiscountValueField(formPrefix) {
             showError(discountValueInput, result.message);
             return false;
         }
+        
+        // Check if fixed discount is less than minimum purchase
+        if (minPurchaseInput && minPurchaseInput.value) {
+            const minPurchase = Number(minPurchaseInput.value);
+            if (result.value >= minPurchase) {
+                showError(discountValueInput, 'Fixed discount must be less than minimum purchase amount');
+                return false;
+            }
+        }
     }
     
     clearError(discountValueInput);
     return true;
+}
 }
 
 /**
@@ -366,6 +383,10 @@ function validateEndDateField(formPrefix) {
         const startDate = new Date(startDateInput.value);
         const endDate = new Date(endResult.value);
         
+        // Set time to start of day for accurate comparison
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+        
         if (endDate <= startDate) {
             showError(endDateInput, 'End date must be after start date');
             return false;
@@ -459,12 +480,13 @@ function validateCouponForm(formPrefix) {
 /**
  * Handle form submission
  */
-function handleCouponFormSubmit(event, formPrefix) {
+async function handleCouponFormSubmit(event, formPrefix) {
     // ALWAYS prevent default first
     event.preventDefault();
     event.stopPropagation();
     
-    const submitButton = event.target.querySelector('button[type="submit"]');
+    const form = event.target;
+    const submitButton = form.querySelector('button[type="submit"]');
     const originalText = submitButton.innerHTML;
     
     // Disable submit button
@@ -492,11 +514,75 @@ function handleCouponFormSubmit(event, formPrefix) {
         return false;
     }
     
-    // If validation passes, re-enable button
-    disableSubmitButton(submitButton, false);
-    
-    // Return true to allow the original event handler to proceed
-    return true;
+    // If validation passes, submit the form via fetch
+    try {
+        const formData = new FormData(form);
+        
+        // Show loading state
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+        
+        // Determine the URL based on form type
+        let url = form.action;
+        if (formPrefix === 'edit') {
+            const couponId = formData.get('id');
+            url = `/admin/coupons/update/${couponId}`;
+            formData.delete('id'); // Remove id from formData as it's in the URL
+        }
+        
+        // Convert FormData to JSON
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        const response = await fetch(url, {
+            method: formPrefix === 'create' ? 'POST' : 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: result.message || (formPrefix === 'create' ? 'Coupon created successfully!' : 'Coupon updated successfully!'),
+                confirmButtonColor: '#4f46e5',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            
+            // Reload page to show updated data
+            window.location.reload();
+        } else {
+            // Re-enable submit button
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: result.message || 'Failed to save coupon. Please try again.',
+                confirmButtonColor: '#ef4444'
+            });
+        }
+    } catch (error) {
+        console.error('Error submitting coupon:', error);
+        
+        // Re-enable submit button
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalText;
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred. Please try again.',
+            confirmButtonColor: '#ef4444'
+        });
+    }
 }
 
 // ============================================
@@ -659,12 +745,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup validation for create form
     const createForm = document.getElementById('createCouponForm');
     if (createForm) {
-        createForm.addEventListener('submit', function(e) {
-            const isValid = handleCouponFormSubmit(e, 'create');
-            if (!isValid) {
-                return false;
-            }
-            // If valid, the original handler in coupons.ejs will execute
+        createForm.addEventListener('submit', async function(e) {
+            await handleCouponFormSubmit(e, 'create');
         }, true); // Use capture phase to run before other handlers
         
         setupRealTimeValidation('create');
@@ -674,12 +756,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup validation for edit form
     const editForm = document.getElementById('editCouponForm');
     if (editForm) {
-        editForm.addEventListener('submit', function(e) {
-            const isValid = handleCouponFormSubmit(e, 'edit');
-            if (!isValid) {
-                return false;
-            }
-            // If valid, the original handler in coupons.ejs will execute
+        editForm.addEventListener('submit', async function(e) {
+            await handleCouponFormSubmit(e, 'edit');
         }, true); // Use capture phase to run before other handlers
         
         setupRealTimeValidation('edit');

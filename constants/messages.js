@@ -189,6 +189,8 @@ export const COUPON_MESSAGES = {
     COUPON_CODE_EXISTS: 'Coupon code already exists',
     COUPON_ZERO_ORDER: 'This coupon cannot be applied as it would make the order total zero or negative. Please contact support.',
     COUPON_MIN_ONE_RUPEE: 'Order total must be at least ₹1 after discount',
+    COUPON_LIMIT_REACHED: 'This coupon has reached its usage limit',
+    COUPON_USER_LIMIT_REACHED: 'You have already used this coupon the maximum number of times allowed',
     
     // Validation
     DESCRIPTION_LENGTH: 'Description must be between 10 and 200 characters',

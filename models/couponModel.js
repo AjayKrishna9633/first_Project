@@ -64,7 +64,25 @@ const couponSchema = new mongoose.Schema({
     userId:{
         type:Schema.Types.ObjectId,
         ref:"user"
-    }
+    },
+    usedCount: {
+        type: Number,
+        default: 0
+    },
+    usedBy: [{
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: 'user'
+        },
+        usageCount: {
+            type: Number,
+            default: 0
+        },
+        lastUsed: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 });
 
 const coupon= mongoose.model('coupon',couponSchema)

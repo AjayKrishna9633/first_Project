@@ -100,10 +100,6 @@ router.get('/contact', (req, res) => {
 
 router.post('/contact/send', contactCtrl.submitContactForm);
 
-// Admin routes for contact messages (for future use)
-// router.get('/admin/contact-messages', protectAdmin, contactCtrl.getAllContactMessages);
-// router.patch('/admin/contact-messages/:id/read', protectAdmin, contactCtrl.markAsRead);
-// router.delete('/admin/contact-messages/cleanup', protectAdmin, contactCtrl.cleanupOldMessages);
 
 //shop page
 router.get('/shop', productCtrl.getShopPage)

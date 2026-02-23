@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- Coupon Form Validation -->
-    <script src="/public/admin/couponFormValidation.js"></script>
+  
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
@@ -283,7 +283,7 @@
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <form id="createCouponForm" class="px-4 py-3">
+                <form id="createCouponForm" action="/admin/coupons/add" method="POST" class="px-4 py-3">
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div class="col-span-2">
                             <label class="block text-left text-sm font-medium text-gray-700 mb-1">Coupon Code *</label>
@@ -326,7 +326,22 @@
                             <p class="text-xs text-red-600 mt-1 hidden error-message"></p>
                         </div>
                         <div>
-                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">Max Discount (Optional)</label>
+                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">
+                                Max Discount (Optional)
+                                <span class="relative inline-block">
+                                    <i class="fas fa-info-circle text-gray-400 ml-1 cursor-help" id="createMaxDiscountInfo"></i>
+                                    <div id="createMaxDiscountTooltip" class="hidden absolute z-50 w-80 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg -top-2 left-6">
+                                        <div class="font-semibold mb-1">💡 How Max Discount Works:</div>
+                                        <div class="mb-2">Caps the maximum discount amount for percentage-based coupons.</div>
+                                        <div class="bg-gray-700 p-2 rounded">
+                                            <strong>Example:</strong> 20% off with ₹500 max discount<br>
+                                            • Order: ₹5000<br>
+                                            • 20% = ₹1000, but capped at ₹500<br>
+                                            • Final discount: ₹500 only
+                                        </div>
+                                    </div>
+                                </span>
+                            </label>
                             <input type="number" name="maxDiscountAmount" placeholder="₹ Amount"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <p class="text-xs text-red-600 mt-1 hidden error-message"></p>
@@ -346,13 +361,47 @@
                         </div>
 
                         <div>
-                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">Usage Limit (Total)</label>
+                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">
+                                Usage Limit (Total)
+                                <span class="relative inline-block">
+                                    <i class="fas fa-info-circle text-gray-400 ml-1 cursor-help" id="createUsageLimitInfo"></i>
+                                    <div id="createUsageLimitTooltip" class="hidden absolute z-50 w-80 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg -top-2 left-6">
+                                        <div class="font-semibold mb-1">📊 Total Usage Limit</div>
+                                        <div class="mb-2">Maximum number of times this coupon can be used across ALL users.</div>
+                                        <div class="bg-gray-700 p-2 rounded">
+                                            <strong>Example:</strong> Limit = 100<br>
+                                            • 100 different users can use it once each, OR<br>
+                                            • 50 users can use it twice each, OR<br>
+                                            • Any combination totaling 100 uses<br>
+                                            • After 100 uses, coupon becomes invalid
+                                        </div>
+                                        <div class="mt-2 text-yellow-300">💡 Leave empty for unlimited uses</div>
+                                    </div>
+                                </span>
+                            </label>
                             <input type="number" name="usageLimit" placeholder="Unlimited"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <p class="text-xs text-red-600 mt-1 hidden error-message"></p>
                         </div>
                         <div>
-                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">Usage Per User *</label>
+                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">
+                                Usage Per User *
+                                <span class="relative inline-block">
+                                    <i class="fas fa-info-circle text-gray-400 ml-1 cursor-help" id="createUsagePerUserInfo"></i>
+                                    <div id="createUsagePerUserTooltip" class="hidden absolute z-50 w-80 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg -top-2 left-6">
+                                        <div class="font-semibold mb-1">👤 Usage Per User Limit</div>
+                                        <div class="mb-2">Maximum number of times ONE user can use this coupon.</div>
+                                        <div class="bg-gray-700 p-2 rounded">
+                                            <strong>Example:</strong> Per User = 2<br>
+                                            • Each user can apply this coupon maximum 2 times<br>
+                                            • User A: Can use 2 times<br>
+                                            • User B: Can use 2 times<br>
+                                            • Prevents abuse by single users
+                                        </div>
+                                        <div class="mt-2 text-yellow-300">⚠️ Must be ≤ Total Usage Limit</div>
+                                    </div>
+                                </span>
+                            </label>
                             <input type="number" name="usagePerUser" value="1"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <p class="text-xs text-red-600 mt-1 hidden error-message"></p>
@@ -384,7 +433,7 @@
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <form id="editCouponForm" class="px-4 py-3">
+                <form id="editCouponForm" action="/admin/coupons/update" method="POST" class="px-4 py-3">
                     <input type="hidden" id="editCouponId" name="id">
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div class="col-span-2">
@@ -428,9 +477,26 @@
                             <p class="text-xs text-red-600 mt-1 hidden error-message"></p>
                         </div>
                         <div>
-                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">Max Discount (Optional)</label>
+                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">
+                                Max Discount (Optional)
+                                <span class="relative inline-block">
+                                    <i class="fas fa-info-circle text-gray-400 ml-1 cursor-help" id="editMaxDiscountInfo"></i>
+                                    <div id="editMaxDiscountTooltip" class="hidden absolute z-50 w-80 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg -top-2 left-6">
+                                        <div class="font-semibold mb-1">💡 How Max Discount Works:</div>
+                                        <div class="mb-2">Caps the maximum discount amount for percentage-based coupons.</div>
+                                        <div class="bg-gray-700 p-2 rounded">
+                                            <strong>Example:</strong> 20% off with ₹500 max discount<br>
+                                            • Order: ₹5000<br>
+                                            • 20% = ₹1000, but capped at ₹500<br>
+                                            • Final discount: ₹500 only
+                                        </div>
+                                    </div>
+                                </span>
+                            </label>
                             <input type="number" id="editMaxDiscountAmount" name="maxDiscountAmount"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <p class="text-xs text-red-600 mt-1 hidden error-message"></p>
+                        </div>
                             <p class="text-xs text-red-600 mt-1 hidden error-message"></p>
                         </div>
 
@@ -448,13 +514,47 @@
                         </div>
 
                         <div>
-                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">Usage Limit (Total)</label>
+                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">
+                                Usage Limit (Total)
+                                <span class="relative inline-block">
+                                    <i class="fas fa-info-circle text-gray-400 ml-1 cursor-help" id="editUsageLimitInfo"></i>
+                                    <div id="editUsageLimitTooltip" class="hidden absolute z-50 w-80 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg -top-2 left-6">
+                                        <div class="font-semibold mb-1">📊 Total Usage Limit</div>
+                                        <div class="mb-2">Maximum number of times this coupon can be used across ALL users.</div>
+                                        <div class="bg-gray-700 p-2 rounded">
+                                            <strong>Example:</strong> Limit = 100<br>
+                                            • 100 different users can use it once each, OR<br>
+                                            • 50 users can use it twice each, OR<br>
+                                            • Any combination totaling 100 uses<br>
+                                            • After 100 uses, coupon becomes invalid
+                                        </div>
+                                        <div class="mt-2 text-yellow-300">💡 Leave empty for unlimited uses</div>
+                                    </div>
+                                </span>
+                            </label>
                             <input type="number" id="editUsageLimit" name="usageLimit"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <p class="text-xs text-red-600 mt-1 hidden error-message"></p>
                         </div>
                         <div>
-                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">Usage Per User *</label>
+                            <label class="block text-left text-sm font-medium text-gray-700 mb-1">
+                                Usage Per User *
+                                <span class="relative inline-block">
+                                    <i class="fas fa-info-circle text-gray-400 ml-1 cursor-help" id="editUsagePerUserInfo"></i>
+                                    <div id="editUsagePerUserTooltip" class="hidden absolute z-50 w-80 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg -top-2 left-6">
+                                        <div class="font-semibold mb-1">👤 Usage Per User Limit</div>
+                                        <div class="mb-2">Maximum number of times ONE user can use this coupon.</div>
+                                        <div class="bg-gray-700 p-2 rounded">
+                                            <strong>Example:</strong> Per User = 2<br>
+                                            • Each user can apply this coupon maximum 2 times<br>
+                                            • User A: Can use 2 times<br>
+                                            • User B: Can use 2 times<br>
+                                            • Prevents abuse by single users
+                                        </div>
+                                        <div class="mt-2 text-yellow-300">⚠️ Must be ≤ Total Usage Limit</div>
+                                    </div>
+                                </span>
+                            </label>
                             <input type="number" id="editUsagePerUser" name="usagePerUser"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <p class="text-xs text-red-600 mt-1 hidden error-message"></p>
@@ -477,6 +577,90 @@
     </div>
 
     <script>
+        // Tooltip functionality for info icons
+        function setupTooltips() {
+            // Max Discount - Create tooltip
+            const createMaxDiscountInfo = document.getElementById('createMaxDiscountInfo');
+            const createMaxDiscountTooltip = document.getElementById('createMaxDiscountTooltip');
+            
+            if (createMaxDiscountInfo && createMaxDiscountTooltip) {
+                createMaxDiscountInfo.addEventListener('mouseenter', () => {
+                    createMaxDiscountTooltip.classList.remove('hidden');
+                });
+                createMaxDiscountInfo.addEventListener('mouseleave', () => {
+                    createMaxDiscountTooltip.classList.add('hidden');
+                });
+            }
+            
+            // Max Discount - Edit tooltip
+            const editMaxDiscountInfo = document.getElementById('editMaxDiscountInfo');
+            const editMaxDiscountTooltip = document.getElementById('editMaxDiscountTooltip');
+            
+            if (editMaxDiscountInfo && editMaxDiscountTooltip) {
+                editMaxDiscountInfo.addEventListener('mouseenter', () => {
+                    editMaxDiscountTooltip.classList.remove('hidden');
+                });
+                editMaxDiscountInfo.addEventListener('mouseleave', () => {
+                    editMaxDiscountTooltip.classList.add('hidden');
+                });
+            }
+            
+            // Usage Limit - Create tooltip
+            const createUsageLimitInfo = document.getElementById('createUsageLimitInfo');
+            const createUsageLimitTooltip = document.getElementById('createUsageLimitTooltip');
+            
+            if (createUsageLimitInfo && createUsageLimitTooltip) {
+                createUsageLimitInfo.addEventListener('mouseenter', () => {
+                    createUsageLimitTooltip.classList.remove('hidden');
+                });
+                createUsageLimitInfo.addEventListener('mouseleave', () => {
+                    createUsageLimitTooltip.classList.add('hidden');
+                });
+            }
+            
+            // Usage Limit - Edit tooltip
+            const editUsageLimitInfo = document.getElementById('editUsageLimitInfo');
+            const editUsageLimitTooltip = document.getElementById('editUsageLimitTooltip');
+            
+            if (editUsageLimitInfo && editUsageLimitTooltip) {
+                editUsageLimitInfo.addEventListener('mouseenter', () => {
+                    editUsageLimitTooltip.classList.remove('hidden');
+                });
+                editUsageLimitInfo.addEventListener('mouseleave', () => {
+                    editUsageLimitTooltip.classList.add('hidden');
+                });
+            }
+            
+            // Usage Per User - Create tooltip
+            const createUsagePerUserInfo = document.getElementById('createUsagePerUserInfo');
+            const createUsagePerUserTooltip = document.getElementById('createUsagePerUserTooltip');
+            
+            if (createUsagePerUserInfo && createUsagePerUserTooltip) {
+                createUsagePerUserInfo.addEventListener('mouseenter', () => {
+                    createUsagePerUserTooltip.classList.remove('hidden');
+                });
+                createUsagePerUserInfo.addEventListener('mouseleave', () => {
+                    createUsagePerUserTooltip.classList.add('hidden');
+                });
+            }
+            
+            // Usage Per User - Edit tooltip
+            const editUsagePerUserInfo = document.getElementById('editUsagePerUserInfo');
+            const editUsagePerUserTooltip = document.getElementById('editUsagePerUserTooltip');
+            
+            if (editUsagePerUserInfo && editUsagePerUserTooltip) {
+                editUsagePerUserInfo.addEventListener('mouseenter', () => {
+                    editUsagePerUserTooltip.classList.remove('hidden');
+                });
+                editUsagePerUserInfo.addEventListener('mouseleave', () => {
+                    editUsagePerUserTooltip.classList.add('hidden');
+                });
+            }
+        }
+        
+        // Initialize tooltips on page load
+        document.addEventListener('DOMContentLoaded', setupTooltips);
+        
         // Update discount value constraints based on discount type
         function updateDiscountValueConstraints(formType) {
             const discountType = document.getElementById(`${formType}DiscountType`).value;
@@ -553,6 +737,40 @@
             const minimumPrice = parseFloat(data.minimumPrice);
             const maxDiscountAmount = data.maxDiscountAmount ? parseFloat(data.maxDiscountAmount) : null;
             const discountType = data.discountType;
+            const startDate = new Date(data.startDate);
+            const endDate = new Date(data.endDate);
+
+            // Validate dates
+            if (!data.startDate) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Field',
+                    text: 'Start date is required'
+                });
+                return;
+            }
+
+            if (!data.endDate) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Field',
+                    text: 'End date is required'
+                });
+                return;
+            }
+
+            // Set time to start of day for accurate comparison
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+
+            if (endDate <= startDate) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Dates',
+                    text: 'End date must be after start date'
+                });
+                return;
+            }
 
             if (discountType === 'percentage') {
                 if (offerPrice >= 100) {
@@ -677,6 +895,40 @@
             const minimumPrice = parseFloat(data.minimumPrice);
             const maxDiscountAmount = data.maxDiscountAmount ? parseFloat(data.maxDiscountAmount) : null;
             const discountType = data.discountType;
+            const startDate = new Date(data.startDate);
+            const endDate = new Date(data.endDate);
+
+            // Validate dates
+            if (!data.startDate) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Field',
+                    text: 'Start date is required'
+                });
+                return;
+            }
+
+            if (!data.endDate) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Field',
+                    text: 'End date is required'
+                });
+                return;
+            }
+
+            // Set time to start of day for accurate comparison
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+
+            if (endDate <= startDate) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Dates',
+                    text: 'End date must be after start date'
+                });
+                return;
+            }
 
             if (discountType === 'percentage') {
                 if (offerPrice >= 100) {

@@ -5,6 +5,7 @@ import env from "dotenv";
 import user from "../../models/userModal.js";
 import StatusCodes from '../../utils/statusCodes.js';
 import { AUTH_MESSAGES, USER_MESSAGES } from '../../constants/messages.js';
+import { generateReferralCode, REFERRAL_REWARDS } from '../../utils/referralUtils.js';
 
 
 
@@ -376,56 +377,68 @@ export const verifyOtp = async (req, res) => {
             });
         }
 
+        // Generate unique 6-character referral code
+        let newReferralCode;
+        let isUnique = false;
+        while (!isUnique) {
+            newReferralCode = generateReferralCode();
+            const existingCode = await User.findOne({ referralCode: newReferralCode });
+            if (!existingCode) {
+                isUnique = true;
+            }
+        }
+
         const userData = {
             fullName: fullName.trim(),
             email: email.trim(),
             password,
             isBlocked: false,
-            referralCode: 'REF' + Math.random().toString(36).substring(2, 8).toUpperCase()
+            referralCode: newReferralCode
         };
 
         let referrer = null;
-        const referralReward = 100;
 
         if (referralCode) {
             referrer = await User.findOne({ referralCode: referralCode });
             if (referrer) {
                 userData.referredBy = referralCode;
+                userData.hasUsedReferral = true; // Mark as used so they can't use another code
                 
-                if (referralReward > 0) {
-                    referrer.Wallet += referralReward;
-                    referrer.referralEarnings += referralReward;
-                    await referrer.save();
+                // Credit ₹500 to referrer
+                referrer.Wallet += REFERRAL_REWARDS.REFERRER;
+                referrer.referralEarnings += REFERRAL_REWARDS.REFERRER;
+                await referrer.save();
 
-                    await WalletTransaction.create({
-                        userId: referrer._id,
-                        amount: referralReward,
-                        type: 'credit',
-                        balance: referrer.Wallet,
-                        paymentMethod: 'wallet',
-                        status: 'success',
-                        description: `Referral Bonus for referring ${userData.email}`
-                    });
-                }
+                await WalletTransaction.create({
+                    userId: referrer._id,
+                    amount: REFERRAL_REWARDS.REFERRER,
+                    type: 'credit',
+                    balance: referrer.Wallet,
+                    paymentMethod: 'referral',
+                    status: 'success',
+                    description: `Referral reward - ${userData.fullName} used your code during signup`
+                });
             }
         }
 
-        if (referrer && referralReward > 0) {
-            userData.Wallet = referralReward;
+        // Credit ₹100 to new user if they used a referral code
+        if (referrer) {
+            userData.Wallet = REFERRAL_REWARDS.REFEREE;
         }
 
         const user = new User(userData);
         const savedUser = await user.save();
 
-        if (referrer && referralReward > 0) {
+        // Create transaction for new user if they used referral code
+        if (referrer) {
              await WalletTransaction.create({
                 userId: savedUser._id,
-                amount: referralReward,
+                amount: REFERRAL_REWARDS.REFEREE,
                 type: 'credit',
                 balance: savedUser.Wallet,
-                paymentMethod: 'wallet',
+                paymentMethod: 'referral',
                 status: 'success',
-                description: `Signup Bonus using referral code ${referralCode}`
+                description: `Signup bonus using referral code ${referralCode}`
             });
         }
 
