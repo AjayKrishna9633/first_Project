@@ -55,14 +55,34 @@
     <!-- Page Title -->
     <div class="bg-gray-900 py-8 px-6 border-b border-gray-800">
         <div class="max-w-7xl mx-auto">
-            <h1 class="text-4xl font-bold text-white mb-2">Shopping Cart</h1>
-            <p class="text-gray-400">
-                <% if (cart && cart.items.length > 0) { %>
-                    <i class="fas fa-shopping-cart text-cyan-400"></i> <%= cart.items.length %> <%= cart.items.length === 1 ? 'item' : 'items' %> in your cart
-                <% } else { %>
-                    <i class="fas fa-shopping-cart text-gray-500"></i> Your cart is empty
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-white mb-2">Shopping Cart</h1>
+                    <p class="text-gray-400">
+                        <% if (cart && cart.items.length > 0) { %>
+                            <i class="fas fa-shopping-cart text-cyan-400"></i> <%= cart.items.length %> <%= cart.items.length === 1 ? 'item' : 'items' %> in your cart
+                        <% } else { %>
+                            <i class="fas fa-shopping-cart text-gray-500"></i> Your cart is empty
+                        <% } %>
+                    </p>
+                </div>
+                
+                <!-- Total Quantity Badge -->
+                <% if (cart && cart.items.length > 0 && totalQuantity > 0) { %>
+                    <div class="bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl px-6 py-4 shadow-lg">
+                        <div class="text-center">
+                            <p class="text-white text-sm font-medium mb-1">Total Items</p>
+                            <div class="flex items-center justify-center gap-2">
+                                <i class="fas fa-box text-white text-2xl"></i>
+                                <span class="text-white text-4xl font-bold"><%= totalQuantity %></span>
+                            </div>
+                            <p class="text-white text-xs mt-1 opacity-90">
+                                <%= totalQuantity === 1 ? 'unit' : 'units' %> total
+                            </p>
+                        </div>
+                    </div>
                 <% } %>
-            </p>
+            </div>
         </div>
     </div>
 

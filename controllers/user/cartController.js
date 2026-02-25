@@ -174,10 +174,17 @@ const getCart =async(req,res)=>{
              }
          }
 
+        // Calculate total quantity (sum of all item quantities)
+        let totalQuantity = 0;
+        if (cart && cart.items.length > 0) {
+            totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+        }
+
         res.render('user/cart', {
             cart: cart || { items: [] },
             user: req.session.user,
-            stockValidationError: stockValidationError || null
+            stockValidationError: stockValidationError || null,
+            totalQuantity
         });
 
     }catch(error){
