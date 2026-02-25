@@ -1,14 +1,3 @@
-// ============================================
-// CHANGE PASSWORD FORM VALIDATION
-// ============================================
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-/**
- * Validate password strength
- */
 function validatePasswordStrength(password) {
     const trimmed = password.trim();
     
@@ -42,9 +31,6 @@ function validatePasswordStrength(password) {
     return { valid: true, value: trimmed };
 }
 
-/**
- * Show error message
- */
 function showError(inputId, message) {
     const input = document.getElementById(inputId);
     const errorElement = document.getElementById(`${inputId}-error`);
@@ -60,9 +46,6 @@ function showError(inputId, message) {
     }
 }
 
-/**
- * Clear error message
- */
 function clearError(inputId) {
     const input = document.getElementById(inputId);
     const errorElement = document.getElementById(`${inputId}-error`);
@@ -77,9 +60,6 @@ function clearError(inputId) {
     }
 }
 
-/**
- * Scroll to first error
- */
 function scrollToFirstError() {
     const firstError = document.querySelector('.border-red-500');
     if (firstError) {
@@ -88,9 +68,6 @@ function scrollToFirstError() {
     }
 }
 
-/**
- * Disable/enable submit button
- */
 function disableSubmitButton(button, disabled) {
     if (disabled) {
         button.disabled = true;
@@ -101,9 +78,6 @@ function disableSubmitButton(button, disabled) {
     }
 }
 
-/**
- * Toggle password visibility
- */
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(`${inputId}-icon`);
@@ -121,16 +95,8 @@ function togglePassword(inputId) {
     }
 }
 
-// Make togglePassword available globally
 window.togglePassword = togglePassword;
 
-// ============================================
-// FIELD VALIDATION
-// ============================================
-
-/**
- * Validate current password field
- */
 function validateCurrentPassword() {
     const input = document.getElementById('currentPassword');
     if (!input) return true;
@@ -146,9 +112,6 @@ function validateCurrentPassword() {
     return true;
 }
 
-/**
- * Validate new password field
- */
 function validateNewPassword() {
     const input = document.getElementById('newPassword');
     const currentPasswordInput = document.getElementById('currentPassword');
@@ -179,9 +142,6 @@ function validateNewPassword() {
     return true;
 }
 
-/**
- * Validate confirm password field
- */
 function validateConfirmPassword() {
     const newPasswordInput = document.getElementById('newPassword');
     const confirmPasswordInput = document.getElementById('confirmPassword');
@@ -206,13 +166,6 @@ function validateConfirmPassword() {
     return true;
 }
 
-// ============================================
-// FORM VALIDATION
-// ============================================
-
-/**
- * Validate entire form
- */
 function validateChangePasswordForm() {
     let isValid = true;
     
@@ -224,11 +177,7 @@ function validateChangePasswordForm() {
     return isValid;
 }
 
-/**
- * Handle form submission
- */
 async function handleFormSubmit(event) {
-    // ALWAYS prevent default first
     event.preventDefault();
     event.stopPropagation();
     
@@ -321,13 +270,6 @@ async function handleFormSubmit(event) {
     }
 }
 
-// ============================================
-// REAL-TIME VALIDATION
-// ============================================
-
-/**
- * Setup real-time validation listeners
- */
 function setupRealTimeValidation() {
     // Current password
     const currentPasswordInput = document.getElementById('currentPassword');
@@ -368,13 +310,6 @@ function setupRealTimeValidation() {
     }
 }
 
-// ============================================
-// INITIALIZATION
-// ============================================
-
-/**
- * Initialize validation on page load
- */
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('changePasswordForm');
     

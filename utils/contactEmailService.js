@@ -1,7 +1,6 @@
 import pkg from 'nodemailer';
 const { createTransport } = pkg;
 
-// Create email transporter
 const createTransporter = () => {
     return createTransport({
         service: 'gmail',
@@ -19,7 +18,6 @@ export const sendContactNotificationEmail = async (contactData) => {
         
         const { fullName, email, phone, subject, message } = contactData;
         
-        // Create HTML email body
         const htmlBody = `
             <!DOCTYPE html>
             <html>

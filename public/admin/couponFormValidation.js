@@ -1,14 +1,3 @@
-// ============================================
-// COUPON FORM VALIDATION
-// ============================================
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-/**
- * Validate string field
- */
 function validateString(value, minLength, maxLength, fieldName) {
     const trimmed = value.trim();
     
@@ -27,9 +16,6 @@ function validateString(value, minLength, maxLength, fieldName) {
     return { valid: true, value: trimmed };
 }
 
-/**
- * Validate coupon code
- */
 function validateCouponCode(value) {
     const trimmed = value.trim().toUpperCase();
     
@@ -58,9 +44,6 @@ function validateCouponCode(value) {
     return { valid: true, value: trimmed };
 }
 
-/**
- * Validate numeric field
- */
 function validateNumeric(value, fieldName, minValue = 0) {
     const num = Number(value);
     
@@ -75,9 +58,6 @@ function validateNumeric(value, fieldName, minValue = 0) {
     return { valid: true, value: num };
 }
 
-/**
- * Validate integer field
- */
 function validateInteger(value, fieldName, minValue = 1, maxValue = null) {
     const num = Number(value);
     
@@ -96,9 +76,6 @@ function validateInteger(value, fieldName, minValue = 1, maxValue = null) {
     return { valid: true, value: num };
 }
 
-/**
- * Validate date field
- */
 function validateDate(value, fieldName) {
     if (!value) {
         return { valid: false, message: `${fieldName} is required` };
@@ -113,9 +90,6 @@ function validateDate(value, fieldName) {
     return { valid: true, value: date };
 }
 
-/**
- * Show error message
- */
 function showError(input, message) {
     // Add error class to input
     input.classList.add('border-red-500', 'bg-red-50');
@@ -133,9 +107,6 @@ function showError(input, message) {
     errorElement.classList.remove('hidden');
 }
 
-/**
- * Clear error message
- */
 function clearError(input) {
     input.classList.remove('border-red-500', 'bg-red-50');
     input.classList.add('border-gray-300');
@@ -146,9 +117,6 @@ function clearError(input) {
     }
 }
 
-/**
- * Scroll to first error
- */
 function scrollToFirstError() {
     const firstError = document.querySelector('.border-red-500');
     if (firstError) {
@@ -157,9 +125,6 @@ function scrollToFirstError() {
     }
 }
 
-/**
- * Disable/enable submit button
- */
 function disableSubmitButton(button, disabled) {
     if (disabled) {
         button.disabled = true;
@@ -170,13 +135,8 @@ function disableSubmitButton(button, disabled) {
     }
 }
 
-// ============================================
 // FIELD VALIDATION
-// ============================================
 
-/**
- * Validate coupon code field
- */
 function validateCouponCodeField(formPrefix) {
     const input = document.querySelector(`#${formPrefix}CouponForm input[name="name"]`);
     if (!input) return true;
@@ -194,9 +154,6 @@ function validateCouponCodeField(formPrefix) {
     return true;
 }
 
-/**
- * Validate description field
- */
 function validateDescriptionField(formPrefix) {
     const input = document.querySelector(`#${formPrefix}CouponForm input[name="description"]`);
     if (!input) return true;
@@ -212,9 +169,6 @@ function validateDescriptionField(formPrefix) {
     return true;
 }
 
-/**
- * Validate discount type field
- */
 function validateDiscountTypeField(formPrefix) {
     const input = document.querySelector(`#${formPrefix}DiscountType`);
     if (!input) return true;
@@ -228,9 +182,6 @@ function validateDiscountTypeField(formPrefix) {
     return true;
 }
 
-/**
- * Validate discount value field
- */
 function validateDiscountValueField(formPrefix) {
     const discountTypeInput = document.querySelector(`#${formPrefix}DiscountType`);
     const discountValueInput = document.querySelector(`#${formPrefix}OfferPrice`);
@@ -275,11 +226,7 @@ function validateDiscountValueField(formPrefix) {
     clearError(discountValueInput);
     return true;
 }
-}
 
-/**
- * Validate min purchase amount field
- */
 function validateMinPurchaseField(formPrefix) {
     const input = document.querySelector(`#${formPrefix}CouponForm input[name="minimumPrice"]`);
     if (!input) return true;
@@ -295,9 +242,6 @@ function validateMinPurchaseField(formPrefix) {
     return true;
 }
 
-/**
- * Validate max discount field
- */
 function validateMaxDiscountField(formPrefix) {
     const discountTypeInput = document.querySelector(`#${formPrefix}DiscountType`);
     const maxDiscountInput = document.querySelector(`#${formPrefix}CouponForm input[name="maxDiscountAmount"]`);
@@ -333,9 +277,6 @@ function validateMaxDiscountField(formPrefix) {
     return true;
 }
 
-/**
- * Validate start date field
- */
 function validateStartDateField(formPrefix) {
     const input = document.querySelector(`#${formPrefix}CouponForm input[name="startDate"]`);
     if (!input) return true;
@@ -362,9 +303,6 @@ function validateStartDateField(formPrefix) {
     return true;
 }
 
-/**
- * Validate end date field
- */
 function validateEndDateField(formPrefix) {
     const startDateInput = document.querySelector(`#${formPrefix}CouponForm input[name="startDate"]`);
     const endDateInput = document.querySelector(`#${formPrefix}CouponForm input[name="endDate"]`);
@@ -397,9 +335,6 @@ function validateEndDateField(formPrefix) {
     return true;
 }
 
-/**
- * Validate usage limit field
- */
 function validateUsageLimitField(formPrefix) {
     const input = document.querySelector(`#${formPrefix}CouponForm input[name="usageLimit"]`);
     if (!input) return true;
@@ -421,9 +356,6 @@ function validateUsageLimitField(formPrefix) {
     return true;
 }
 
-/**
- * Validate usage per user field
- */
 function validateUsagePerUserField(formPrefix) {
     const usagePerUserInput = document.querySelector(`#${formPrefix}CouponForm input[name="usagePerUser"]`);
     const usageLimitInput = document.querySelector(`#${formPrefix}CouponForm input[name="usageLimit"]`);
@@ -452,13 +384,8 @@ function validateUsagePerUserField(formPrefix) {
     return true;
 }
 
-// ============================================
 // FORM VALIDATION
-// ============================================
 
-/**
- * Validate entire coupon form
- */
 function validateCouponForm(formPrefix) {
     let isValid = true;
     
@@ -477,9 +404,6 @@ function validateCouponForm(formPrefix) {
     return isValid;
 }
 
-/**
- * Handle form submission
- */
 async function handleCouponFormSubmit(event, formPrefix) {
     // ALWAYS prevent default first
     event.preventDefault();
@@ -585,13 +509,8 @@ async function handleCouponFormSubmit(event, formPrefix) {
     }
 }
 
-// ============================================
 // DISCOUNT TYPE HANDLING
-// ============================================
 
-/**
- * Handle discount type change
- */
 function handleDiscountTypeChange(formPrefix) {
     const discountTypeInput = document.querySelector(`#${formPrefix}DiscountType`);
     const maxDiscountInput = document.querySelector(`#${formPrefix}CouponForm input[name="maxDiscountAmount"]`);
@@ -616,13 +535,8 @@ function handleDiscountTypeChange(formPrefix) {
     }
 }
 
-// ============================================
 // REAL-TIME VALIDATION
-// ============================================
 
-/**
- * Setup real-time validation listeners
- */
 function setupRealTimeValidation(formPrefix) {
     // Coupon code
     const codeInput = document.querySelector(`#${formPrefix}CouponForm input[name="name"]`);
@@ -734,13 +648,8 @@ function setupRealTimeValidation(formPrefix) {
     }
 }
 
-// ============================================
 // INITIALIZATION
-// ============================================
 
-/**
- * Initialize validation on page load
- */
 document.addEventListener('DOMContentLoaded', function() {
     // Setup validation for create form
     const createForm = document.getElementById('createCouponForm');

@@ -12,9 +12,6 @@ import { generateReferralCode, REFERRAL_REWARDS } from '../../utils/referralUtil
 
 env.config();
 
-
-
-// Email transporter configuration
 const createTransporter = () => {
     return nodemailer.createTransport({
         service: 'gmail',
@@ -25,7 +22,6 @@ const createTransporter = () => {
     });
 };
 
-// Send email function
 async function sendEmailVerification(email, otp) {
     try {
         const transporter = createTransporter();
@@ -71,12 +67,9 @@ async function sendEmailVerification(email, otp) {
     }
 }
 
-// Generate 6-digit OTP
 function generateOtp() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
-
-//  LOGIN FUNCTIONS 
 
 export const getLogin = async (req, res) => {
     try {
@@ -173,8 +166,6 @@ export const loginUser = async (req, res) => {
         });
     }
 };
-
-//  SIGNUP FUNCTIONS 
 
 export const getSignup = (req, res) => {
    
@@ -306,8 +297,6 @@ export const registerUser = async (req, res) => {
     }
 };
 
-//  OTP VERIFICATION 
-
 export const getOtp = (req, res) => {
     if (!req.session.userOtp || !req.session.userData) {
         return res.redirect('/signup');
@@ -402,9 +391,8 @@ export const verifyOtp = async (req, res) => {
             referrer = await User.findOne({ referralCode: referralCode });
             if (referrer) {
                 userData.referredBy = referralCode;
-                userData.hasUsedReferral = true; // Mark as used so they can't use another code
+                userData.hasUsedReferral = true;
                 
-                // Credit ₹500 to referrer
                 referrer.Wallet += REFERRAL_REWARDS.REFERRER;
                 referrer.referralEarnings += REFERRAL_REWARDS.REFERRER;
                 await referrer.save();
@@ -421,7 +409,6 @@ export const verifyOtp = async (req, res) => {
             }
         }
 
-        // Credit ₹100 to new user if they used a referral code
         if (referrer) {
             userData.Wallet = REFERRAL_REWARDS.REFEREE;
         }
@@ -429,7 +416,6 @@ export const verifyOtp = async (req, res) => {
         const user = new User(userData);
         const savedUser = await user.save();
 
-        // Create transaction for new user if they used referral code
         if (referrer) {
              await WalletTransaction.create({
                 userId: savedUser._id,
@@ -790,7 +776,6 @@ export const loadhomePage = async (req, res) => {
     try {
         const user = req.session?.user || null;
         
-        // Import models and mongoose
         const mongoose = (await import('mongoose')).default;
         const Product = (await import('../../models/porductsModal.js')).default;
         const Category = (await import('../../models/categoryModel.js')).default;
@@ -808,7 +793,6 @@ export const loadhomePage = async (req, res) => {
         .populate('variants')
         .lean();
         
-        // Apply discount calculation to keyboard
         if (latestKeyboard) {
             latestKeyboard = applyBestDiscountToProduct(latestKeyboard);
         }
@@ -878,7 +862,6 @@ export const loadhomePage = async (req, res) => {
             }
         ]);
         
-        // Apply discount calculation to each bestseller
         bestSellers.forEach(product => {
             if (product.variants && product.variants.length > 0) {
                 product.variants = product.variants.map(variant => {
@@ -906,7 +889,6 @@ export const loadhomePage = async (req, res) => {
         .populate('variants')
         .lean();
         
-        // Apply discount calculation to mouse
         if (latestMouse) {
             latestMouse = applyBestDiscountToProduct(latestMouse);
         }
@@ -1193,10 +1175,6 @@ const verifyEmailChange = async(req,res)=>{
 
         await userData.save();
 
-// await User.findByIdAndUpdate(userId, {  
-//     email: newEmail.toLowerCase()
-// });
-
         req.session.user.email= newEmail.toLowerCase();
 
      delete req.session.emailChangeOtp;  
@@ -1255,8 +1233,6 @@ avatar:{
         });
     }
 }
-
-//  EXPORTS 
 
 export default {
     requestEmailChange,

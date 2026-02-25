@@ -25,7 +25,7 @@ const addToCart = async (req, res) => {
         }
 
         let product = await Product.findById(productId).populate('variants').populate('category').lean();
-
+    
         if (!product || product.IsBlocked) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
@@ -137,7 +137,12 @@ const getCart =async(req,res)=>{
                 }
             })
             .populate('items.variantId');
-
+    // let pro= await Product.aggregate({
+    //         $lookup:{
+    //             from:""
+    //         }
+    //     })
+    console.log(cart.items.quantity)
         const stockValidationError = req.session.stockValidationError;
         delete req.session.stockValidationError;
 

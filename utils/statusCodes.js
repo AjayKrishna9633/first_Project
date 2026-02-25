@@ -1,5 +1,5 @@
 // Centralized HTTP Status Codes
-// Similar to FastAPI's status module
+
 
 // 2xx Success
 export const HTTP_200_OK = 200;

@@ -1,14 +1,7 @@
-// ============================================
 // ADDRESS FORM VALIDATION
-// ============================================
 
-// ============================================
 // HELPER FUNCTIONS
-// ============================================
 
-/**
- * Validate string field
- */
 function validateString(value, minLength, maxLength, fieldName) {
     const trimmed = value.trim();
     
@@ -32,9 +25,6 @@ function validateString(value, minLength, maxLength, fieldName) {
     return { valid: true, value: trimmed };
 }
 
-/**
- * Validate name field (letters and spaces only)
- */
 function validateName(value, fieldName) {
     const result = validateString(value, 2, 50, fieldName);
     
@@ -50,9 +40,6 @@ function validateName(value, fieldName) {
     return result;
 }
 
-/**
- * Validate street address
- */
 function validateStreetAddress(value) {
     const result = validateString(value, 10, 200, 'Street address');
     
@@ -68,9 +55,6 @@ function validateStreetAddress(value) {
     return result;
 }
 
-/**
- * Validate Indian pin code
- */
 function validatePinCode(value) {
     const trimmed = value.trim();
     
@@ -91,9 +75,6 @@ function validatePinCode(value) {
     return { valid: true, value: trimmed };
 }
 
-/**
- * Validate Indian mobile number
- */
 function validatePhone(value, fieldName = 'Phone number') {
     const trimmed = value.trim();
     
@@ -114,9 +95,6 @@ function validatePhone(value, fieldName = 'Phone number') {
     return { valid: true, value: trimmed };
 }
 
-/**
- * Show error message
- */
 function showError(input, message) {
     // Add error class to input
     input.classList.add('border-red-500', 'bg-red-900', 'bg-opacity-20');
@@ -141,9 +119,6 @@ function showError(input, message) {
     errorElement.classList.remove('hidden');
 }
 
-/**
- * Clear error message
- */
 function clearError(input) {
     input.classList.remove('border-red-500', 'bg-red-900', 'bg-opacity-20');
     input.classList.add('border-gray-700');
@@ -154,9 +129,6 @@ function clearError(input) {
     }
 }
 
-/**
- * Scroll to first error
- */
 function scrollToFirstError() {
     const firstError = document.querySelector('.border-red-500');
     if (firstError) {
@@ -165,9 +137,6 @@ function scrollToFirstError() {
     }
 }
 
-/**
- * Disable/enable submit button
- */
 function disableSubmitButton(button, disabled) {
     if (disabled) {
         button.disabled = true;
@@ -178,9 +147,6 @@ function disableSubmitButton(button, disabled) {
     }
 }
 
-/**
- * Restrict input to digits only
- */
 function restrictToDigits(input) {
     input.addEventListener('input', function(e) {
         this.value = this.value.replace(/\D/g, '');
@@ -193,13 +159,8 @@ function restrictToDigits(input) {
     });
 }
 
-// ============================================
 // FIELD VALIDATION
-// ============================================
 
-/**
- * Validate address type field
- */
 function validateAddressTypeField(formId) {
     const input = document.querySelector(`#${formId} select[name="addressType"]`);
     if (!input) return true;
@@ -213,9 +174,6 @@ function validateAddressTypeField(formId) {
     return true;
 }
 
-/**
- * Validate full name field
- */
 function validateFullNameField(formId) {
     const input = document.querySelector(`#${formId} input[name="name"]`);
     if (!input) return true;
@@ -233,9 +191,6 @@ function validateFullNameField(formId) {
     return true;
 }
 
-/**
- * Validate street address field
- */
 function validateStreetAddressField(formId) {
     const input = document.querySelector(`#${formId} textarea[name="streetAddress"]`);
     if (!input) return true;
@@ -253,9 +208,6 @@ function validateStreetAddressField(formId) {
     return true;
 }
 
-/**
- * Validate city field
- */
 function validateCityField(formId) {
     const input = document.querySelector(`#${formId} input[name="city"]`);
     if (!input) return true;
@@ -273,9 +225,6 @@ function validateCityField(formId) {
     return true;
 }
 
-/**
- * Validate state field
- */
 function validateStateField(formId) {
     const input = document.querySelector(`#${formId} input[name="state"]`);
     if (!input) return true;
@@ -293,9 +242,6 @@ function validateStateField(formId) {
     return true;
 }
 
-/**
- * Validate pin code field
- */
 function validatePinCodeField(formId) {
     const input = document.querySelector(`#${formId} input[name="pinCode"]`);
     if (!input) return true;
@@ -311,9 +257,6 @@ function validatePinCodeField(formId) {
     return true;
 }
 
-/**
- * Validate phone number field
- */
 function validatePhoneField(formId) {
     const input = document.querySelector(`#${formId} input[name="phone"]`);
     if (!input) return true;
@@ -329,9 +272,6 @@ function validatePhoneField(formId) {
     return true;
 }
 
-/**
- * Validate alternate phone field
- */
 function validateAltPhoneField(formId) {
     const altPhoneInput = document.querySelector(`#${formId} input[name="altPhone"]`);
     const phoneInput = document.querySelector(`#${formId} input[name="phone"]`);
@@ -361,13 +301,8 @@ function validateAltPhoneField(formId) {
     return true;
 }
 
-// ============================================
 // FORM VALIDATION
-// ============================================
 
-/**
- * Validate entire address form
- */
 function validateAddressForm(formId) {
     let isValid = true;
     
@@ -384,9 +319,6 @@ function validateAddressForm(formId) {
     return isValid;
 }
 
-/**
- * Handle form submission
- */
 function handleAddressFormSubmit(event, formId) {
     // ALWAYS prevent default first
     event.preventDefault();
@@ -426,13 +358,8 @@ function handleAddressFormSubmit(event, formId) {
     return true;
 }
 
-// ============================================
 // REAL-TIME VALIDATION
-// ============================================
 
-/**
- * Setup real-time validation listeners
- */
 function setupRealTimeValidation(formId) {
     // Address type
     const addressTypeInput = document.querySelector(`#${formId} select[name="addressType"]`);
@@ -525,13 +452,8 @@ function setupRealTimeValidation(formId) {
     }
 }
 
-// ============================================
 // INITIALIZATION
-// ============================================
 
-/**
- * Initialize validation on page load
- */
 document.addEventListener('DOMContentLoaded', function() {
     // Setup validation for add address form
     const addForm = document.getElementById('addAddressForm');

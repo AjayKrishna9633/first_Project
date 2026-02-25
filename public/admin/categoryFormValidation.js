@@ -1,14 +1,7 @@
-// ============================================
 // CATEGORY FORM VALIDATION
-// ============================================
 
-// ============================================
 // HELPER FUNCTIONS
-// ============================================
 
-/**
- * Validate string field
- */
 function validateString(value, minLength, maxLength, fieldName) {
     const trimmed = value.trim();
     
@@ -32,9 +25,6 @@ function validateString(value, minLength, maxLength, fieldName) {
     return { valid: true, value: trimmed };
 }
 
-/**
- * Validate category name (letters, numbers, spaces only)
- */
 function validateCategoryName(value) {
     const result = validateString(value, 3, 50, 'Category name');
     
@@ -50,9 +40,6 @@ function validateCategoryName(value) {
     return result;
 }
 
-/**
- * Validate numeric field
- */
 function validateNumeric(value, fieldName, minValue = 0) {
     const num = Number(value);
     
@@ -67,9 +54,6 @@ function validateNumeric(value, fieldName, minValue = 0) {
     return { valid: true, value: num };
 }
 
-/**
- * Validate integer field
- */
 function validateInteger(value, fieldName, minValue = 0, maxValue = null) {
     const num = Number(value);
     
@@ -88,9 +72,6 @@ function validateInteger(value, fieldName, minValue = 0, maxValue = null) {
     return { valid: true, value: num };
 }
 
-/**
- * Show error message
- */
 function showError(input, message) {
     // Add error class to input
     input.classList.add('border-red-500', 'bg-red-50');
@@ -108,9 +89,6 @@ function showError(input, message) {
     errorElement.classList.remove('hidden');
 }
 
-/**
- * Clear error message
- */
 function clearError(input) {
     input.classList.remove('border-red-500', 'bg-red-50');
     input.classList.add('border-gray-300');
@@ -121,9 +99,6 @@ function clearError(input) {
     }
 }
 
-/**
- * Scroll to first error
- */
 function scrollToFirstError() {
     const firstError = document.querySelector('.border-red-500');
     if (firstError) {
@@ -132,9 +107,6 @@ function scrollToFirstError() {
     }
 }
 
-/**
- * Disable/enable submit button
- */
 function disableSubmitButton(button, disabled) {
     if (disabled) {
         button.disabled = true;
@@ -145,13 +117,8 @@ function disableSubmitButton(button, disabled) {
     }
 }
 
-// ============================================
 // FIELD VALIDATION
-// ============================================
 
-/**
- * Validate category name field
- */
 function validateCategoryNameField() {
     const input = document.querySelector('input[name="name"]');
     if (!input) return true;
@@ -167,9 +134,6 @@ function validateCategoryNameField() {
     return true;
 }
 
-/**
- * Validate description field
- */
 function validateDescriptionField() {
     const input = document.querySelector('textarea[name="description"]');
     if (!input) return true;
@@ -185,9 +149,6 @@ function validateDescriptionField() {
     return true;
 }
 
-/**
- * Validate offer type and value
- */
 function validateOfferFields() {
     const offerTypeInput = document.getElementById('offerType');
     const offerValueInput = document.getElementById('offerValue');
@@ -238,13 +199,8 @@ function validateOfferFields() {
     return true;
 }
 
-// ============================================
 // FORM VALIDATION
-// ============================================
 
-/**
- * Validate entire form
- */
 function validateCategoryForm() {
     let isValid = true;
     
@@ -256,9 +212,6 @@ function validateCategoryForm() {
     return isValid;
 }
 
-/**
- * Handle form submission
- */
 function handleFormSubmit(event) {
     // ALWAYS prevent default first
     event.preventDefault();
@@ -303,13 +256,8 @@ function handleFormSubmit(event) {
     }
 }
 
-// ============================================
 // OFFER TYPE HANDLING
-// ============================================
 
-/**
- * Handle offer type change
- */
 function handleOfferTypeChange() {
     const offerTypeInput = document.getElementById('offerType');
     const offerValueInput = document.getElementById('offerValue');
@@ -346,13 +294,8 @@ function handleOfferTypeChange() {
     }
 }
 
-// ============================================
 // REAL-TIME VALIDATION
-// ============================================
 
-/**
- * Setup real-time validation listeners
- */
 function setupRealTimeValidation() {
     // Category name
     const nameInput = document.querySelector('input[name="name"]');
@@ -397,13 +340,8 @@ function setupRealTimeValidation() {
     }
 }
 
-// ============================================
 // INITIALIZATION
-// ============================================
 
-/**
- * Initialize validation on page load
- */
 document.addEventListener('DOMContentLoaded', function() {
     // Setup form submit handler
     const form = document.querySelector('form');

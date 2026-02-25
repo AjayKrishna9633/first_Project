@@ -1,7 +1,7 @@
 import Order from '../../models/orderModel.js';
 import StatusCodes from '../../utils/statusCodes.js';
-import SalesReportPdfService from '../../services/salesReportPdfService.js';
-import SalesReportExcelService from '../../services/salesReportExcelService.js';
+import SalesReportPdfService from '../../utils/salesReportPdfService.js';
+import SalesReportExcelService from '../../utils/salesReportExcelService.js';
 
 const getSalesReport = async (req, res) => {
     try {

@@ -1,5 +1,5 @@
 import ContactMessage from '../../models/contactMessageModel.js';
-import { sendContactNotificationEmail, sendAutoReplyEmail } from '../../services/contactEmailService.js';
+import { sendContactNotificationEmail, sendAutoReplyEmail } from '../../utils/contactEmailService.js';
 import StatusCodes from '../../utils/statusCodes.js';
 import { CONTACT_MESSAGES, formatMessage } from '../../constants/messages.js';
 

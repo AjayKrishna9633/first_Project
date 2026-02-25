@@ -1,4 +1,3 @@
-// models/orderModel.js
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
@@ -47,7 +46,6 @@ const orderSchema = new Schema({
             type: String,
             enum: ['user', 'admin']
         },
-        // Individual item return fields
         returnStatus: {
             type: String,
             enum: ['none', 'requested', 'approved', 'rejected', 'completed'],
