@@ -156,6 +156,8 @@ router.post('/orders/return/request', protectUser, orderCtrl.requestReturn);
 router.post('/orders/return/item-request', protectUser, orderCtrl.requestItemReturn);
 router.post('/orders/:id/pay-cod', protectUser, orderCtrl.payCODOrder);
 router.post('/orders/:id/verify-cod-payment', protectUser, orderCtrl.verifyCODPayment);
+router.post('/orders/:id/retry-payment', protectUser, orderCtrl.retryPayment);
+router.post('/orders/:id/verify-retry-payment', protectUser, orderCtrl.verifyRetryPayment);
 
 //wallet routes
 router.get('/wallet', protectUser, walletCtrl.getWallet);

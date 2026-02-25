@@ -884,6 +884,123 @@ const verifyCODPayment = async (req, res) => {
     }
 };
 
+const retryPayment = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { id } = req.params;
+        
+        const order = await Order.findOne({ _id: id, userId });
+        
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
+            });
+        }
+        
+        if (order.paymentMethod !== 'online') {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'This order was not placed with online payment'
+            });
+        }
+        
+        if (['delivered', 'cancelled', 'returned'].includes(order.orderStatus)) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Cannot retry payment for this order at this stage'
+            });
+        }
+        
+        if (order.paymentStatus === 'paid') {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Order is already paid'
+            });
+        }
+        
+        const instance = razorpayInstance;
+        
+        const timestamp = Date.now().toString().slice(-8);
+        const orderIdShort = order._id.toString().slice(-8);
+        const receipt = `RETRY${orderIdShort}${timestamp}`;
+        
+        const options = {
+            amount: Math.round(order.totalAmount) * 100,
+            currency: "INR",
+            receipt: receipt
+        };
+        
+        const razorpayOrder = await instance.orders.create(options);
+        
+        res.status(StatusCodes.OK).json({
+            success: true,
+            razorpayOrder: {
+                id: razorpayOrder.id,
+                amount: razorpayOrder.amount,
+                currency: razorpayOrder.currency,
+                key_id: process.env.RAZORPAY_KEY_ID
+            },
+            orderNumber: order.orderNumber
+        });
+        
+    } catch (error) {
+        console.error('Retry payment error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to initiate payment'
+        });
+    }
+};
+
+const verifyRetryPayment = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { id } = req.params;
+        const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+        
+        const order = await Order.findOne({ _id: id, userId });
+        
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
+            });
+        }
+        
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(body.toString())
+            .digest("hex");
+        
+        if (expectedSignature !== razorpay_signature) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Payment verification failed'
+            });
+        }
+        
+        order.paymentStatus = 'paid';
+        order.razorpayOrderId = razorpay_order_id;
+        order.razorpayPaymentId = razorpay_payment_id;
+        order.updatedAt = new Date();
+        await order.save();
+        
+        res.status(StatusCodes.OK).json({
+            success: true,
+            message: 'Payment successful'
+        });
+        
+    } catch (error) {
+        console.error('Verify retry payment error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Payment verification failed'
+        });
+    }
+};
+
 
 export default {
     getUserOrders,
@@ -895,5 +1012,7 @@ export default {
     requestItemReturn,
     cancelOrderItem,
     payCODOrder,
-    verifyCODPayment
+    verifyCODPayment,
+    retryPayment,
+    verifyRetryPayment
 };

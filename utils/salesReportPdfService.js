@@ -87,43 +87,52 @@ class SalesReportPdfService {
             .text('Order Details', { underline: true })
             .moveDown(0.5);
 
+        const columns = {
+            orderId: { x: 50, width: 70 },
+            date: { x: 125, width: 65 },
+            customer: { x: 195, width: 90 },
+            amount: { x: 290, width: 65 },
+            discount: { x: 360, width: 65 },
+            payment: { x: 430, width: 60 },
+            status: { x: 495, width: 60 }
+        };
+
         const tableTop = this.doc.y;
         this.doc.fontSize(9).font('Helvetica-Bold');
         
         this.doc
-            .text('Order ID', 50, tableTop, { width: 80 })
-            .text('Date', 130, tableTop, { width: 70 })
-            .text('Customer', 200, tableTop, { width: 100 })
-            .text('Amount', 300, tableTop, { width: 60, align: 'right' })
-            .text('Discount', 360, tableTop, { width: 60, align: 'right' })
-            .text('Payment', 420, tableTop, { width: 60 })
-            .text('Status', 480, tableTop, { width: 70 });
+            .text('Order ID', columns.orderId.x, tableTop, { width: columns.orderId.width, align: 'left' })
+            .text('Date', columns.date.x, tableTop, { width: columns.date.width, align: 'left' })
+            .text('Customer', columns.customer.x, tableTop, { width: columns.customer.width, align: 'left' })
+            .text('Amount', columns.amount.x, tableTop, { width: columns.amount.width, align: 'right' })
+            .text('Discount', columns.discount.x, tableTop, { width: columns.discount.width, align: 'right' })
+            .text('Payment', columns.payment.x, tableTop, { width: columns.payment.width, align: 'left' })
+            .text('Status', columns.status.x, tableTop, { width: columns.status.width, align: 'left' });
 
-        this.generateHr(this.doc.y + 5);
-        this.doc.moveDown(0.5);
+        this.generateHr(tableTop + 15);
+        this.doc.moveDown(1);
 
         this.doc.font('Helvetica').fontSize(8);
         
         orders.forEach((order) => {
-            const y = this.doc.y;
-            
-            if (y > 700) {
+            if (this.doc.y > 700) {
                 this.doc.addPage();
                 this.doc.y = 50;
             }
 
+            const rowY = this.doc.y;
             const orderDiscount = (order.couponDiscount || 0) + (order.walletAmountUsed || 0);
             
             this.doc
-                .text(order.orderNumber, 50, this.doc.y, { width: 80 })
-                .text(order.createdAt.toLocaleDateString(), 130, this.doc.y, { width: 70 })
-                .text((order.userId?.fullName || 'Guest').substring(0, 15), 200, this.doc.y, { width: 100 })
-                .text(`₹${order.totalAmount.toLocaleString('en-IN')}`, 300, this.doc.y, { width: 60, align: 'right' })
-                .text(`₹${orderDiscount.toLocaleString('en-IN')}`, 360, this.doc.y, { width: 60, align: 'right' })
-                .text(order.paymentMethod.toUpperCase(), 420, this.doc.y, { width: 60 })
-                .text(order.orderStatus, 480, this.doc.y, { width: 70 });
+                .text(order.orderNumber, columns.orderId.x, rowY, { width: columns.orderId.width, align: 'left' })
+                .text(order.createdAt.toLocaleDateString('en-IN'), columns.date.x, rowY, { width: columns.date.width, align: 'left' })
+                .text((order.userId?.fullName || 'Guest').substring(0, 12), columns.customer.x, rowY, { width: columns.customer.width, align: 'left' })
+                .text(`₹${order.totalAmount.toFixed(2)}`, columns.amount.x, rowY, { width: columns.amount.width, align: 'right' })
+                .text(`₹${orderDiscount.toFixed(2)}`, columns.discount.x, rowY, { width: columns.discount.width, align: 'right' })
+                .text(order.paymentMethod.substring(0, 8).toUpperCase(), columns.payment.x, rowY, { width: columns.payment.width, align: 'left' })
+                .text(order.orderStatus.substring(0, 10), columns.status.x, rowY, { width: columns.status.width, align: 'left' });
             
-            this.doc.moveDown(0.8);
+            this.doc.y = rowY + 18;
         });
     }
 
