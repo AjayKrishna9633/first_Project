@@ -19,8 +19,7 @@ const getShopPage = async (req, res) => {
         const sortBy = req.query.sort || "featured";
 
         let query = {
-            IsBlocked: false,
-            status: 'Available'
+            IsBlocked: false
         };
 
         if (search) {

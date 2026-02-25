@@ -29,6 +29,21 @@ try{
     .sort({createdAt:-1})
     .skip(skip)
     .limit(limit);
+
+    // Update product status based on variant quantities
+    for (const prod of product) {
+        if (prod.variants && prod.variants.length > 0) {
+            const totalStock = prod.variants.reduce((sum, variant) => sum + (variant.quantity || 0), 0);
+            const newStatus = totalStock > 0 ? 'Available' : 'Out of Stock';
+            
+            // Only update if status has changed
+            if (prod.status !== newStatus) {
+                prod.status = newStatus;
+                await prod.save();
+            }
+        }
+    }
+
 console.log(product)
 // const products = product.filter(v=>)
 
