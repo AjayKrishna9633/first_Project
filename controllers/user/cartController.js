@@ -33,6 +33,13 @@ const addToCart = async (req, res) => {
             });
         }
 
+        if (!product.category || !product.category.isListed) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: 'Product not available'
+            });
+        }
+
         product = applyBestDiscountToProduct(product);
 
         const variant = product.variants.find(v => v._id.toString() === variantId);
@@ -137,16 +144,16 @@ const getCart =async(req,res)=>{
                 }
             })
             .populate('items.variantId');
-    // let pro= await Product.aggregate({
-    //         $lookup:{
-    //             from:""
-    //         }
-    //     })
-    console.log(cart.items.quantity)
+
         const stockValidationError = req.session.stockValidationError;
         delete req.session.stockValidationError;
 
          if(cart && cart.items.length > 0){
+             cart.items = cart.items.filter(item => {
+                 const product = item.productId;
+                 return product && !product.IsBlocked && product.category && product.category.isListed;
+             });
+
              let cartUpdated = false;
              for(let item of cart.items){
                  if(item.productId && item.variantId && item.productId.variants){
@@ -167,6 +174,11 @@ const getCart =async(req,res)=>{
                             cartUpdated = true;
                         }
                     }
+
+                    // Add stock status to item
+                    item.isOutOfStock = !variant || variant.quantity === 0;
+                    item.availableStock = variant ? variant.quantity : 0;
+                    item.hasInsufficientStock = variant && item.quantity > variant.quantity;
                  }
              }
              if(cartUpdated){
@@ -249,6 +261,13 @@ const updateCartItem = async (req, res) => {
             return res.status(StatusCodes.NOT_FOUND).json({
                 success: false,
                 message: PRODUCT_MESSAGES.PRODUCT_NOT_FOUND
+            });
+        }
+
+        if (!product.category || !product.category.isListed) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: 'Product not available'
             });
         }
 

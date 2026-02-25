@@ -783,7 +783,7 @@ export const loadhomePage = async (req, res) => {
         const { applyBestDiscountToProduct, calculateBestDiscount } = await import('../../utils/discountCalculator.js');
         
         // 1. Get latest keyboard (most recently added)
-        const keyboardCategory = await Category.findOne({ name: /keyboard/i });
+        const keyboardCategory = await Category.findOne({ name: /keyboard/i, isListed: true });
         let latestKeyboard = await Product.findOne({
             category: keyboardCategory?._id,
             IsBlocked: false
@@ -847,7 +847,8 @@ export const loadhomePage = async (req, res) => {
             },
             {
                 $match: {
-                    'product.IsBlocked': false
+                    'product.IsBlocked': false,
+                    'category.isListed': true
                 }
             },
             {
@@ -879,7 +880,7 @@ export const loadhomePage = async (req, res) => {
         });
         
         // 3. Get latest mouse product
-        const mouseCategory = await Category.findOne({ name: /mouse/i });
+        const mouseCategory = await Category.findOne({ name: /mouse/i, isListed: true });
         let latestMouse = await Product.findOne({
             category: mouseCategory?._id,
             IsBlocked: false

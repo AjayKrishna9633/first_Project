@@ -71,6 +71,11 @@ const getShopPage = async (req, res) => {
                 }
             },
             {
+                $match: {
+                    'category.isListed': true
+                }
+            },
+            {
                 $sort: {
                     hasStock: -1, 
                     ...sortOption
@@ -179,10 +184,14 @@ const getProductDetail = async (req, res) => {
         const productId = req.params.id;
 
         const product = await Product.findById(productId)
-            .populate('category', 'name offerType offerValue')
+            .populate('category', 'name offerType offerValue isListed')
             .populate('variants');
 
         if (!product || product.IsBlocked) {
+            return res.status(StatusCodes.NOT_FOUND).redirect('/shop');
+        }
+
+        if (!product.category.isListed) {
             return res.status(StatusCodes.NOT_FOUND).redirect('/shop');
         }
 
@@ -194,11 +203,13 @@ const getProductDetail = async (req, res) => {
             IsBlocked: false,
             status: 'Available'
         })
-            .populate('category', 'name offerType offerValue')
+            .populate('category', 'name offerType offerValue isListed')
             .populate('variants')
             .limit(4);
 
-        relatedProducts = relatedProducts.map(p => applyBestDiscountToProduct(p.toObject()));
+        relatedProducts = relatedProducts
+            .filter(p => p.category.isListed)
+            .map(p => applyBestDiscountToProduct(p.toObject()));
 
         let isInWishlist = false;
         if (req.session.user) {

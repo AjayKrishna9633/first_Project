@@ -70,7 +70,8 @@ const getCheckOut = async(req,res)=>{
                 stockIssues.push({
                     productName: 'Unknown Product',
                     cartQuantity: item.quantity,
-                    availableQuantity: 0
+                    availableQuantity: 0,
+                    issue: 'Product not found'
                 });
                 continue;
             }
@@ -79,7 +80,18 @@ const getCheckOut = async(req,res)=>{
                 stockIssues.push({
                     productName: item.productId.productName,
                     cartQuantity: item.quantity,
-                    availableQuantity: 0
+                    availableQuantity: 0,
+                    issue: 'Product is not available'
+                });
+                continue;
+            }
+
+            if (!item.productId.category || !item.productId.category.isListed) {
+                stockIssues.push({
+                    productName: item.productId.productName,
+                    cartQuantity: item.quantity,
+                    availableQuantity: 0,
+                    issue: 'Product is not available'
                 });
                 continue;
             }
@@ -92,7 +104,8 @@ const getCheckOut = async(req,res)=>{
                 stockIssues.push({
                     productName: item.productId.productName,
                     cartQuantity: item.quantity,
-                    availableQuantity: 0
+                    availableQuantity: 0,
+                    issue: 'Variant not found'
                 });
                 continue;
             }
@@ -102,7 +115,8 @@ const getCheckOut = async(req,res)=>{
                     productName: item.productId.productName,
                     color: variant.color,
                     cartQuantity: item.quantity,
-                    availableQuantity: variant.quantity
+                    availableQuantity: variant.quantity,
+                    issue: 'Insufficient stock'
                 });
             }
         }
@@ -318,7 +332,7 @@ const placeOrder=async(req,res)=>{
             let product;
             
             if (isBuyNow) {
-                product = await Product.findById(item.productId._id).populate('variants');
+                product = await Product.findById(item.productId._id).populate('variants').populate('category');
             } else {
                 product = item.productId;
             }
@@ -326,7 +340,14 @@ const placeOrder=async(req,res)=>{
             if (!product || product.IsBlocked) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
                     success: false,
-                    message: `Product "${product ? product.productName : 'Unknown'}" is no longer available for purchase. Please remove it from your cart and try again.`
+                    message: PRODUCT_MESSAGES.PRODUCT_BLOCKED
+                });
+            }
+
+            if (!product.category || !product.category.isListed) {
+                return res.status(StatusCodes.BAD_REQUEST).json({
+                    success: false,
+                    message: PRODUCT_MESSAGES.PRODUCT_UNAVAILABLE
                 });
             }
         }
@@ -781,6 +802,13 @@ const buyNow = async(req,res)=>{
             })
         }
 
+        if (!product.category || !product.category.isListed) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: 'Product not available'
+            });
+        }
+
         product = applyBestDiscountToProduct(product);
 
         const variant = product.variants.find(v=>v._id.toString()===variantId);
@@ -846,12 +874,19 @@ const getBuyNowCheckout = async(req, res) => {
         }
 
         const productId = req.session.buyNowData.items[0].productId;
-        const product = await Product.findById(productId).populate('variants');
+        const product = await Product.findById(productId).populate('variants').populate('category');
         if(!product||product.IsBlocked){
             return res.status(StatusCodes.NOT_FOUND).json({
                 success:false,
-                message:"Product is not available"
+                message: PRODUCT_MESSAGES.PRODUCT_UNAVAILABLE
             })
+        }
+
+        if (!product.category || !product.category.isListed) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: PRODUCT_MESSAGES.PRODUCT_UNAVAILABLE
+            });
         }
 
         const addressDoc = await Address.findOne({ userId });

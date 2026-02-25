@@ -6,7 +6,7 @@ class SalesReportExcelService {
         this.worksheet = null;
     }
 
-    async generateReport(orders, stats, dateRange) {
+    async generateReport(orders, stats, dateRange, refundedOrders = []) {
         try {
             this.workbook = new ExcelJS.Workbook();
             this.worksheet = this.workbook.addWorksheet('Sales Report');
@@ -14,6 +14,11 @@ class SalesReportExcelService {
             this.generateHeader(dateRange);
             this.generateSummary(stats);
             this.generateOrdersTable(orders);
+            
+            if (refundedOrders.length > 0) {
+                this.generateRefundsTable(refundedOrders);
+            }
+            
             this.applyBorders();
 
             return this.workbook;
@@ -46,14 +51,21 @@ class SalesReportExcelService {
         this.worksheet.getCell('A5').font = { bold: true, size: 12 };
         
         this.worksheet.addRow(['Total Orders:', stats.totalOrders]);
+        this.worksheet.addRow(['Delivered Orders:', stats.deliveredOrderCount]);
+        this.worksheet.addRow(['Refunded Orders:', stats.refundedOrderCount]);
+        this.worksheet.addRow(['Cancelled Orders:', stats.cancelledOrderCount]);
+        this.worksheet.addRow([]);
         this.worksheet.addRow(['Gross Sales:', `₹${stats.grossSales.toFixed(2)}`]);
         this.worksheet.addRow(['Coupon Discount:', `-₹${stats.totalCouponDiscount.toFixed(2)}`]);
         this.worksheet.addRow(['Wallet Discount:', `-₹${stats.totalWalletDiscount.toFixed(2)}`]);
         this.worksheet.addRow(['Total Discount:', `-₹${stats.totalDiscount.toFixed(2)}`]);
-        this.worksheet.addRow(['Net Sales:', `₹${stats.totalSales.toFixed(2)}`]);
+        this.worksheet.addRow(['Delivered Sales:', `₹${stats.totalSales.toFixed(2)}`]);
         
-        this.worksheet.getCell('A11').font = { bold: true };
-        this.worksheet.getCell('B11').font = { bold: true };
+        const refundRow = this.worksheet.addRow(['Total Refunds:', `-₹${stats.totalRefundAmount.toFixed(2)}`]);
+        refundRow.getCell(2).font = { color: { argb: 'FFDC2626' } };
+        
+        const netSalesRow = this.worksheet.addRow(['Net Sales:', `₹${stats.netSales.toFixed(2)}`]);
+        netSalesRow.font = { bold: true, color: { argb: 'FF059669' } };
 
         this.worksheet.addRow([]);
         this.worksheet.addRow([]);
@@ -116,6 +128,47 @@ class SalesReportExcelService {
                     right: { style: 'thin' }
                 };
             });
+        });
+    }
+
+    generateRefundsTable(refundedOrders) {
+        this.worksheet.addRow([]);
+        this.worksheet.addRow(['Refunded Orders']);
+        const titleCell = this.worksheet.lastRow.getCell(1);
+        titleCell.font = { bold: true, size: 12 };
+        this.worksheet.addRow([]);
+
+        const headerRow = this.worksheet.addRow([
+            'Order ID',
+            'Date',
+            'Customer',
+            'Email',
+            'Order Amount',
+            'Refund Amount',
+            'Payment Method',
+            'Status'
+        ]);
+
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFDC2626' }
+        };
+
+        refundedOrders.forEach(order => {
+            const row = this.worksheet.addRow([
+                order.orderNumber,
+                order.createdAt.toLocaleDateString(),
+                order.userId?.fullName || 'Guest',
+                order.userId?.email || 'N/A',
+                `₹${order.totalAmount.toFixed(2)}`,
+                `₹${(order.refundAmount || 0).toFixed(2)}`,
+                order.paymentMethod.toUpperCase(),
+                order.orderStatus
+            ]);
+            
+            row.getCell(6).font = { color: { argb: 'FFDC2626' } };
         });
     }
 }

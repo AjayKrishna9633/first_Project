@@ -9,12 +9,19 @@ const addToWishlist = async(req,res)=>{
         const userId = req.session.user.id;
         const { productId } = req.body;
 
-        const product = await Product.findById(productId);
+        const product = await Product.findById(productId).populate('category');
         if(!product){
             return res.json({
                 success:false,
                 message:PRODUCT_MESSAGES.PRODUCT_NOT_FOUND 
             })
+        }
+
+        if (!product.category || !product.category.isListed) {
+            return res.json({
+                success: false,
+                message: 'Product not available'
+            });
         }
 
         let wishlist = await Wishlist.findOne({userId});
@@ -77,6 +84,21 @@ const skip = (page-1)*limit;
                     user: req.session.user
                 });
             }
+
+            wishlist.products = wishlist.products.filter(item => {
+                const product = item.productId;
+                return product && !product.IsBlocked && product.category && product.category.isListed;
+            });
+
+            // Add stock status to each wishlist item
+            wishlist.products.forEach(item => {
+                if (item.productId && item.productId.variants) {
+                    const totalStock = item.productId.variants.reduce((sum, v) => sum + v.quantity, 0);
+                    item.isOutOfStock = totalStock === 0;
+                    item.totalStock = totalStock;
+                }
+            });
+
             const totalProducts =wishlist.products.length;
             const totalPages= Math.ceil(totalProducts/10);
             const paginatedProducts= wishlist.products.slice(skip,skip+limit)
