@@ -156,7 +156,11 @@ const getOrderDetails = async (req, res) => {
         let refundAmount = 0;
         
         if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
-            refundAmount += order.totalAmount;
+            // Calculate remaining amount to refund
+            // Use original amount paid minus any refunds already processed
+            const originalAmountPaid = order.snapshotFinalTotal || order.originalTotalAmount || order.totalAmount;
+            const alreadyRefunded = order.refundAmount || 0;
+            refundAmount = originalAmountPaid - alreadyRefunded;
         }
         
         if (order.walletAmountUsed > 0) {
@@ -179,7 +183,7 @@ const getOrderDetails = async (req, res) => {
                 orderId: order._id
             });
             
-            order.refundAmount = refundAmount;
+            order.refundAmount = (order.refundAmount || 0) + refundAmount;
             order.refundStatus = 'processed';
         }
 
@@ -441,14 +445,6 @@ const requestItemReturn = async (req, res) => {
             });
         }
 
-        // Check if order was placed with a coupon - prevent individual item returns
-        if (order.couponCode) {
-            return res.status(StatusCodes.BAD_REQUEST).json({
-                success: false,
-                message: ORDER_MESSAGES.COUPON_ORDER_NO_ITEM_RETURN
-            });
-        }
-
         // Check if order is delivered
         if (order.orderStatus !== 'delivered') {
             return res.status(StatusCodes.BAD_REQUEST).json({
@@ -543,7 +539,7 @@ const updateReturnStatus = async (req, res) => {
             order.returnStatus = 'completed';
             order.returnCompletedDate = new Date();
             order.orderStatus = 'returned';
-            order.refundAmount = order.totalAmount;
+            order.refundAmount = (order.refundAmount || 0) + order.totalAmount;
             order.refundStatus = 'processed';
             order.adminReturnNotes = adminNotes;
 
@@ -588,12 +584,10 @@ const cancelOrderItem = async (req, res) => {
             });
         }
         
-        // Check if order was placed with a coupon - prevent individual item cancellation
+        // If order has coupon, route to coupon-safe cancellation
         if (order.couponCode) {
-            return res.status(StatusCodes.BAD_REQUEST).json({ 
-                success: false, 
-                message: ORDER_MESSAGES.COUPON_ORDER_NO_ITEM_CANCEL
-            });
+            const couponSafeCancellation = (await import('./couponSafeCancellation.js')).default;
+            return couponSafeCancellation.cancelOrderItemWithCoupon(req, res);
         }
         
         // Check if order can be modified
@@ -642,11 +636,13 @@ const cancelOrderItem = async (req, res) => {
             order.cancellationReason = 'All items cancelled';
             order.cancelledAt = new Date();
             
-            // Refund entire order amount
+            // Refund remaining amount (original paid - already refunded)
             let totalRefund = 0;
             
             if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
-                totalRefund += order.totalAmount;
+                const originalAmountPaid = order.snapshotFinalTotal || order.originalTotalAmount || order.totalAmount;
+                const alreadyRefunded = order.refundAmount || 0;
+                totalRefund = originalAmountPaid - alreadyRefunded;
             }
             
             if (order.walletAmountUsed > 0) {
@@ -669,7 +665,7 @@ const cancelOrderItem = async (req, res) => {
                     orderId: order._id
                 });
                 
-                order.refundAmount = totalRefund;
+                order.refundAmount = (order.refundAmount || 0) + totalRefund;
                 order.refundStatus = 'processed';
             }
         } else {
@@ -1002,6 +998,24 @@ const verifyRetryPayment = async (req, res) => {
 };
 
 
+const getPendingAdjustments = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { getUserPendingAdjustments } = await import('../../middlewares/paymentAdjustmentGuard.js');
+        const pendingData = await getUserPendingAdjustments(userId);
+        
+        res.status(StatusCodes.OK).json(pendingData);
+    } catch (error) {
+        console.error('Get pending adjustments error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            hasPending: false,
+            totalAmount: 0,
+            orderCount: 0,
+            orders: []
+        });
+    }
+};
+
 export default {
     getUserOrders,
     getOrderDetails,
@@ -1014,5 +1028,6 @@ export default {
     payCODOrder,
     verifyCODPayment,
     retryPayment,
-    verifyRetryPayment
+    verifyRetryPayment,
+    getPendingAdjustments
 };

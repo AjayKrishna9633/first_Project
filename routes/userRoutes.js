@@ -11,6 +11,9 @@ import checkoutCtrl from "../controllers/user/checkoutController.js";
 import orderCtrl from "../controllers/user/orderController.js";
 import walletCtrl from "../controllers/user/walletController.js";
 import contactCtrl from "../controllers/user/contactController.js";
+import couponSafeCancellation from "../controllers/user/couponSafeCancellation.js";
+import { checkPendingAdjustments } from "../middlewares/paymentAdjustmentGuard.js";
+import StatusCodes from "../utils/statusCodes.js";
 const router = Router();
 
 //  HOME ROUTE 
@@ -132,8 +135,8 @@ router.delete('/cart/remove',protectUser,cartCtrl.removeFromCart)
 
 
 //checkout
-router.get('/checkout', protectUser, checkoutCtrl.getCheckOut);
-router.post('/checkout/place-order', protectUser, checkoutCtrl.placeOrder);
+router.get('/checkout', protectUser, checkPendingAdjustments, checkoutCtrl.getCheckOut);
+router.post('/checkout/place-order', protectUser, checkPendingAdjustments, checkoutCtrl.placeOrder);
 router.post('/checkout/apply-coupon', protectUser, checkoutCtrl.applyCoupon);
 router.get('/checkout/available-coupons', protectUser, checkoutCtrl.getAvailableCoupons);
 router.post('/checkout/verify-payment', protectUser, checkoutCtrl.verifyPayment);
@@ -158,6 +161,10 @@ router.post('/orders/:id/pay-cod', protectUser, orderCtrl.payCODOrder);
 router.post('/orders/:id/verify-cod-payment', protectUser, orderCtrl.verifyCODPayment);
 router.post('/orders/:id/retry-payment', protectUser, orderCtrl.retryPayment);
 router.post('/orders/:id/verify-retry-payment', protectUser, orderCtrl.verifyRetryPayment);
+
+// Coupon-safe cancellation routes
+router.get('/orders/:orderId/items/:itemId/cancel-preview', protectUser, couponSafeCancellation.getRecalculationPreview);
+router.get('/orders/pending-adjustments', protectUser, orderCtrl.getPendingAdjustments);
 
 //wallet routes
 router.get('/wallet', protectUser, walletCtrl.getWallet);

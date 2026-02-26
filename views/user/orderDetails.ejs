@@ -248,46 +248,48 @@
                                     
                                     <!-- Cancel Item Button -->
                                     <% if (item.status === 'active' && ['pending', 'confirmed', 'processing'].includes(order.orderStatus)) { %>
-                                        <% if (!order.couponCode) { %>
-                                            <button onclick="cancelOrderItem('<%= order._id %>', '<%= item._id %>')" 
-                                                    class="text-red-400 hover:text-red-300 text-sm">
-                                                <i class="fas fa-times mr-1"></i>Cancel Item
-                                            </button>
-                                        <% } else { %>
-                                            <span class="text-gray-500 text-xs italic" title="Individual items cannot be cancelled for orders with coupons">
-                                                <i class="fas fa-lock mr-1"></i>Cancel Locked
-                                            </span>
-                                        <% } %>
+                                        <button onclick="cancelOrderItem('<%= order._id %>', '<%= item._id %>', '<%= item.productId.productName.replace(/'/g, "\\'") %>')" 
+                                                class="text-red-400 hover:text-red-300 text-sm">
+                                            <i class="fas fa-times mr-1"></i>Cancel Item
+                                        </button>
                                     <% } %>
                                     
                                     <!-- Return Item Button -->
                                     <% if (order.orderStatus === 'delivered' && item.status === 'active') { %>
-                                        <% if (!order.couponCode) { %>
-                                            <% if (item.returnStatus === 'none') { %>
-                                                <button onclick="requestItemReturn('<%= order._id %>', '<%= item._id %>')" 
-                                                        class="text-orange-400 hover:text-orange-300 text-sm">
-                                                    <i class="fas fa-undo mr-1"></i>Return Item
-                                                </button>
-                                            <% } else if (item.returnStatus === 'requested') { %>
-                                                <span class="text-yellow-400 text-xs">
-                                                    <i class="fas fa-clock mr-1"></i>Return Requested
-                                                </span>
-                                            <% } else if (item.returnStatus === 'approved') { %>
+                                        <% if (item.returnStatus === 'none') { %>
+                                            <button onclick="requestItemReturn('<%= order._id %>', '<%= item._id %>')" 
+                                                    class="text-orange-400 hover:text-orange-300 text-sm">
+                                                <i class="fas fa-undo mr-1"></i>Return Item
+                                            </button>
+                                        <% } else if (item.returnStatus === 'requested') { %>
+                                            <span class="text-yellow-400 text-xs">
+                                                <i class="fas fa-clock mr-1"></i>Return Requested
+                                            </span>
+                                        <% } else if (item.returnStatus === 'approved') { %>
+                                            <div class="flex flex-col gap-1">
                                                 <span class="text-blue-400 text-xs">
                                                     <i class="fas fa-check mr-1"></i>Return Approved
                                                 </span>
-                                            <% } else if (item.returnStatus === 'completed') { %>
+                                                <% if (item.refundApproved) { %>
+                                                    <span class="text-green-400 text-xs">
+                                                        <i class="fas fa-check-circle mr-1"></i>Refund Approved
+                                                    </span>
+                                                <% } %>
+                                            </div>
+                                        <% } else if (item.returnStatus === 'completed') { %>
+                                            <div class="flex flex-col gap-1">
                                                 <span class="text-green-400 text-xs">
                                                     <i class="fas fa-check-circle mr-1"></i>Returned
                                                 </span>
-                                            <% } else if (item.returnStatus === 'rejected') { %>
-                                                <span class="text-red-400 text-xs">
-                                                    <i class="fas fa-times mr-1"></i>Return Rejected
-                                                </span>
-                                            <% } %>
-                                        <% } else { %>
-                                            <span class="text-gray-500 text-xs italic" title="Individual items cannot be returned for orders with coupons">
-                                                <i class="fas fa-lock mr-1"></i>Return Locked
+                                                <% if (item.refundApproved) { %>
+                                                    <span class="text-green-400 text-xs">
+                                                        <i class="fas fa-wallet mr-1"></i>Refund Processed
+                                                    </span>
+                                                <% } %>
+                                            </div>
+                                        <% } else if (item.returnStatus === 'rejected') { %>
+                                            <span class="text-red-400 text-xs">
+                                                <i class="fas fa-times mr-1"></i>Return Rejected
                                             </span>
                                         <% } %>
                                     <% } %>
@@ -352,54 +354,123 @@
                         <% 
                             const activeItems = order.items.filter(item => item.status === 'active');
                             const cancelledItems = order.items.filter(item => item.status === 'cancelled');
-                            const allItemsCancelled = activeItems.length === 0 && cancelledItems.length > 0;
+                            const returnedItems = order.items.filter(item => item.status === 'returned');
+                            const allItemsGone = activeItems.length === 0;
+                            const hasRefunds = (order.refundAmount || 0) > 0;
+                            const originalTotal = order.snapshotFinalTotal || order.originalTotalAmount || order.totalAmount;
                         %>
                         
-                        <% if (allItemsCancelled) { %>
-                            <!-- When all items are cancelled, show different layout -->
-                            <div class="flex justify-between text-red-400">
-                                <span>All items cancelled (<%= cancelledItems.length %> items):</span>
-                                <span title="₹<%= getFullNumber(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>"><%= formatCurrency(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %></span>
-                            </div>
-                            <div class="flex justify-between text-gray-500 text-sm">
-                                <span>Order Total (before cancellation):</span>
-                                <span class="line-through" title="₹<%= getFullNumber(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0) + (order.shippingCost || 0) + (order.tax || 0)) %>"><%= formatCurrency(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0) + (order.shippingCost || 0) + (order.tax || 0)) %></span>
-                            </div>
-                            <div class="border-t border-gray-700 pt-3">
-                                <div class="flex justify-between text-xl font-bold text-red-400">
-                                    <span>Final Total:</span>
-                                    <span>₹0 (Order Cancelled)</span>
-                                </div>
-                            </div>
-                        <% } else { %>
-                            <!-- Normal display when some items are active -->
-                            <div class="flex justify-between text-gray-300">
-                                <span>Subtotal (<%= activeItems.length %> active items):</span>
-                                <span title="₹<%= getFullNumber(order.subtotal) %>"><%= formatCurrency(order.subtotal) %></span>
-                            </div>
-                            <% if (cancelledItems.length > 0) { %>
-                                <div class="flex justify-between text-red-400 text-sm">
-                                    <span>Cancelled items (<%= cancelledItems.length %>):</span>
-                                    <span title="-₹<%= getFullNumber(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>">-<%= formatCurrency(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %></span>
-                                </div>
-                            <% } %>
-                            <div class="flex justify-between text-gray-300">
-                                <span>Shipping:</span>
-                                <span class="<%= order.shippingCost === 0 ? 'text-green-400' : '' %>" title="₹<%= getFullNumber(order.shippingCost) %>">
-                                    <%= order.shippingCost === 0 ? 'FREE' : formatCurrency(order.shippingCost) %>
+                        <!-- Original Order Amount -->
+                        <div class="flex justify-between text-gray-300">
+                            <span>Original Order Total:</span>
+                            <span title="₹<%= getFullNumber(originalTotal) %>">
+                                <%= formatCurrency(originalTotal) %>
+                            </span>
+                        </div>
+                        
+                        <!-- Show coupon discount if applied -->
+                        <% if (order.couponCode && order.snapshotCouponDiscount > 0) { %>
+                            <div class="flex justify-between text-green-400 text-sm">
+                                <span>Coupon Applied (<%= order.couponCode %>):</span>
+                                <span title="-₹<%= getFullNumber(order.snapshotCouponDiscount) %>">
+                                    -<%= formatCurrency(order.snapshotCouponDiscount) %>
                                 </span>
                             </div>
-                            <div class="flex justify-between text-gray-300">
-                                <span>Tax:</span>
-                                <span title="₹<%= getFullNumber(order.tax) %>"><%= formatCurrency(order.tax) %></span>
+                        <% } %>
+                        
+                        <!-- Show cancelled items if any -->
+                        <% if (cancelledItems.length > 0) { %>
+                            <div class="flex justify-between text-red-400 text-sm">
+                                <span>Cancelled Items (<%= cancelledItems.length %>):</span>
+                                <span title="₹<%= getFullNumber(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>">
+                                    ₹<%= cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('en-IN') %>
+                                </span>
                             </div>
-                            <div class="border-t border-gray-700 pt-3">
-                                <div class="flex justify-between text-xl font-bold text-white">
-                                    <span>Total:</span>
-                                    <span class="text-cyan-400" title="₹<%= getFullNumber(order.totalAmount) %>"><%= formatCurrency(order.totalAmount) %></span>
+                        <% } %>
+                        
+                        <!-- Show returned items if any -->
+                        <% if (returnedItems.length > 0) { %>
+                            <div class="flex justify-between text-orange-400 text-sm">
+                                <span>Returned Items (<%= returnedItems.length %>):</span>
+                                <span title="₹<%= getFullNumber(returnedItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>">
+                                    ₹<%= returnedItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('en-IN') %>
+                                </span>
+                            </div>
+                        <% } %>
+                        
+                        <!-- Show coupon invalidation if happened -->
+                        <% if (order.couponCode && !order.couponValid && order.couponInvalidationReason) { %>
+                            <div class="bg-yellow-900/30 border border-yellow-700 rounded p-2 text-xs">
+                                <div class="flex items-start gap-2">
+                                    <i class="fas fa-exclamation-triangle text-yellow-400 mt-0.5"></i>
+                                    <div class="text-yellow-300">
+                                        <div class="font-semibold">Coupon Removed</div>
+                                        <div class="text-yellow-400"><%= order.couponInvalidationReason %></div>
+                                    </div>
                                 </div>
                             </div>
                         <% } %>
+                        
+                        <!-- Show total refunded if any -->
+                        <% 
+                            // Calculate total refunds from payment ledger for accuracy
+                            let totalRefunded = 0;
+                            if (order.paymentLedger && order.paymentLedger.length > 0) {
+                                const ledgerRefunds = order.paymentLedger
+                                    .filter(entry => entry.type === 'refund')
+                                    .reduce((sum, entry) => sum + entry.amount, 0);
+                                // Use ledger if it has refunds, otherwise fall back to order.refundAmount
+                                totalRefunded = ledgerRefunds > 0 ? ledgerRefunds : (order.refundAmount || 0);
+                            } else {
+                                totalRefunded = order.refundAmount || 0;
+                            }
+                        %>
+                        <% if (totalRefunded > 0) { %>
+                            <div class="border-t border-gray-700 pt-3">
+                                <div class="flex justify-between text-green-400">
+                                    <span>Total Refunded:</span>
+                                    <span title="₹<%= getFullNumber(totalRefunded) %>">
+                                        <%= formatCurrency(totalRefunded) %>
+                                    </span>
+                                </div>
+                                <% if (order.couponCode && totalRefunded < (cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0) + returnedItems.reduce((sum, item) => sum + item.totalPrice, 0))) { %>
+                                    <div class="text-xs text-gray-400 mt-1">
+                                        <i class="fas fa-info-circle mr-1"></i>Refund calculated with coupon adjustments
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% } %>
+                        
+                        <!-- Final Amount -->
+                        <div class="border-t border-gray-700 pt-3">
+                            <% if (allItemsGone) { %>
+                                <div class="flex justify-between text-xl font-bold">
+                                    <span class="text-gray-400">Amount Paid:</span>
+                                    <span class="text-cyan-400" title="₹<%= getFullNumber(originalTotal) %>">
+                                        <%= formatCurrency(originalTotal) %>
+                                    </span>
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500 mt-1">
+                                    <span>Current Order Value:</span>
+                                    <span>₹0 (All items <%= cancelledItems.length > 0 ? 'cancelled' : 'returned' %>)</span>
+                                </div>
+                            <% } else { %>
+                                <div class="flex justify-between text-xl font-bold">
+                                    <span class="text-white">Amount Paid:</span>
+                                    <span class="text-cyan-400" title="₹<%= getFullNumber(originalTotal) %>">
+                                        <%= formatCurrency(originalTotal) %>
+                                    </span>
+                                </div>
+                                <% if (hasRefunds || cancelledItems.length > 0 || returnedItems.length > 0) { %>
+                                    <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                        <span>Current Order Value:</span>
+                                        <span title="₹<%= getFullNumber(order.totalAmount) %>">
+                                            <%= formatCurrency(order.totalAmount) %>
+                                        </span>
+                                    </div>
+                                <% } %>
+                            <% } %>
+                        </div>
                     </div>
                 </div>
 
@@ -817,7 +888,7 @@
             }
         }
 
-        async function cancelOrderItem(orderId, itemId) {
+        async function cancelOrderItem(orderId, itemId, productName) {
             const cancellationReasons = [
                 { value: 'CHANGED_MIND', label: 'Changed my mind about this item' },
                 { value: 'ORDERED_MISTAKE', label: 'Ordered by mistake' },
@@ -834,6 +905,9 @@
                 title: 'Cancel Item',
                 html: `
                     <div class="text-left space-y-4">
+                        <p class="text-sm text-gray-600 mb-3">
+                            <strong>Product:</strong> ${productName}
+                        </p>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
                                 Why are you cancelling this item? *

@@ -90,7 +90,7 @@ class InvoiceService {
 
     generateInvoiceTable(order) {
     let i;
-    const invoiceTableTop = 380; // Increased from 330 to 380 for more space
+    const invoiceTableTop = 380;
 
     // Table headers
     this.doc.font('Helvetica-Bold');
@@ -110,7 +110,14 @@ class InvoiceService {
     for (i = 0; i < order.items.length; i++) {
         const item = order.items[i];
         const productName = item.productId.productName || 'Product';
-        const description = `Color: ${item.variantId?.color || 'N/A'}`;
+        let description = `Color: ${item.variantId?.color || 'N/A'}`;
+        
+        // Add status indicator for cancelled/returned items
+        if (item.status === 'cancelled') {
+            description += ' [CANCELLED]';
+        } else if (item.status === 'returned') {
+            description += ' [RETURNED]';
+        }
         
         this.generateTableRow(
             position,
@@ -126,7 +133,13 @@ class InvoiceService {
 
     this.generateHr(position + 20);
 
-    // Totals
+    // Calculate totals
+    const activeItems = order.items.filter(item => item.status === 'active');
+    const cancelledItems = order.items.filter(item => item.status === 'cancelled');
+    const returnedItems = order.items.filter(item => item.status === 'returned');
+    const originalTotal = order.snapshotFinalTotal || order.originalTotalAmount || order.totalAmount;
+
+    // Subtotal
     const subtotalPosition = position + 30;
     this.generateTableRow(
         subtotalPosition,
@@ -137,36 +150,129 @@ class InvoiceService {
         this.formatCurrency(order.subtotal)
     );
 
-    const shippingPosition = subtotalPosition + 20;
+    let currentPosition = subtotalPosition + 20;
+
+    // Show coupon discount if applied
+    if (order.couponCode && order.snapshotCouponDiscount > 0) {
+        this.doc.fillColor('#22c55e');
+        this.generateTableRow(
+            currentPosition,
+            '',
+            '',
+            `Coupon (${order.couponCode})`,
+            '',
+            '-' + this.formatCurrency(order.snapshotCouponDiscount)
+        );
+        this.doc.fillColor('#444444');
+        currentPosition += 20;
+    }
+
+    // Show cancelled items total if any
+    if (cancelledItems.length > 0) {
+        const cancelledTotal = cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0);
+        this.doc.fillColor('#ef4444');
+        this.generateTableRow(
+            currentPosition,
+            '',
+            '',
+            `Cancelled Items (${cancelledItems.length})`,
+            '',
+            '-' + this.formatCurrency(cancelledTotal)
+        );
+        this.doc.fillColor('#444444');
+        currentPosition += 20;
+    }
+
+    // Show returned items total if any
+    if (returnedItems.length > 0) {
+        const returnedTotal = returnedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+        this.doc.fillColor('#f97316');
+        this.generateTableRow(
+            currentPosition,
+            '',
+            '',
+            `Returned Items (${returnedItems.length})`,
+            '',
+            '-' + this.formatCurrency(returnedTotal)
+        );
+        this.doc.fillColor('#444444');
+        currentPosition += 20;
+    }
+
+    // Shipping
     this.generateTableRow(
-        shippingPosition,
+        currentPosition,
         '',
         '',
         'Shipping',
         '',
         order.shippingCost === 0 ? 'FREE' : this.formatCurrency(order.shippingCost)
     );
+    currentPosition += 20;
 
-    const taxPosition = shippingPosition + 20;
+    // Tax
     this.generateTableRow(
-        taxPosition,
+        currentPosition,
         '',
         '',
         'Tax',
-        '',                                   
+        '',
         this.formatCurrency(order.tax)
     );
+    currentPosition += 25;
 
-    const totalPosition = taxPosition + 25;
+    // Original Total (if different from current)
+    if (cancelledItems.length > 0 || returnedItems.length > 0) {
+        this.doc.font('Helvetica');
+        this.generateTableRow(
+            currentPosition,
+            '',
+            '',
+            'Original Total',
+            '',
+            this.formatCurrency(originalTotal)
+        );
+        currentPosition += 20;
+    }
+
+    // Current Total
     this.doc.font('Helvetica-Bold');
     this.generateTableRow(
-        totalPosition,
+        currentPosition,
         '',
         '',
-        'Total',
+        cancelledItems.length > 0 || returnedItems.length > 0 ? 'Current Total' : 'Total',
         '',
         this.formatCurrency(order.totalAmount)
     );
+    currentPosition += 25;
+
+    // Show refund information if any
+    if (order.refundAmount > 0) {
+        this.doc.font('Helvetica').fillColor('#22c55e');
+        this.generateTableRow(
+            currentPosition,
+            '',
+            '',
+            'Total Refunded',
+            '',
+            this.formatCurrency(order.refundAmount)
+        );
+        this.doc.fillColor('#444444');
+        currentPosition += 20;
+    }
+
+    // Show coupon invalidation notice if applicable
+    if (order.couponCode && !order.couponValid && order.couponInvalidationReason) {
+        currentPosition += 10;
+        this.doc
+            .fontSize(9)
+            .fillColor('#f59e0b')
+            .text('Note: ' + order.couponInvalidationReason, 50, currentPosition, { width: 500, align: 'right' })
+            .fillColor('#444444')
+            .fontSize(10);
+    }
+
     this.doc.font('Helvetica');
 }
 

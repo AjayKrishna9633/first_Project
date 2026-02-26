@@ -317,7 +317,12 @@ const placeOrder=async(req,res)=>{
         } else {
         
             cart = await Cart.findOne({userId})
-                .populate('items.productId')
+                .populate({
+                    path: 'items.productId',
+                    populate: {
+                        path: 'category'
+                    }
+                })
                 .populate('items.variantId');
         }
 
@@ -450,16 +455,52 @@ const placeOrder=async(req,res)=>{
 
         const orderNumber = 'ORD' + Date.now() + Math.random().toString(36).substring(2, 7).toUpperCase();
 
+        // Prepare order items with pricing snapshot for coupon recalculation
+        const orderItems = cart.items.map(item => {
+            const basePrice = item.price;
+            const offerDiscount = 0; // Offer already applied in cart price
+            const priceAfterOffer = item.price;
+            const quantity = item.quantity;
+            
+            // Handle both populated and non-populated references
+            const productId = item.productId._id || item.productId;
+            const variantId = item.variantId._id || item.variantId;
+            
+            return {
+                productId,
+                variantId,
+                quantity,
+                price: item.price,
+                totalPrice: item.totalPrice,
+                // Pricing snapshot for coupon recalculation
+                basePrice,
+                offerDiscount,
+                priceAfterOffer,
+                couponShare: 0, // Will be calculated below if coupon applied
+                finalPrice: item.price
+            };
+        });
+
+        // If coupon applied, calculate and distribute coupon share
+        if (couponApplied && discountAmount > 0) {
+            const totalPostOfferAmount = orderItems.reduce((sum, item) => 
+                sum + (item.priceAfterOffer * item.quantity), 0
+            );
+            
+            orderItems.forEach(item => {
+                const itemPostOfferTotal = item.priceAfterOffer * item.quantity;
+                const proportion = itemPostOfferTotal / totalPostOfferAmount;
+                const itemCouponShare = Math.round(discountAmount * proportion * 100) / 100;
+                
+                item.couponShare = itemCouponShare;
+                item.finalPrice = item.priceAfterOffer - (itemCouponShare / item.quantity);
+            });
+        }
+
         const order = new Order({
             userId,
             orderNumber,
-            items: cart.items.map(item => ({
-                productId: item.productId._id,
-                variantId: item.variantId._id,
-                quantity: item.quantity,
-                price: item.price,
-                totalPrice: item.totalPrice
-            })),
+            items: orderItems,
             shippingAddress,
             paymentMethod, 
             subtotal,
@@ -469,17 +510,34 @@ const placeOrder=async(req,res)=>{
             couponDiscount: discountAmount,
             walletAmountUsed,
             totalAmount: Math.round(totalAmount), 
-            orderNotes: orderNotes || ''
+            orderNotes: orderNotes || '',
+            // Initialize payment ledger
+            paymentLedger: [],
+            // Snapshot of original amounts for admin reference
+            snapshotSubtotalBeforeCoupon: subtotal + discountAmount,
+            snapshotSubtotalAfterCoupon: subtotal,
+            snapshotCouponDiscount: discountAmount,
+            snapshotFinalTotal: Math.round(totalAmount)
         });
         
         if (Math.round(totalAmount) === 0 && walletAmountUsed > 0) {
              order.paymentStatus = 'paid'; 
-             order.orderStatus = 'confirmed'; 
+             order.orderStatus = 'confirmed';
+             // Add wallet payment to ledger
+             order.paymentLedger.push({
+                 type: 'initial',
+                 amount: walletAmountUsed,
+                 method: 'wallet',
+                 timestamp: new Date(),
+                 description: 'Full payment via wallet'
+             });
         } else if (paymentMethod === 'cod') {
              order.orderStatus = 'confirmed';
+             // COD payment will be recorded on delivery
         } else if (paymentMethod === 'online') {
              order.orderStatus = 'pending';
              order.paymentStatus = 'pending';
+             // Online payment ledger entry added after verification
         } else {
              order.orderStatus = 'pending';
         }
@@ -560,6 +618,17 @@ const placeOrder=async(req,res)=>{
                 description: `Payment for Order #${orderNumber}`,
                 orderId: order._id
             });
+            
+            // Add wallet payment to ledger if not already added (for partial wallet payment)
+            if (Math.round(totalAmount) > 0) {
+                order.paymentLedger.push({
+                    type: 'initial',
+                    amount: walletAmountUsed,
+                    method: 'wallet',
+                    timestamp: new Date(),
+                    description: 'Partial payment via wallet'
+                });
+            }
         }
 
         if (paymentMethod === 'cod' || paymentMethod === 'wallet') {
@@ -625,6 +694,17 @@ const verifyPayment = async (req, res) => {
                  order.paymentStatus = 'paid';
                  order.orderStatus = 'confirmed';
                  order.razorpayPaymentId = razorpay_payment_id;
+                 
+                 // Add payment to ledger
+                 order.paymentLedger.push({
+                     type: 'initial',
+                     amount: order.totalAmount,
+                     method: 'online',
+                     timestamp: new Date(),
+                     description: 'Online payment via Razorpay',
+                     transactionId: razorpay_payment_id
+                 });
+                 
                  await order.save();
                  
                  const Variant = (await import('../../models/variantModel.js')).default;

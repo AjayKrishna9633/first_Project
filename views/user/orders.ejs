@@ -207,8 +207,11 @@
                                             'bg-gray-800 text-gray-300' %>">
                                         <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
                                     </span>
-                                    <span class="text-xl font-bold text-white" title="₹<%= typeof getFullNumber !== 'undefined' ? getFullNumber(order.totalAmount) : order.totalAmount.toLocaleString() %>">
-                                        <%= typeof formatCurrency !== 'undefined' ? formatCurrency(order.totalAmount) : '₹' + order.totalAmount.toLocaleString() %>
+                                    <% 
+                                        const displayAmount = order.snapshotFinalTotal || order.originalTotalAmount || order.totalAmount;
+                                    %>
+                                    <span class="text-xl font-bold text-white" title="₹<%= typeof getFullNumber !== 'undefined' ? getFullNumber(displayAmount) : displayAmount.toLocaleString() %>">
+                                        <%= typeof formatCurrency !== 'undefined' ? formatCurrency(displayAmount) : '₹' + displayAmount.toLocaleString() %>
                                     </span>
                                 </div>
                             </div>

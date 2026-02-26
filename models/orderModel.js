@@ -35,6 +35,27 @@ const orderSchema = new Schema({
             type: Number,
             required: true
         },
+        // Pricing snapshot for coupon recalculation
+        basePrice: {
+            type: Number,
+            default: 0
+        },
+        offerDiscount: {
+            type: Number,
+            default: 0
+        },
+        priceAfterOffer: {
+            type: Number,
+            default: 0
+        },
+        couponShare: {
+            type: Number,
+            default: 0
+        },
+        finalPrice: {
+            type: Number,
+            default: 0
+        },
         status: {
             type: String,
             enum: ['active', 'cancelled', 'returned'],
@@ -73,7 +94,17 @@ const orderSchema = new Schema({
         refundAmount: {
             type: Number,
             default: 0
-        }
+        },
+        refundApproved: {
+            type: Boolean,
+            default: false
+        },
+        refundApprovedDate: Date,
+        refundApproved: {
+            type: Boolean,
+            default: false
+        },
+        refundApprovedDate: Date
     }],
     shippingAddress: {
         fullName: String,
@@ -179,7 +210,73 @@ default: null
         type: String,
         enum: ['none', 'pending', 'processed'],
         default: 'none'
-    }
+    },
+    // Payment ledger for tracking all financial transactions
+    paymentLedger: [{
+        type: {
+            type: String,
+            enum: ['initial', 'adjustment', 'wallet_adjustment', 'refund'],
+            required: true
+        },
+        amount: {
+            type: Number,
+            required: true
+        },
+        method: {
+            type: String,
+            enum: ['cod', 'online', 'wallet']
+        },
+        timestamp: {
+            type: Date,
+            default: Date.now
+        },
+        description: String,
+        transactionId: String
+    }],
+    // Payment adjustment tracking
+    pendingAdjustment: {
+        type: Number,
+        default: 0
+    },
+    adjustmentReason: String,
+    adjustmentCreatedAt: Date,
+    // Original amounts for recalculation reference
+    originalSubtotal: {
+        type: Number,
+        default: 0
+    },
+    originalCouponDiscount: {
+        type: Number,
+        default: 0
+    },
+    originalTotalAmount: {
+        type: Number,
+        default: 0
+    },
+    // Snapshot of amounts at order creation (before any modifications)
+    snapshotSubtotalBeforeCoupon: {
+        type: Number,
+        default: 0
+    },
+    snapshotSubtotalAfterCoupon: {
+        type: Number,
+        default: 0
+    },
+    snapshotCouponDiscount: {
+        type: Number,
+        default: 0
+    },
+    snapshotFinalTotal: {
+        type: Number,
+        default: 0
+    },
+    // Coupon validity tracking
+    couponValid: {
+        type: Boolean,
+        default: true
+    },
+    couponInvalidatedAt: Date,
+    couponInvalidationReason: String
 });
 
 const Order = mongoose.model('order', orderSchema);

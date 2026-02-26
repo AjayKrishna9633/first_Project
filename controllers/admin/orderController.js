@@ -399,8 +399,8 @@ const updateReturnStatus = async (req, res) => {
             order.returnStatus = 'approved';
             order.returnApprovedDate = new Date();
             order.adminReturnNotes = adminNotes;
-            order.refundStatus = 'pending'; // Set refund as pending when approved
-            order.refundAmount = order.totalAmount; // Set expected refund amount
+            order.refundStatus = 'pending';
+            // Don't set refundAmount here, it will be set when completed
         } else if (action === 'reject') {
             order.returnStatus = 'rejected';
             order.adminReturnNotes = adminNotes;
@@ -411,7 +411,7 @@ const updateReturnStatus = async (req, res) => {
             
             // Calculate refund amount (total amount paid by user)
             const refundAmount = order.totalAmount;
-            order.refundAmount = refundAmount;
+            order.refundAmount = (order.refundAmount || 0) + refundAmount;
             order.refundStatus = 'processed';
             order.adminReturnNotes = adminNotes;
             
@@ -520,10 +520,21 @@ const updateItemReturnStatus = async (req, res) => {
             order.items[itemIndex].returnStatus = 'rejected';
             order.items[itemIndex].adminReturnNotes = adminNotes;
         } else if (action === 'complete') {
+            // If order has coupon, use coupon-safe return approval
+            if (order.couponCode) {
+                const couponSafeCancellation = (await import('../user/couponSafeCancellation.js')).default;
+                return couponSafeCancellation.approveReturnWithCoupon(req, res);
+            }
+            
+            // Regular return without coupon
             order.items[itemIndex].returnStatus = 'completed';
             order.items[itemIndex].returnCompletedDate = new Date();
             order.items[itemIndex].status = 'returned';
             order.items[itemIndex].adminReturnNotes = adminNotes;
+            
+            // Mark refund as approved
+            order.items[itemIndex].refundApproved = true;
+            order.items[itemIndex].refundApprovedDate = new Date();
             
             // Calculate refund amount for this item
             const refundAmount = item.totalPrice;

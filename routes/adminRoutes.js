@@ -7,6 +7,7 @@ import { upload } from "../config/cloudinary.js";
 import orderCtrl from '../controllers/admin/orderController.js';
 import salesReportCtrl from "../controllers/admin/salesReportController.js";
 import couponCtrl from "../controllers/admin/couponController.js";
+import couponSafeCancellation from "../controllers/user/couponSafeCancellation.js";
 
 const router = Router();
 
@@ -62,6 +63,9 @@ router.patch('/orders/:id/update', isAdminAuthenticated, orderCtrl.updateOrderSt
 router.get('/orders/export', isAdminAuthenticated, orderCtrl.exportOrders);
 router.patch('/returns/update', isAdminAuthenticated, orderCtrl.updateReturnStatus);
 router.patch('/returns/item-update', isAdminAuthenticated, orderCtrl.updateItemReturnStatus);
+
+// Coupon-safe return approval
+router.post('/orders/approve-return-with-coupon', isAdminAuthenticated, couponSafeCancellation.approveReturnWithCoupon);
 
 //logout route
 router.get('/logout', isAdminAuthenticated, adminCtrl.logout)

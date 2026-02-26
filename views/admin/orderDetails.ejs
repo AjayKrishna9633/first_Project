@@ -258,6 +258,10 @@
                                             class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600">
                                             <i class="fas fa-check-circle mr-1"></i>Complete
                                         </button>
+                                    <% } else if (item.returnStatus === 'completed') { %>
+                                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                            <i class="fas fa-check-circle mr-1"></i>Completed
+                                        </span>
                                     <% } %>
                                 </div>
                             </div>
@@ -458,11 +462,46 @@
                 <!-- Order Summary -->
                 <div class="bg-white rounded-lg shadow p-6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Order Summary</h2>
+                    
+                    <!-- Original Order Snapshot (if coupon was applied) -->
+                    <% if (order.couponCode && order.snapshotSubtotalBeforeCoupon > 0) { %>
+                        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h3 class="text-sm font-semibold text-blue-800 mb-2">
+                                <i class="fas fa-camera mr-1"></i>Original Order Snapshot
+                            </h3>
+                            <div class="space-y-1 text-sm">
+                                <div class="flex justify-between text-gray-700">
+                                    <span>Subtotal (Before Coupon):</span>
+                                    <span class="font-medium">₹<%= order.snapshotSubtotalBeforeCoupon.toLocaleString('en-IN') %></span>
+                                </div>
+                                <div class="flex justify-between text-green-600">
+                                    <span>Coupon Discount (<%= order.couponCode %>):</span>
+                                    <span class="font-medium">-₹<%= order.snapshotCouponDiscount.toLocaleString('en-IN') %></span>
+                                </div>
+                                <div class="flex justify-between text-gray-700">
+                                    <span>Subtotal (After Coupon):</span>
+                                    <span class="font-medium">₹<%= order.snapshotSubtotalAfterCoupon.toLocaleString('en-IN') %></span>
+                                </div>
+                                <div class="flex justify-between text-gray-700 pt-1 border-t border-blue-200">
+                                    <span>Final Total Paid:</span>
+                                    <span class="font-semibold">₹<%= order.snapshotFinalTotal.toLocaleString('en-IN') %></span>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <!-- Current Order Summary -->
                     <div class="space-y-2">
                         <% 
                             const activeItems = order.items.filter(item => item.status === 'active');
                             const cancelledItems = order.items.filter(item => item.status === 'cancelled');
+                            const returnedItems = order.items.filter(item => item.status === 'returned');
                         %>
+                        <% if (cancelledItems.length > 0 || returnedItems.length > 0) { %>
+                            <p class="text-xs text-gray-500 mb-2">
+                                <i class="fas fa-info-circle mr-1"></i>Current amounts after modifications
+                            </p>
+                        <% } %>
                         <div class="flex justify-between">
                             <span>Subtotal (<%= activeItems.length %> active items):</span>
                             <span title="₹<%= getFullNumber(order.subtotal) %>"><%= formatCurrency(order.subtotal) %></span>
@@ -472,6 +511,14 @@
                                 <span>Cancelled items (<%= cancelledItems.length %>):</span>
                                 <span title="-₹<%= getFullNumber(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>">
                                     -<%= formatCurrency(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>
+                                </span>
+                            </div>
+                        <% } %>
+                        <% if (returnedItems.length > 0) { %>
+                            <div class="flex justify-between text-orange-600 text-sm">
+                                <span>Returned items (<%= returnedItems.length %>):</span>
+                                <span title="-₹<%= getFullNumber(returnedItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>">
+                                    -<%= formatCurrency(returnedItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>
                                 </span>
                             </div>
                         <% } %>
