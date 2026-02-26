@@ -192,11 +192,14 @@ const getCart =async(req,res)=>{
             totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
         }
 
+        const checkoutBlocked = req.session.checkoutBlocked || null;
+
         res.render('user/cart', {
             cart: cart || { items: [] },
             user: req.session.user,
             stockValidationError: stockValidationError || null,
-            totalQuantity
+            totalQuantity,
+            checkoutBlocked
         });
 
     }catch(error){

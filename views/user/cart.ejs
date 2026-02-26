@@ -88,6 +88,36 @@
 
     <!-- Cart Content -->
     <div class="max-w-7xl mx-auto py-12 px-6">
+        <!-- Checkout Blocked Alert -->
+        <% if (typeof checkoutBlocked !== 'undefined' && checkoutBlocked) { %>
+            <div class="mb-6 bg-red-900 border border-red-700 rounded-lg p-6">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-circle text-red-400 text-3xl mt-1"></i>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-semibold text-white mb-2">Checkout Blocked - Payment Required</h3>
+                        <p class="text-red-200 mb-4">You have pending payment adjustments from previous orders. Please clear them before placing a new order.</p>
+                        
+                        <div class="bg-red-800 rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-red-300">Total Pending Amount:</span>
+                                <span class="text-white font-bold text-xl">₹<%= checkoutBlocked.totalPending.toLocaleString('en-IN') %></span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-red-300">Affected Orders:</span>
+                                <span class="text-white font-semibold"><%= checkoutBlocked.orderCount %></span>
+                            </div>
+                        </div>
+                        
+                        <a href="/orders" class="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition font-semibold">
+                            <i class="fas fa-credit-card"></i>
+                            View Orders & Pay Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <% delete session.checkoutBlocked; %>
+        <% } %>
+        
         <!-- Stock Validation Error Alert -->
         <% if (typeof stockValidationError !== 'undefined' && stockValidationError) { %>
             <div class="mb-6 bg-red-900 border border-red-700 rounded-lg p-6">

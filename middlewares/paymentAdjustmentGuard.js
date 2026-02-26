@@ -26,7 +26,20 @@ export const checkPendingAdjustments = async (req, res, next) => {
                 0
             );
 
-            // Block checkout
+            // For GET requests (checkout page), redirect with session message
+            if (req.method === 'GET') {
+                req.session.checkoutBlocked = {
+                    totalPending,
+                    orderCount: ordersWithPendingAdjustments.length,
+                    orders: ordersWithPendingAdjustments.map(order => ({
+                        orderNumber: order.orderNumber,
+                        pendingAmount: order.pendingAdjustment
+                    }))
+                };
+                return res.redirect('/cart');
+            }
+
+            // For POST requests (place order), return JSON
             return res.status(StatusCodes.PAYMENT_REQUIRED).json({
                 success: false,
                 blocked: true,

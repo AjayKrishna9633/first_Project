@@ -1016,6 +1016,310 @@ const getPendingAdjustments = async (req, res) => {
     }
 };
 
+const payAdjustment = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { id } = req.params;
+        
+        const order = await Order.findOne({ _id: id, userId });
+        
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
+            });
+        }
+        
+        if (!order.pendingAdjustment || order.pendingAdjustment <= 0) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'No pending adjustment for this order'
+            });
+        }
+        
+        const instance = razorpayInstance;
+        
+        const timestamp = Date.now().toString().slice(-8);
+        const orderIdShort = order._id.toString().slice(-8);
+        const receipt = `ADJ${orderIdShort}${timestamp}`;
+        
+        const options = {
+            amount: Math.round(order.pendingAdjustment) * 100,
+            currency: "INR",
+            receipt: receipt
+        };
+        
+        const razorpayOrder = await instance.orders.create(options);
+        
+        res.status(StatusCodes.OK).json({
+            success: true,
+            razorpayOrder: {
+                id: razorpayOrder.id,
+                amount: razorpayOrder.amount,
+                currency: razorpayOrder.currency,
+                key_id: process.env.RAZORPAY_KEY_ID
+            },
+            orderNumber: order.orderNumber
+        });
+        
+    } catch (error) {
+        console.error('Pay adjustment error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to initiate payment'
+        });
+    }
+};
+
+const verifyAdjustmentPayment = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { id } = req.params;
+        const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+        
+        const order = await Order.findOne({ _id: id, userId });
+        
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
+            });
+        }
+        
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(body.toString())
+            .digest("hex");
+        
+        if (expectedSignature !== razorpay_signature) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Payment verification failed'
+            });
+        }
+        
+        // Clear pending adjustment using the utility
+        const { clearPendingAdjustment } = await import('../../middlewares/paymentAdjustmentGuard.js');
+        const result = await clearPendingAdjustment(id, {
+            method: 'online',
+            transactionId: razorpay_payment_id
+        });
+        
+        if (!result.success) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: result.message
+            });
+        }
+        
+        res.status(StatusCodes.OK).json({
+            success: true,
+            message: 'Payment successful'
+        });
+        
+    } catch (error) {
+        console.error('Verify adjustment payment error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Payment verification failed'
+        });
+    }
+};
+
+// Dynamic Refund Projection Endpoints
+
+/**
+ * Get return projection for a specific item
+ * Calculates projected refund and determines if return is allowed
+ */
+const getItemReturnProjection = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { orderId, itemId } = req.params;
+
+        const order = await Order.findOne({ _id: orderId, userId })
+            .populate('items.productId', 'productName')
+            .populate('items.variantId', 'color');
+
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
+            });
+        }
+
+        // Check if order is delivered
+        if (order.orderStatus !== 'delivered') {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Only delivered orders can be returned'
+            });
+        }
+
+        // Check return window (7 days)
+        const deliveryDate = order.updatedAt;
+        const returnWindow = 7 * 24 * 60 * 60 * 1000;
+        const currentDate = new Date();
+
+        if (currentDate - deliveryDate > returnWindow) {
+            return res.status(StatusCodes.GONE).json({
+                success: false,
+                message: 'Return window has expired. Returns are only allowed within 7 days of delivery.'
+            });
+        }
+
+        const returnProjectionService = (await import('../../utils/returnProjectionService.js')).default;
+        const projection = await returnProjectionService.calculateItemReturnProjection(order, itemId);
+
+        res.status(StatusCodes.OK).json(projection);
+
+    } catch (error) {
+        console.error('Get item return projection error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to calculate return projection'
+        });
+    }
+};
+
+/**
+ * Get return projections for all items in an order
+ * Used to render the return UI with proper state for each item
+ */
+const getAllItemReturnProjections = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { orderId } = req.params;
+
+        const order = await Order.findOne({ _id: orderId, userId })
+            .populate('items.productId', 'productName')
+            .populate('items.variantId', 'color');
+
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
+            });
+        }
+
+        // Check if order is delivered
+        if (order.orderStatus !== 'delivered') {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Only delivered orders can be returned'
+            });
+        }
+
+        const returnProjectionService = (await import('../../utils/returnProjectionService.js')).default;
+        const result = await returnProjectionService.calculateAllItemProjections(order);
+
+        res.status(StatusCodes.OK).json(result);
+
+    } catch (error) {
+        console.error('Get all item return projections error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to calculate return projections'
+        });
+    }
+};
+
+/**
+ * Request item return with projection validation
+ * Validates that the return is allowed before processing
+ */
+const requestItemReturnWithProjection = async (req, res) => {
+    try {
+        const { orderId, itemId, returnReason, returnNotes } = req.body;
+        const userId = req.session.user.id;
+
+        const order = await Order.findOne({ _id: orderId, userId })
+            .populate('items.productId', 'productName')
+            .populate('items.variantId', 'color');
+
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
+            });
+        }
+
+        // Validate return projection first
+        const returnProjectionService = (await import('../../utils/returnProjectionService.js')).default;
+        const projection = await returnProjectionService.calculateItemReturnProjection(order, itemId);
+
+        if (!projection.success) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: projection.message
+            });
+        }
+
+        if (!projection.isReturnAllowed) {
+            return res.status(StatusCodes.FORBIDDEN).json({
+                success: false,
+                message: projection.blockMessage || 'This item cannot be returned individually',
+                alternativeAction: projection.alternativeAction,
+                alternativeMessage: projection.alternativeMessage
+            });
+        }
+
+        // Proceed with return request (use existing logic)
+        const itemIndex = order.items.findIndex(item => item._id.toString() === itemId);
+
+        if (itemIndex === -1) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ITEM_NOT_FOUND
+            });
+        }
+
+        const item = order.items[itemIndex];
+
+        if (item.returnStatus !== 'none') {
+            return res.status(StatusCodes.CONFLICT).json({
+                success: false,
+                message: ORDER_MESSAGES.ITEM_ALREADY_RETURNED
+            });
+        }
+
+        if (item.status === 'cancelled') {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Cancelled items cannot be returned'
+            });
+        }
+
+        // Update item return status
+        order.items[itemIndex].returnStatus = 'requested';
+        order.items[itemIndex].returnReason = returnReason;
+        order.items[itemIndex].returnNotes = returnNotes;
+        order.items[itemIndex].returnRequestDate = new Date();
+        
+        // Store projected refund for admin reference
+        order.items[itemIndex].refundAmount = projection.projectedRefundAmount;
+
+        await order.save();
+
+        res.status(StatusCodes.ACCEPTED).json({
+            success: true,
+            message: ORDER_MESSAGES.ITEM_RETURN_REQUESTED,
+            projection: {
+                projectedRefund: projection.projectedRefundAmount,
+                couponWillBeInvalidated: projection.explanationCode === 'POSITIVE_REFUND_COUPON_INVALID'
+            }
+        });
+
+    } catch (error) {
+        console.error('Request item return with projection error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: ORDER_MESSAGES.ITEM_RETURN_REQUEST_FAILED
+        });
+    }
+};
+
 export default {
     getUserOrders,
     getOrderDetails,
@@ -1029,5 +1333,10 @@ export default {
     verifyCODPayment,
     retryPayment,
     verifyRetryPayment,
-    getPendingAdjustments
+    getPendingAdjustments,
+    payAdjustment,
+    verifyAdjustmentPayment,
+    getItemReturnProjection,
+    getAllItemReturnProjections,
+    requestItemReturnWithProjection
 };

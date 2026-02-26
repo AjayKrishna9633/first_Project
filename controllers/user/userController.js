@@ -782,6 +782,13 @@ export const loadhomePage = async (req, res) => {
         const Order = (await import('../../models/orderModel.js')).default;
         const { applyBestDiscountToProduct, calculateBestDiscount } = await import('../../utils/discountCalculator.js');
         
+        // Check for pending payment adjustments
+        let pendingAdjustments = null;
+        if (user) {
+            const { getUserPendingAdjustments } = await import('../../middlewares/paymentAdjustmentGuard.js');
+            pendingAdjustments = await getUserPendingAdjustments(user.id);
+        }
+        
         // 1. Get latest keyboard (most recently added)
         const keyboardCategory = await Category.findOne({ name: /keyboard/i, isListed: true });
         let latestKeyboard = await Product.findOne({
@@ -898,7 +905,8 @@ export const loadhomePage = async (req, res) => {
             user,
             latestKeyboard,
             bestSellers,
-            latestMouse
+            latestMouse,
+            pendingAdjustments
         });
     } catch (err) {
         console.log('Error loading home page:', err);

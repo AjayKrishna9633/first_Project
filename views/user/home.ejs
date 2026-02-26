@@ -54,6 +54,41 @@
     <!-- Navigation -->
     <%-include("../../views/partials/header.ejs")%>
 
+    <!-- Pending Payment Banner -->
+    <% if (pendingAdjustments && pendingAdjustments.hasPending) { %>
+        <div class="bg-red-600 text-white py-3 overflow-hidden fixed top-20 left-0 right-0 z-40">
+            <div class="animate-marquee whitespace-nowrap inline-block">
+                <span class="text-sm font-semibold mx-8">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    PAYMENT REQUIRED: You have pending payment of ₹<%= pendingAdjustments.totalAmount.toLocaleString('en-IN') %> for <%= pendingAdjustments.orderCount %> order(s). 
+                    <a href="/orders" class="underline ml-2">View Orders</a>
+                </span>
+                <span class="text-sm font-semibold mx-8">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    PAYMENT REQUIRED: You have pending payment of ₹<%= pendingAdjustments.totalAmount.toLocaleString('en-IN') %> for <%= pendingAdjustments.orderCount %> order(s). 
+                    <a href="/orders" class="underline ml-2">View Orders</a>
+                </span>
+                <span class="text-sm font-semibold mx-8">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    PAYMENT REQUIRED: You have pending payment of ₹<%= pendingAdjustments.totalAmount.toLocaleString('en-IN') %> for <%= pendingAdjustments.orderCount %> order(s). 
+                    <a href="/orders" class="underline ml-2">View Orders</a>
+                </span>
+            </div>
+        </div>
+        <style>
+            @keyframes marquee {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-33.33%); }
+            }
+            .animate-marquee {
+                animation: marquee 20s linear infinite;
+            }
+            .hero-section {
+                margin-top: 3rem;
+            }
+        </style>
+    <% } %>
+
     <!-- Hero Section - Latest Keyboard -->
     <section class="hero-section pt-24 pb-12 min-h-screen flex items-center">
         <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-8 items-center">

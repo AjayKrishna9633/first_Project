@@ -157,10 +157,18 @@ router.patch('/orders/:orderId/items/:itemId/cancel', protectUser, orderCtrl.can
 router.get('/orders/:id/invoice', protectUser, orderCtrl.downloadInvoice);
 router.post('/orders/return/request', protectUser, orderCtrl.requestReturn);
 router.post('/orders/return/item-request', protectUser, orderCtrl.requestItemReturn);
+
+// Dynamic Refund Projection routes
+router.get('/orders/:orderId/items/:itemId/return-projection', protectUser, orderCtrl.getItemReturnProjection);
+router.get('/orders/:orderId/return-projections', protectUser, orderCtrl.getAllItemReturnProjections);
+router.post('/orders/return/item-request-validated', protectUser, orderCtrl.requestItemReturnWithProjection);
+
 router.post('/orders/:id/pay-cod', protectUser, orderCtrl.payCODOrder);
 router.post('/orders/:id/verify-cod-payment', protectUser, orderCtrl.verifyCODPayment);
 router.post('/orders/:id/retry-payment', protectUser, orderCtrl.retryPayment);
 router.post('/orders/:id/verify-retry-payment', protectUser, orderCtrl.verifyRetryPayment);
+router.post('/orders/:id/pay-adjustment', protectUser, orderCtrl.payAdjustment);
+router.post('/orders/:id/verify-adjustment-payment', protectUser, orderCtrl.verifyAdjustmentPayment);
 
 // Coupon-safe cancellation routes
 router.get('/orders/:orderId/items/:itemId/cancel-preview', protectUser, couponSafeCancellation.getRecalculationPreview);

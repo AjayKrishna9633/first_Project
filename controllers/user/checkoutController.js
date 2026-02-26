@@ -430,6 +430,7 @@ const placeOrder=async(req,res)=>{
         }
 
         let totalAmount = subtotal + shippingCost + tax - discountAmount;
+        const actualOrderAmount = totalAmount; // Store actual order amount before wallet deduction
         let walletAmountUsed = 0;
 
         if (useWallet) {
@@ -517,7 +518,7 @@ const placeOrder=async(req,res)=>{
             snapshotSubtotalBeforeCoupon: subtotal + discountAmount,
             snapshotSubtotalAfterCoupon: subtotal,
             snapshotCouponDiscount: discountAmount,
-            snapshotFinalTotal: Math.round(totalAmount)
+            snapshotFinalTotal: Math.round(actualOrderAmount) // Actual order amount before wallet deduction
         });
         
         if (Math.round(totalAmount) === 0 && walletAmountUsed > 0) {

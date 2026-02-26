@@ -113,6 +113,40 @@
             </div>
         <% } %>
         
+        <!-- Pending Adjustment Alert -->
+        <% if (order.pendingAdjustment && order.pendingAdjustment > 0) { %>
+            <div class="bg-red-900/40 border-2 border-red-600 rounded-lg p-6 mb-8">
+                <div class="flex items-start gap-4">
+                    <i class="fas fa-exclamation-circle text-red-400 text-4xl mt-1"></i>
+                    <div class="flex-1">
+                        <h2 class="text-2xl font-bold text-white mb-3">⚠️ Payment Required</h2>
+                        <p class="text-red-200 mb-4">Your order requires an additional payment to continue processing.</p>
+                        
+                        <div class="bg-red-950/50 rounded-lg p-4 space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-red-300">Outstanding Balance:</span>
+                                <span class="text-white font-bold text-xl">₹<%= order.pendingAdjustment.toLocaleString('en-IN') %></span>
+                            </div>
+                            <div class="text-red-400 text-xs">
+                                <i class="fas fa-info-circle mr-1"></i>Required to process your remaining items
+                            </div>
+                        </div>
+                        
+                        <% if (order.adjustmentReason) { %>
+                            <div class="mt-3 text-sm text-red-300">
+                                <i class="fas fa-info-circle mr-1"></i><%= order.adjustmentReason %>
+                            </div>
+                        <% } %>
+                        
+                        <button onclick="payAdjustment('<%= order._id %>', <%= order.pendingAdjustment %>)" 
+                                class="mt-4 w-full bg-red-600 text-white px-6 py-4 rounded-lg hover:bg-red-700 transition font-bold text-lg shadow-lg hover:shadow-xl">
+                            <i class="fas fa-credit-card mr-2"></i>Pay ₹<%= order.pendingAdjustment.toLocaleString('en-IN') %> Balance
+                        </button>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+        
         <!-- Order Progress Tracker -->
         <% if (order.orderStatus !== 'cancelled') { %>
             <div class="bg-gray-900 rounded-lg border border-gray-800 p-8 mb-8">
@@ -203,9 +237,9 @@
             <div class="lg:col-span-2 space-y-6">
                 <div class="bg-gray-900 rounded-lg border border-gray-800 p-6">
                     <h2 class="text-xl font-semibold text-white mb-6">Order Items</h2>
-                    <div class="space-y-4">
+                    <div class="space-y-4" data-order-id="<%= order._id %>" data-order-status="<%= order.orderStatus %>">
                         <% order.items.forEach(item => { %>
-                            <div class="flex items-center gap-4 p-4 border border-gray-800 rounded-lg hover:border-gray-700 transition <%= item.status === 'cancelled' ? 'opacity-60 bg-gray-800' : '' %>">
+                            <div class="flex items-center gap-4 p-4 border border-gray-800 rounded-lg hover:border-gray-700 transition <%= item.status === 'cancelled' ? 'opacity-60 bg-gray-800' : '' %>" data-item-id="<%= item._id %>">
                                 <div class="w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0">
                                     <% if (item.variantId && item.variantId.images && item.variantId.images.length > 0) { %>
                                         <img src="<%= item.variantId.images[0] %>" alt="Product" class="w-full h-full object-cover">
@@ -254,13 +288,15 @@
                                         </button>
                                     <% } %>
                                     
-                                    <!-- Return Item Button -->
+                                    <!-- Return Item Button - Will be replaced by dynamic projection -->
                                     <% if (order.orderStatus === 'delivered' && item.status === 'active') { %>
                                         <% if (item.returnStatus === 'none') { %>
-                                            <button onclick="requestItemReturn('<%= order._id %>', '<%= item._id %>')" 
-                                                    class="text-orange-400 hover:text-orange-300 text-sm">
-                                                <i class="fas fa-undo mr-1"></i>Return Item
-                                            </button>
+                                            <!-- Placeholder for dynamic return projection UI -->
+                                            <div class="return-projection-placeholder">
+                                                <span class="text-gray-400 text-xs">
+                                                    <i class="fas fa-spinner fa-spin mr-1"></i>Loading return options...
+                                                </span>
+                                            </div>
                                         <% } else if (item.returnStatus === 'requested') { %>
                                             <span class="text-yellow-400 text-xs">
                                                 <i class="fas fa-clock mr-1"></i>Return Requested
@@ -357,120 +393,174 @@
                             const returnedItems = order.items.filter(item => item.status === 'returned');
                             const allItemsGone = activeItems.length === 0;
                             const hasRefunds = (order.refundAmount || 0) > 0;
-                            const originalTotal = order.snapshotFinalTotal || order.originalTotalAmount || order.totalAmount;
+                            
+                            // Calculate amounts
+                            // Original Order Value is what user agreed to pay (after coupon discount)
+                            const originalOrderValue = order.snapshotSubtotalAfterCoupon || order.subtotal;
+                            const originalAmountPaid = order.snapshotFinalTotal || order.originalTotalAmount || order.totalAmount;
+                            
+                            // Calculate total amount paid including adjustments
+                            let totalAmountPaid = originalAmountPaid;
+                            if (order.paymentLedger && order.paymentLedger.length > 0) {
+                                const adjustmentPayments = order.paymentLedger
+                                    .filter(entry => entry.type === 'adjustment')
+                                    .reduce((sum, entry) => sum + entry.amount, 0);
+                                totalAmountPaid += adjustmentPayments;
+                            }
+                            
+                            // Calculate cancelled/returned amounts
+                            const cancelledAmount = cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0);
+                            const returnedAmount = returnedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+                            
+                            // Calculate revised order value (current subtotal)
+                            const revisedOrderValue = order.totalAmount;
+                            
+                            // Calculate outstanding balance
+                            const outstandingBalance = order.pendingAdjustment || 0;
                         %>
                         
-                        <!-- Original Order Amount -->
-                        <div class="flex justify-between text-gray-300">
-                            <span>Original Order Total:</span>
-                            <span title="₹<%= getFullNumber(originalTotal) %>">
-                                <%= formatCurrency(originalTotal) %>
+                        <!-- Original Order Value -->
+                        <div class="flex justify-between text-gray-300 pb-3">
+                            <span>Original Order Value:</span>
+                            <span class="font-semibold" title="₹<%= getFullNumber(originalOrderValue) %>">
+                                <%= formatCurrency(originalOrderValue) %>
                             </span>
                         </div>
                         
-                        <!-- Show coupon discount if applied -->
-                        <% if (order.couponCode && order.snapshotCouponDiscount > 0) { %>
-                            <div class="flex justify-between text-green-400 text-sm">
-                                <span>Coupon Applied (<%= order.couponCode %>):</span>
-                                <span title="-₹<%= getFullNumber(order.snapshotCouponDiscount) %>">
-                                    -<%= formatCurrency(order.snapshotCouponDiscount) %>
-                                </span>
-                            </div>
-                        <% } %>
+                        <!-- Original Amount Paid -->
+                        <div class="flex justify-between text-gray-300 pb-3 border-b border-gray-700">
+                            <span>Original Amount Paid:</span>
+                            <span class="font-semibold" title="₹<%= getFullNumber(originalAmountPaid) %>">
+                                <%= formatCurrency(originalAmountPaid) %>
+                            </span>
+                        </div>
                         
-                        <!-- Show cancelled items if any -->
-                        <% if (cancelledItems.length > 0) { %>
-                            <div class="flex justify-between text-red-400 text-sm">
-                                <span>Cancelled Items (<%= cancelledItems.length %>):</span>
-                                <span title="₹<%= getFullNumber(cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>">
-                                    ₹<%= cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('en-IN') %>
-                                </span>
-                            </div>
-                        <% } %>
-                        
-                        <!-- Show returned items if any -->
-                        <% if (returnedItems.length > 0) { %>
-                            <div class="flex justify-between text-orange-400 text-sm">
-                                <span>Returned Items (<%= returnedItems.length %>):</span>
-                                <span title="₹<%= getFullNumber(returnedItems.reduce((sum, item) => sum + item.totalPrice, 0)) %>">
-                                    ₹<%= returnedItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('en-IN') %>
-                                </span>
-                            </div>
-                        <% } %>
-                        
-                        <!-- Show coupon invalidation if happened -->
+                        <!-- Coupon Invalidation Warning -->
                         <% if (order.couponCode && !order.couponValid && order.couponInvalidationReason) { %>
-                            <div class="bg-yellow-900/30 border border-yellow-700 rounded p-2 text-xs">
-                                <div class="flex items-start gap-2">
-                                    <i class="fas fa-exclamation-triangle text-yellow-400 mt-0.5"></i>
-                                    <div class="text-yellow-300">
-                                        <div class="font-semibold">Coupon Removed</div>
-                                        <div class="text-yellow-400"><%= order.couponInvalidationReason %></div>
+                            <div class="bg-yellow-900/40 border-2 border-yellow-600 rounded-lg p-4 my-4">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-exclamation-triangle text-yellow-400 text-xl mt-0.5"></i>
+                                    <div class="flex-1">
+                                        <div class="font-bold text-yellow-300 mb-2">⚠️ Coupon "<%= order.couponCode %>" Invalidated</div>
+                                        <div class="text-yellow-200 text-sm space-y-1">
+                                            <% 
+                                                // The coupon minimum is the original order value (what user paid with coupon)
+                                                // NOT the pre-coupon subtotal
+                                                const couponMinimum = originalOrderValue;
+                                            %>
+                                            <% if (cancelledAmount > 0) { %>
+                                                <p>You cancelled <%= cancelledItems.length %> item(s) (₹<%= cancelledAmount.toLocaleString('en-IN') %>). Your revised subtotal (₹<%= revisedOrderValue.toLocaleString('en-IN') %>)</p>
+                                            <% } else if (returnedAmount > 0) { %>
+                                                <p>You returned <%= returnedItems.length %> item(s) (₹<%= returnedAmount.toLocaleString('en-IN') %>). Your revised subtotal (₹<%= revisedOrderValue.toLocaleString('en-IN') %>)</p>
+                                            <% } %>
+                                            <p>no longer meets the ₹<%= couponMinimum.toLocaleString('en-IN') %> minimum required for this coupon.</p>
+                                            <% if (order.snapshotCouponDiscount > 0) { %>
+                                                <p class="font-semibold text-yellow-300 mt-2">The ₹<%= order.snapshotCouponDiscount.toLocaleString('en-IN') %> discount has been reversed.</p>
+                                            <% } %>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         <% } %>
                         
-                        <!-- Show total refunded if any -->
+                        <!-- Show valid coupon if still active -->
+                        <% if (order.couponCode && order.couponValid && order.snapshotCouponDiscount > 0) { %>
+                            <div class="bg-green-900/30 border border-green-600 rounded-lg p-3 my-4">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                    <div class="flex-1">
+                                        <span class="text-green-300 font-semibold">Coupon "<%= order.couponCode %>" Applied</span>
+                                        <span class="text-green-400 ml-2">-₹<%= order.snapshotCouponDiscount.toLocaleString('en-IN') %></span>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+                        
+                        <!-- Revised Order Value -->
+                        <div class="flex justify-between text-gray-300 pt-3">
+                            <span>Revised Order Value:</span>
+                            <span class="font-semibold" title="₹<%= getFullNumber(revisedOrderValue) %>">
+                                <%= formatCurrency(revisedOrderValue) %>
+                            </span>
+                        </div>
+                        
+                        <!-- Amount Already Paid -->
+                        <div class="flex justify-between text-gray-300 pb-3 border-b border-gray-700">
+                            <span>Amount Already Paid:</span>
+                            <span class="font-semibold text-cyan-400" title="₹<%= getFullNumber(totalAmountPaid) %>">
+                                <%= formatCurrency(totalAmountPaid) %>
+                            </span>
+                        </div>
+                        
+                        <!-- Show wallet deduction if used -->
+                        <% if (order.walletAmountUsed > 0) { %>
+                            <div class="flex justify-between text-purple-400 text-sm">
+                                <span><i class="fas fa-wallet mr-1"></i>Wallet Used:</span>
+                                <span title="₹<%= getFullNumber(order.walletAmountUsed) %>">
+                                    <%= formatCurrency(order.walletAmountUsed) %>
+                                </span>
+                            </div>
+                        <% } %>
+                        
+                        <!-- Outstanding Balance -->
+                        <% if (outstandingBalance > 0) { %>
+                            <div class="bg-red-900/30 border-2 border-red-600 rounded-lg p-4 mt-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="text-red-300 font-bold text-lg">Outstanding Balance:</div>
+                                        <div class="text-red-400 text-xs mt-1">(Required to process your remaining items)</div>
+                                    </div>
+                                    <div class="text-red-400 font-bold text-2xl" title="₹<%= getFullNumber(outstandingBalance) %>">
+                                        <%= formatCurrency(outstandingBalance) %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <!-- Final Amount Summary when no outstanding balance -->
+                            <div class="bg-gray-800 rounded-lg p-4 mt-4">
+                                <div class="flex justify-between items-center">
+                                    <div class="text-white font-bold text-lg">Total Amount Paid:</div>
+                                    <div class="text-cyan-400 font-bold text-2xl" title="₹<%= getFullNumber(totalAmountPaid) %>">
+                                        <%= formatCurrency(totalAmountPaid) %>
+                                    </div>
+                                </div>
+                                <% if (allItemsGone) { %>
+                                    <div class="text-gray-400 text-xs mt-2">
+                                        <i class="fas fa-info-circle mr-1"></i>All items have been <%= cancelledItems.length > 0 ? 'cancelled' : 'returned' %>
+                                    </div>
+                                <% } else { %>
+                                    <div class="text-gray-400 text-xs mt-2">
+                                        <i class="fas fa-info-circle mr-1"></i>Current order value: ₹<%= revisedOrderValue.toLocaleString('en-IN') %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% } %>
+                        
+                        <!-- Show refund information if any -->
                         <% 
-                            // Calculate total refunds from payment ledger for accuracy
                             let totalRefunded = 0;
                             if (order.paymentLedger && order.paymentLedger.length > 0) {
                                 const ledgerRefunds = order.paymentLedger
                                     .filter(entry => entry.type === 'refund')
                                     .reduce((sum, entry) => sum + entry.amount, 0);
-                                // Use ledger if it has refunds, otherwise fall back to order.refundAmount
                                 totalRefunded = ledgerRefunds > 0 ? ledgerRefunds : (order.refundAmount || 0);
                             } else {
                                 totalRefunded = order.refundAmount || 0;
                             }
                         %>
                         <% if (totalRefunded > 0) { %>
-                            <div class="border-t border-gray-700 pt-3">
-                                <div class="flex justify-between text-green-400">
-                                    <span>Total Refunded:</span>
-                                    <span title="₹<%= getFullNumber(totalRefunded) %>">
+                            <div class="bg-green-900/20 border border-green-700 rounded-lg p-3 mt-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-green-300"><i class="fas fa-undo mr-2"></i>Total Refunded:</span>
+                                    <span class="text-green-400 font-semibold" title="₹<%= getFullNumber(totalRefunded) %>">
                                         <%= formatCurrency(totalRefunded) %>
                                     </span>
                                 </div>
-                                <% if (order.couponCode && totalRefunded < (cancelledItems.reduce((sum, item) => sum + item.totalPrice, 0) + returnedItems.reduce((sum, item) => sum + item.totalPrice, 0))) { %>
-                                    <div class="text-xs text-gray-400 mt-1">
-                                        <i class="fas fa-info-circle mr-1"></i>Refund calculated with coupon adjustments
-                                    </div>
-                                <% } %>
+                                <div class="text-xs text-green-400 mt-1">
+                                    <i class="fas fa-check-circle mr-1"></i>Refunded to your wallet
+                                </div>
                             </div>
                         <% } %>
-                        
-                        <!-- Final Amount -->
-                        <div class="border-t border-gray-700 pt-3">
-                            <% if (allItemsGone) { %>
-                                <div class="flex justify-between text-xl font-bold">
-                                    <span class="text-gray-400">Amount Paid:</span>
-                                    <span class="text-cyan-400" title="₹<%= getFullNumber(originalTotal) %>">
-                                        <%= formatCurrency(originalTotal) %>
-                                    </span>
-                                </div>
-                                <div class="flex justify-between text-sm text-gray-500 mt-1">
-                                    <span>Current Order Value:</span>
-                                    <span>₹0 (All items <%= cancelledItems.length > 0 ? 'cancelled' : 'returned' %>)</span>
-                                </div>
-                            <% } else { %>
-                                <div class="flex justify-between text-xl font-bold">
-                                    <span class="text-white">Amount Paid:</span>
-                                    <span class="text-cyan-400" title="₹<%= getFullNumber(originalTotal) %>">
-                                        <%= formatCurrency(originalTotal) %>
-                                    </span>
-                                </div>
-                                <% if (hasRefunds || cancelledItems.length > 0 || returnedItems.length > 0) { %>
-                                    <div class="flex justify-between text-sm text-gray-400 mt-1">
-                                        <span>Current Order Value:</span>
-                                        <span title="₹<%= getFullNumber(order.totalAmount) %>">
-                                            <%= formatCurrency(order.totalAmount) %>
-                                        </span>
-                                    </div>
-                                <% } %>
-                            <% } %>
-                        </div>
                     </div>
                 </div>
 
@@ -1299,6 +1389,129 @@
                 Swal.fire('Error', 'Payment verification failed', 'error');
             }
         }
+
+        // Pay Pending Adjustment
+        async function payAdjustment(orderId, amount) {
+            try {
+                const result = await Swal.fire({
+                    title: 'Additional Payment Required',
+                    html: `
+                        <div class="text-left space-y-4">
+                            <p class="text-gray-600">Due to order modifications, an additional payment is required.</p>
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <p class="text-sm text-gray-700">
+                                    <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+                                    Amount to pay: <strong class="text-red-600">₹${amount.toLocaleString()}</strong>
+                                </p>
+                            </div>
+                            <p class="text-xs text-gray-500">
+                                <i class="fas fa-shield-alt text-green-500 mr-1"></i>
+                                Secure payment via Razorpay
+                            </p>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: '<i class="fas fa-credit-card mr-2"></i>Pay Now',
+                    cancelButtonText: 'Cancel'
+                });
+
+                if (!result.isConfirmed) return;
+
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Please wait',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch(`/orders/${orderId}/pay-adjustment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.close();
+                    
+                    const options = {
+                        "key": data.razorpayOrder.key_id,
+                        "amount": data.razorpayOrder.amount,
+                        "currency": data.razorpayOrder.currency,
+                        "name": "GearGrid",
+                        "description": `Additional Payment for Order #${data.orderNumber}`,
+                        "order_id": data.razorpayOrder.id,
+                        "handler": async function (response) {
+                            await verifyAdjustmentPayment(orderId, response);
+                        },
+                        "theme": {
+                            "color": "#dc2626"
+                        },
+                        "modal": {
+                            "ondismiss": function() {
+                                Swal.fire('Cancelled', 'Payment was cancelled', 'info');
+                            }
+                        }
+                    };
+                    
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Pay adjustment error:', error);
+                Swal.fire('Error', 'Failed to process payment', 'error');
+            }
+        }
+
+        // Verify Adjustment Payment
+        async function verifyAdjustmentPayment(orderId, response) {
+            try {
+                Swal.fire({
+                    title: 'Verifying Payment...',
+                    text: 'Please wait',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const verifyResponse = await fetch(`/orders/${orderId}/verify-adjustment-payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                });
+
+                const result = await verifyResponse.json();
+
+                if (result.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Payment Successful!',
+                        text: 'Your additional payment has been completed successfully.',
+                        confirmButtonColor: '#10b981'
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire('Failed', result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                Swal.fire('Error', 'Payment verification failed', 'error');
+            }
+        }
     </script>
+
+    <!-- Dynamic Return Projection Script -->
+    <script src="/public/user/returnProjection.js"></script>
 </body>
 </html>
