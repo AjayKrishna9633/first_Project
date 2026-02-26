@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/public/css/text-wrap.css">
+    <link rel="stylesheet" href="/public/css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
@@ -55,6 +56,213 @@
             border-top-color: rgba(0, 0, 0, 0.9);
             z-index: 1000;
             pointer-events: none;
+        }
+
+        /* Mobile responsive fixes for order details page */
+        @media (max-width: 768px) {
+            /* Page header */
+            .bg-gray-900.py-8 .flex {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 1rem !important;
+            }
+            
+            .bg-gray-900.py-8 h1 {
+                font-size: 1.5rem !important;
+            }
+            
+            .bg-gray-900.py-8 .flex.gap-3 {
+                width: 100%;
+                flex-direction: column !important;
+            }
+            
+            .bg-gray-900.py-8 .flex.gap-3 a,
+            .bg-gray-900.py-8 .flex.gap-3 button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            /* Order items - product card */
+            .space-y-4 > div.flex {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+            }
+            
+            /* Product image */
+            .space-y-4 .w-20.h-20 {
+                width: 4rem !important;
+                height: 4rem !important;
+            }
+            
+            /* Product info section */
+            .space-y-4 .flex-1 {
+                width: 100%;
+            }
+            
+            .space-y-4 .flex-1 h3 {
+                font-size: 0.875rem !important;
+                line-height: 1.25rem !important;
+            }
+            
+            .space-y-4 .flex-1 .text-sm {
+                font-size: 0.75rem !important;
+            }
+            
+            .space-y-4 .flex-1 .text-xs {
+                font-size: 0.7rem !important;
+            }
+            
+            /* Product actions section */
+            .space-y-4 .text-right {
+                width: 100%;
+                text-align: left !important;
+                flex-direction: row !important;
+                justify-content: flex-start !important;
+                gap: 1rem !important;
+                padding-top: 0.75rem;
+                border-top: 1px solid rgba(75, 85, 99, 0.5);
+            }
+            
+            .space-y-4 .text-right a,
+            .space-y-4 .text-right button {
+                font-size: 0.75rem !important;
+                padding: 0.5rem 0.75rem;
+                border-radius: 0.375rem;
+                background: rgba(31, 41, 55, 0.5);
+            }
+            
+            /* Order summary sidebar */
+            .grid.grid-cols-1.lg\\:grid-cols-3 {
+                grid-template-columns: 1fr !important;
+            }
+            
+            /* Order summary - make it appear first on mobile */
+            .lg\\:col-span-1 {
+                order: -1;
+            }
+            
+            .lg\\:col-span-2 {
+                order: 1;
+            }
+            
+            /* Progress tracker */
+            .progress-step {
+                font-size: 0.4rem !important;
+                min-width: 50px;
+                max-width: 50px;
+            }
+            
+            .progress-step i {
+                font-size: 0.7rem !important;
+            }
+            
+            .progress-step .w-12.h-12 {
+                width: 1.875rem !important;
+                height: 1.875rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+            
+            .progress-step span {
+                font-size: 0.4rem !important;
+                text-align: center;
+                max-width: 50px;
+                line-height: 1.1;
+                white-space: nowrap;
+                overflow: visible;
+            }
+            
+            /* Allow wrapping only for "Order Placed" */
+            .progress-step:first-child span {
+                white-space: normal !important;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            
+            .progress-step .text-xs {
+                font-size: 0.35rem !important;
+                margin-top: 0.25rem !important;
+            }
+            
+            /* Target date specifically */
+            .progress-step span.text-xs {
+                font-size: 0.35rem !important;
+            }
+            
+            /* Progress line */
+            .progress-line {
+                top: 0.9375rem !important;
+                height: 2px !important;
+            }
+        }
+
+        /* Tablet view (iPad) - slightly larger */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .progress-step {
+                font-size: 0.6rem !important;
+                min-width: 70px;
+                max-width: 70px;
+            }
+            
+            .progress-step span {
+                font-size: 0.6rem !important;
+                max-width: 70px;
+                white-space: nowrap;
+            }
+            
+            .progress-step:first-child span {
+                white-space: normal !important;
+            }
+            
+            .progress-step .text-xs {
+                font-size: 0.5rem !important;
+            }
+        }
+            
+            /* Progress line */
+            .progress-line {
+                top: 1rem !important;
+                height: 2px !important;
+            }
+            
+            /* Order progress container */
+            .bg-gray-900.rounded-lg.border.border-gray-800.p-8 {
+                padding: 1.25rem 0.75rem !important;
+            }
+            
+            .bg-gray-900.rounded-lg.border.border-gray-800.p-8 h2 {
+                font-size: 1rem !important;
+                margin-bottom: 1.25rem !important;
+            }
+            
+            /* Current status badge */
+            .bg-gray-900 .inline-flex.items-center.gap-2 {
+                font-size: 0.7rem !important;
+                padding: 0.5rem 0.75rem !important;
+            }
+            
+            /* Adjust spacing between steps */
+            .relative.flex.justify-between {
+                gap: 0.25rem !important;
+            }
+            
+            /* Order summary amounts */
+            .bg-gray-900 .flex.justify-between {
+                font-size: 0.875rem !important;
+            }
+            
+            .bg-gray-900 .text-2xl {
+                font-size: 1.25rem !important;
+            }
+            
+            /* Shipping address */
+            .bg-gray-900 h2 {
+                font-size: 1.125rem !important;
+            }
+            
+            /* Payment info */
+            .bg-gray-900 .text-sm {
+                font-size: 0.8rem !important;
+            }
         }
     </style>
 </head>
@@ -167,7 +375,7 @@
                                 <i class="fas fa-shopping-cart"></i>
                             </div>
                             <span class="text-sm font-medium <%= orderProgress.step >= 1 ? 'text-white' : 'text-gray-400' %>">Order Placed</span>
-                            <span class="text-xs text-gray-500 mt-1"><%= new Date(order.createdAt).toLocaleDateString() %></span>
+                            <span class="text-xs text-gray-500 mt-1" style="font-size: 0.35rem !important;"><%= new Date(order.createdAt).toLocaleDateString() %></span>
                         </div>
                         
                         <!-- Step 2: Confirmed -->
@@ -239,7 +447,7 @@
                     <h2 class="text-xl font-semibold text-white mb-6">Order Items</h2>
                     <div class="space-y-4" data-order-id="<%= order._id %>" data-order-status="<%= order.orderStatus %>">
                         <% order.items.forEach(item => { %>
-                            <div class="flex items-center gap-4 p-4 border border-gray-800 rounded-lg hover:border-gray-700 transition <%= item.status === 'cancelled' ? 'opacity-60 bg-gray-800' : '' %>" data-item-id="<%= item._id %>">
+                            <div class="flex items-center gap-4 p-4 border border-gray-800 rounded-lg hover:border-gray-700 transition <%= item.status === 'cancelled' || item.status === 'returned' ? 'opacity-60 bg-gray-800' : '' %>" data-item-id="<%= item._id %>">
                                 <div class="w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0">
                                     <% if (item.variantId && item.variantId.images && item.variantId.images.length > 0) { %>
                                         <img src="<%= item.variantId.images[0] %>" alt="Product" class="w-full h-full object-cover">
@@ -256,6 +464,10 @@
                                             <span class="ml-2 px-2 py-1 text-xs bg-red-900 text-red-300 rounded-full">
                                                 <i class="fas fa-times mr-1"></i>Cancelled
                                             </span>
+                                        <% } else if (item.status === 'returned') { %>
+                                            <span class="ml-2 px-2 py-1 text-xs bg-orange-900 text-orange-300 rounded-full">
+                                                <i class="fas fa-undo mr-1"></i>Returned
+                                            </span>
                                         <% } %>
                                     </h3>
                                     <p class="text-sm text-gray-400 mb-2">
@@ -264,7 +476,7 @@
                                     </p>
                                     <div class="flex items-center gap-4">
                                         <span class="text-sm text-gray-400" title="₹<%= getFullNumber(item.price) %> each">₹<%= formatCurrency(item.price).replace('₹', '') %> each</span>
-                                        <span class="font-semibold text-white <%= item.status === 'cancelled' ? 'line-through text-gray-500' : '' %>" title="₹<%= getFullNumber(item.totalPrice) %>">
+                                        <span class="font-semibold text-white <%= item.status === 'cancelled' || item.status === 'returned' ? 'line-through text-gray-500' : '' %>" title="₹<%= getFullNumber(item.totalPrice) %>">
                                             <%= formatCurrency(item.totalPrice) %>
                                         </span>
                                     </div>
@@ -272,6 +484,11 @@
                                         <p class="text-xs text-red-400 mt-1">
                                             <i class="fas fa-info-circle mr-1"></i>
                                             Cancelled: <%= item.cancellationReason %>
+                                        </p>
+                                    <% } else if (item.status === 'returned' && item.returnReason) { %>
+                                        <p class="text-xs text-orange-400 mt-1">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Returned: <%= item.returnReason %>
                                         </p>
                                     <% } %>
                                 </div>
@@ -403,7 +620,7 @@
                             let totalAmountPaid = originalAmountPaid;
                             if (order.paymentLedger && order.paymentLedger.length > 0) {
                                 const adjustmentPayments = order.paymentLedger
-                                    .filter(entry => entry.type === 'adjustment')
+                                    .filter(entry => entry.type === 'adjustment' || entry.type === 'wallet_adjustment')
                                     .reduce((sum, entry) => sum + entry.amount, 0);
                                 totalAmountPaid += adjustmentPayments;
                             }
@@ -581,13 +798,6 @@
             <button onclick="payNowCOD('<%= order._id %>', <%= order.totalAmount %>)" 
                     class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">
                 <i class="fas fa-credit-card mr-2"></i>Pay Now Online
-            </button>
-        <% } %>
-        
-        <% if (order.orderStatus === 'delivered') { %>
-            <button onclick="reorderItems('<%= order._id %>')" 
-                    class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">
-                <i class="fas fa-redo mr-2"></i>Reorder Items
             </button>
         <% } %>
         
@@ -978,6 +1188,122 @@
             }
         }
 
+        // Show wallet deduction confirmation popup
+        async function showWalletDeductionConfirmation(orderId, recalculation) {
+            const result = await Swal.fire({
+                title: '⚠️ Payment Adjustment Required',
+                html: `
+                    <div class="text-left space-y-4">
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                            <p class="text-sm text-gray-700">
+                                <strong>Coupon "${recalculation.couponInvalidationReason ? 'invalidated' : 'adjusted'}"</strong>
+                            </p>
+                            <p class="text-xs text-gray-600 mt-1">
+                                ${recalculation.couponInvalidationReason || 'Your order no longer meets the coupon requirements'}
+                            </p>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm text-gray-600">Original Total:</span>
+                                <span class="text-sm font-semibold">₹${recalculation.oldTotal.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm text-gray-600">Revised Total:</span>
+                                <span class="text-sm font-semibold">₹${recalculation.newTotal.toFixed(2)}</span>
+                            </div>
+                            <hr class="my-2">
+                            <div class="flex justify-between">
+                                <span class="text-sm font-bold text-red-600">Amount to Pay:</span>
+                                <span class="text-sm font-bold text-red-600">₹${recalculation.adjustmentAmount.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                            <p class="text-sm text-gray-700">
+                                <i class="fas fa-wallet text-blue-500 mr-2"></i>
+                                <strong>Your Wallet Balance: ₹${recalculation.walletBalance.toFixed(2)}</strong>
+                            </p>
+                            <p class="text-xs text-gray-600 mt-1">
+                                This amount will be deducted from your wallet to complete the cancellation.
+                            </p>
+                        </div>
+                        
+                        <p class="text-xs text-gray-500 text-center">
+                            Do you want to proceed with the cancellation and wallet deduction?
+                        </p>
+                    </div>
+                `,
+                width: '550px',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="fas fa-check mr-2"></i>Confirm & Deduct ₹' + recalculation.adjustmentAmount.toFixed(2),
+                cancelButtonText: '<i class="fas fa-times mr-2"></i>Cancel',
+                customClass: {
+                    popup: 'rounded-xl',
+                    title: 'text-lg font-semibold'
+                }
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    Swal.fire({
+                        title: 'Processing...',
+                        text: 'Deducting from wallet',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    const response = await fetch('/orders/confirm-wallet-deduction', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderId })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        await Swal.fire({
+                            title: 'Cancellation Complete!',
+                            html: `
+                                <p class="mb-2">Item cancelled successfully.</p>
+                                <p class="text-sm text-gray-600">₹${recalculation.adjustmentAmount.toFixed(2)} deducted from wallet</p>
+                                <p class="text-sm text-green-600 mt-2">New wallet balance: ₹${data.newWalletBalance.toFixed(2)}</p>
+                            `,
+                            icon: 'success',
+                            confirmButtonColor: '#10b981'
+                        });
+                        location.reload();
+                    } else {
+                        Swal.fire({
+                            title: 'Failed',
+                            text: data.message || 'Failed to process wallet deduction',
+                            icon: 'error',
+                            confirmButtonColor: '#dc2626'
+                        });
+                    }
+                } catch (error) {
+                    console.error('Wallet deduction error:', error);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Failed to process wallet deduction',
+                        icon: 'error',
+                        confirmButtonColor: '#dc2626'
+                    });
+                }
+            } else {
+                Swal.fire({
+                    title: 'Cancellation Aborted',
+                    text: 'The item was not cancelled. Your order remains unchanged.',
+                    icon: 'info',
+                    confirmButtonColor: '#06b6d4'
+                });
+            }
+        }
+
         async function cancelOrderItem(orderId, itemId, productName) {
             const cancellationReasons = [
                 { value: 'CHANGED_MIND', label: 'Changed my mind about this item' },
@@ -1093,6 +1419,12 @@
                     const result = await response.json();
                     
                     if (result.success) {
+                        // Check if wallet confirmation is required
+                        if (result.requiresWalletConfirmation) {
+                            await showWalletDeductionConfirmation(orderId, result.data.recalculation);
+                            return;
+                        }
+                        
                         let message = 'Item has been cancelled successfully.';
                         
                         if (result.orderStatus === 'cancelled') {

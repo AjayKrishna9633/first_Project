@@ -102,7 +102,7 @@
                 </div>
 
                 <!-- Statistics Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-6">
                     <!-- Total Orders -->
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <div class="flex items-center justify-between">
@@ -155,12 +155,26 @@
                         </div>
                     </div>
 
+                    <!-- Total Refunds -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">Total Refunds</p>
+                                <h3 class="text-2xl font-bold text-red-600">₹<%= totalRefundAmount.toLocaleString('en-IN') %></h3>
+                                <p class="text-xs text-gray-500 mt-1"><%= refundedOrderCount %> orders</p>
+                            </div>
+                            <div class="bg-red-100 p-3 rounded-full">
+                                <i class="fas fa-undo text-red-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Net Sales -->
                     <div class="bg-white rounded-lg shadow-md p-6 border-2 border-green-500">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-gray-500 mb-1">Net Sales</p>
-                                <h3 class="text-2xl font-bold text-green-600">₹<%= totalSales.toLocaleString('en-IN') %></h3>
+                                <h3 class="text-2xl font-bold text-green-600">₹<%= netSales.toLocaleString('en-IN') %></h3>
                             </div>
                             <div class="bg-green-100 p-3 rounded-full">
                                 <i class="fas fa-rupee-sign text-green-600 text-xl"></i>
@@ -248,6 +262,141 @@
                             <i class="fas fa-chart-bar text-6xl text-gray-300 mb-4"></i>
                             <p class="text-gray-500 text-lg">No orders found for the selected period</p>
                             <p class="text-gray-400 text-sm mt-2">Try adjusting your date filters</p>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Refunded/Returned Orders Section -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden mt-6">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-red-50">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Refunded & Returned Orders</h3>
+                            <p class="text-sm text-gray-600 mt-1">
+                                Total Refunds: <span class="font-bold">₹<%= totalRefundAmount.toLocaleString('en-IN') %></span>
+                                <span class="text-gray-500 ml-2">(<%= refundedOrderCount %> orders with refunds)</span>
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-700 font-semibold"><%= totalRefundedOrCancelled %> total orders</p>
+                            <p class="text-xs text-gray-500">Showing <%= refundedOrders.length %> on this page</p>
+                        </div>
+                    </div>
+                    
+                    <% if (refundedOrders && refundedOrders.length > 0) { %>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Original Amount</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Refund Amount</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Refund Status</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <% refundedOrders.forEach(order => { %>
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-indigo-600">#<%= order.orderNumber %></div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900"><%= order.createdAt.toLocaleDateString() %></div>
+                                                <div class="text-xs text-gray-500"><%= order.createdAt.toLocaleTimeString() %></div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900 truncate max-w-xs" title="<%= order.userId?.fullName || 'Guest' %>"><%= order.userId?.fullName || 'Guest' %></div>
+                                                <div class="text-xs text-gray-500 truncate max-w-xs" title="<%= order.userId?.email || 'N/A' %>"><%= order.userId?.email || 'N/A' %></div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">₹<%= (order.snapshotFinalTotal || order.originalTotalAmount || order.totalAmount).toLocaleString('en-IN') %></div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-semibold text-red-600">-₹<%= (order.refundAmount || 0).toLocaleString('en-IN') %></div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    <%= order.refundStatus === 'processed' ? 'bg-green-100 text-green-800' : 
+                                                        order.refundStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                                                        'bg-gray-100 text-gray-800' %>">
+                                                    <%= order.refundStatus || 'N/A' %>
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    <%= order.orderStatus === 'returned' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800' %>">
+                                                    <i class="fas <%= order.orderStatus === 'returned' ? 'fa-undo' : 'fa-times' %> mr-1"></i> <%= order.orderStatus %>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Refund Pagination -->
+                        <% if (totalRefundPages > 1) { %>
+                            <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                                <div class="flex-1 flex justify-between sm:hidden">
+                                    <% if (refundPage > 1) { %>
+                                        <a href="?page=<%= currentPage %>&refundPage=<%= refundPage - 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                            Previous
+                                        </a>
+                                    <% } %>
+                                    <% if (refundPage < totalRefundPages) { %>
+                                        <a href="?page=<%= currentPage %>&refundPage=<%= refundPage + 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                           class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                            Next
+                                        </a>
+                                    <% } %>
+                                </div>
+                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-700">
+                                            Showing page <span class="font-medium"><%= refundPage %></span> of <span class="font-medium"><%= totalRefundPages %></span>
+                                            <span class="text-gray-500 ml-2">(<%= totalRefundedOrCancelled %> total orders, <%= refundedOrderCount %> with refunds)</span>
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                            <% 
+                                                let refundStartPage = Math.max(1, refundPage - 2);
+                                                let refundEndPage = Math.min(totalRefundPages, refundPage + 2);
+                                            %>
+                                            
+                                            <% if (refundPage > 1) { %>
+                                                <a href="?page=<%= currentPage %>&refundPage=<%= refundPage - 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </a>
+                                            <% } %>
+                                            
+                                            <% for(let i = refundStartPage; i <= refundEndPage; i++) { %>
+                                                <a href="?page=<%= currentPage %>&refundPage=<%= i %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium <%= refundPage === i ? 'bg-indigo-50 border-indigo-500 text-indigo-600 z-10' : 'bg-white text-gray-700 hover:bg-gray-50' %>">
+                                                    <%= i %>
+                                                </a>
+                                            <% } %>
+                                            
+                                            <% if (refundPage < totalRefundPages) { %>
+                                                <a href="?page=<%= currentPage %>&refundPage=<%= refundPage + 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            <% } %>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+                    <% } else { %>
+                        <div class="px-6 py-12 text-center">
+                            <i class="fas fa-undo text-6xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500 text-lg">No refunded or returned orders</p>
+                            <p class="text-gray-400 text-sm mt-2">All orders are successfully delivered</p>
                         </div>
                     <% } %>
                 </div>

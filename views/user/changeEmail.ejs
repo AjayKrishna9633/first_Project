@@ -7,7 +7,25 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/public/css/text-wrap.css">
+    <link rel="stylesheet" href="/public/css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Mobile responsive fixes for change email page */
+        @media (max-width: 768px) {
+            .email-container {
+                flex-direction: column !important;
+                gap: 0 !important;
+            }
+            .email-sidebar {
+                width: 100% !important;
+                margin-bottom: 1.5rem;
+            }
+            .email-content {
+                width: 100%;
+                max-width: 100% !important;
+            }
+        }
+    </style>
 </head>
 <body class="bg-black text-white">
     <%- include('../partials/header') %>
@@ -26,10 +44,12 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-6 py-12">
-        <div class="flex gap-8">
+        <div class="flex gap-8 email-container">
+            <div class="email-sidebar">
             <%- include('../partials/sidebar', { currentPage: 'profile' }) %>
+            </div>
 
-            <div class="flex-1 max-w-2xl">
+            <div class="flex-1 max-w-2xl email-content">
                 <!-- Step 1: Request Email Change -->
                 <div id="requestEmailSection" class="bg-gray-900 rounded-lg p-8 border border-gray-800">
                     <h2 class="text-2xl font-bold mb-6">Change Your Email</h2>

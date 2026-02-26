@@ -1,0 +1,777 @@
+/* ============================================
+   GEARGRID - Responsive Design System
+   Mobile-First Approach for User Pages
+   ============================================ */
+
+/* Base Mobile Styles (320px+) */
+* {
+    box-sizing: border-box;
+}
+
+/* Prevent horizontal scroll */
+body {
+    overflow-x: hidden;
+    width: 100%;
+}
+
+/* Container Responsive Padding */
+.max-w-7xl {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+@media (min-width: 640px) {
+    .max-w-7xl {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .max-w-7xl {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+}
+
+/* ============================================
+   Typography Responsive
+   ============================================ */
+
+/* Headings Scale Down on Mobile */
+h1, .text-4xl {
+    font-size: 1.875rem !important; /* 30px */
+    line-height: 2.25rem !important;
+}
+
+@media (min-width: 640px) {
+    h1, .text-4xl {
+        font-size: 2.25rem !important; /* 36px */
+        line-height: 2.5rem !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    h1, .text-4xl {
+        font-size: 3rem !important; /* 48px */
+        line-height: 1 !important;
+    }
+}
+
+h2, .text-3xl {
+    font-size: 1.5rem !important; /* 24px */
+    line-height: 2rem !important;
+}
+
+@media (min-width: 640px) {
+    h2, .text-3xl {
+        font-size: 1.875rem !important; /* 30px */
+        line-height: 2.25rem !important;
+    }
+}
+
+h3, .text-2xl {
+    font-size: 1.25rem !important; /* 20px */
+    line-height: 1.75rem !important;
+}
+
+@media (min-width: 640px) {
+    h3, .text-2xl {
+        font-size: 1.5rem !important; /* 24px */
+        line-height: 2rem !important;
+    }
+}
+
+/* ============================================
+   Buttons Responsive
+   ============================================ */
+
+/* Mobile-Friendly Button Sizes */
+button, .btn, a.btn {
+    min-height: 44px; /* Touch-friendly */
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem !important;
+}
+
+@media (min-width: 640px) {
+    button, .btn, a.btn {
+        padding: 0.5rem 1rem !important;
+        font-size: 1rem !important;
+    }
+}
+
+/* Icon Buttons */
+button i, .btn i {
+    font-size: 1rem !important;
+}
+
+/* ============================================
+   Cards & Product Grid
+   ============================================ */
+
+/* Product Cards */
+.product-card {
+    min-height: auto !important;
+}
+
+/* Ensure images don't overflow */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ============================================
+   Tables Responsive
+   ============================================ */
+
+/* Make tables scrollable on mobile */
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
+    min-width: 600px;
+}
+
+@media (max-width: 768px) {
+    /* Stack table cells on mobile */
+    .responsive-table thead {
+        display: none;
+    }
+    
+    .responsive-table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #374151;
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+    
+    .responsive-table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #1f2937;
+    }
+    
+    .responsive-table td:last-child {
+        border-bottom: none;
+    }
+    
+    .responsive-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #9ca3af;
+    }
+}
+
+/* ============================================
+   Forms Responsive
+   ============================================ */
+
+/* Form Inputs */
+input, select, textarea {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    min-height: 44px;
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============================================
+   Navigation & Header
+   ============================================ */
+
+/* Mobile Menu */
+@media (max-width: 1023px) {
+    .desktop-nav {
+        display: none !important;
+    }
+    
+    .mobile-menu-button {
+        display: block !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .mobile-menu {
+        display: none !important;
+    }
+    
+    .mobile-menu-button {
+        display: none !important;
+    }
+}
+
+/* ============================================
+   Sidebar Layout
+   ============================================ */
+
+/* Profile Sidebar */
+@media (max-width: 1023px) {
+    .sidebar-layout {
+        flex-direction: column !important;
+    }
+    
+    .sidebar {
+        width: 100% !important;
+        margin-bottom: 2rem;
+    }
+    
+    .sidebar-content {
+        width: 100% !important;
+    }
+}
+
+/* ============================================
+   Order Details & Cards
+   ============================================ */
+
+/* Order Items */
+.order-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+}
+
+@media (min-width: 640px) {
+    .order-item {
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+}
+
+/* Order Actions */
+.order-actions {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .order-actions {
+        flex-direction: row !important;
+        width: auto;
+    }
+}
+
+/* ============================================
+   Cart & Checkout
+   ============================================ */
+
+/* Cart Items */
+.cart-item {
+    flex-direction: column !important;
+    gap: 1rem !important;
+}
+
+@media (min-width: 640px) {
+    .cart-item {
+        flex-direction: row !important;
+    }
+}
+
+/* Cart Summary */
+.cart-summary {
+    position: static !important;
+    margin-top: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .cart-summary {
+        position: sticky !important;
+        top: 6rem;
+    }
+}
+
+/* ============================================
+   Modal & Popup
+   ============================================ */
+
+/* SweetAlert Responsive */
+.swal2-popup {
+    width: 90% !important;
+    max-width: 500px !important;
+    padding: 1.5rem !important;
+}
+
+@media (min-width: 640px) {
+    .swal2-popup {
+        width: auto !important;
+        padding: 2rem !important;
+    }
+}
+
+/* ============================================
+   Spacing Utilities
+   ============================================ */
+
+/* Reduce padding on mobile */
+.mobile-px-4 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+@media (min-width: 640px) {
+    .mobile-px-4 {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+
+/* Reduce gaps on mobile */
+.mobile-gap-2 {
+    gap: 0.5rem !important;
+}
+
+@media (min-width: 640px) {
+    .mobile-gap-2 {
+        gap: 1rem !important;
+    }
+}
+
+/* ============================================
+   Text Truncation
+   ============================================ */
+
+.truncate-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+@media (min-width: 640px) {
+    .truncate-mobile {
+        white-space: normal;
+    }
+}
+
+/* ============================================
+   Price Display
+   ============================================ */
+
+.price-display {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.25rem !important;
+}
+
+@media (min-width: 640px) {
+    .price-display {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+}
+
+/* ============================================
+   Pagination
+   ============================================ */
+
+.pagination {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    justify-content: center !important;
+}
+
+.pagination a, .pagination span {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Hide page numbers on very small screens */
+@media (max-width: 480px) {
+    .pagination .page-number:not(.active) {
+        display: none !important;
+    }
+    
+    .pagination .page-number.active {
+        display: flex !important;
+    }
+}
+
+/* ============================================
+   Breadcrumb
+   ============================================ */
+
+.breadcrumb {
+    flex-wrap: wrap !important;
+    font-size: 0.75rem !important;
+}
+
+@media (min-width: 640px) {
+    .breadcrumb {
+        font-size: 0.875rem !important;
+    }
+}
+
+/* ============================================
+   Status Badges
+   ============================================ */
+
+.status-badge {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+    white-space: nowrap;
+}
+
+/* ============================================
+   Image Gallery
+   ============================================ */
+
+.image-gallery {
+    flex-direction: column-reverse !important;
+}
+
+@media (min-width: 1024px) {
+    .image-gallery {
+        flex-direction: row !important;
+    }
+}
+
+.thumbnail-list {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 1024px) {
+    .thumbnail-list {
+        flex-direction: column !important;
+        overflow-x: visible !important;
+    }
+}
+
+/* ============================================
+   Wallet & Transaction Cards
+   ============================================ */
+
+.wallet-card, .transaction-card {
+    padding: 1.5rem !important;
+}
+
+@media (min-width: 640px) {
+    .wallet-card, .transaction-card {
+        padding: 2rem !important;
+    }
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+
+.footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+}
+
+@media (min-width: 640px) {
+    .footer-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .footer-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+/* Hide on mobile */
+.hide-mobile {
+    display: none !important;
+}
+
+@media (min-width: 640px) {
+    .hide-mobile {
+        display: block !important;
+    }
+}
+
+/* Show only on mobile */
+.show-mobile {
+    display: block !important;
+}
+
+@media (min-width: 640px) {
+    .show-mobile {
+        display: none !important;
+    }
+}
+
+/* Full width on mobile */
+.mobile-full {
+    width: 100% !important;
+}
+
+@media (min-width: 640px) {
+    .mobile-full {
+        width: auto !important;
+    }
+}
+
+/* Stack on mobile */
+.mobile-stack {
+    flex-direction: column !important;
+}
+
+@media (min-width: 640px) {
+    .mobile-stack {
+        flex-direction: row !important;
+    }
+}
+
+/* ============================================
+   Touch Improvements
+   ============================================ */
+
+/* Larger touch targets */
+a, button, input[type="checkbox"], input[type="radio"] {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Better touch scrolling */
+.scroll-container {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+}
+
+/* ============================================
+   Loading States
+   ============================================ */
+
+.skeleton {
+    animation: skeleton-loading 1s linear infinite alternate;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-color: hsl(200, 20%, 70%);
+    }
+    100% {
+        background-color: hsl(200, 20%, 95%);
+    }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+}
+
+
+/* ============================================
+   Account Sidebar - Horizontal Menu Bar on Mobile
+   ============================================ */
+
+@media (max-width: 768px) {
+    /* Convert sidebar to horizontal scrollable menu */
+    .account-sidebar {
+        width: 100% !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+        margin-bottom: 1.5rem;
+    }
+    
+    .account-sidebar::-webkit-scrollbar {
+        display: none; /* Chrome, Safari */
+    }
+    
+    .sidebar-menu {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 0.5rem !important;
+        padding: 0.5rem 0 !important;
+        white-space: nowrap;
+    }
+    
+    .sidebar-link {
+        flex-shrink: 0 !important;
+        min-width: auto !important;
+        padding: 0.75rem 1rem !important;
+        border-radius: 9999px !important; /* Full rounded */
+        font-size: 0.875rem !important;
+        gap: 0.5rem !important;
+    }
+    
+    .sidebar-link i {
+        font-size: 1rem !important;
+        width: auto !important;
+    }
+    
+    .link-text {
+        display: inline !important;
+    }
+    
+    /* Active state for horizontal menu */
+    .sidebar-link.bg-white {
+        background-color: #fff !important;
+        color: #000 !important;
+    }
+    
+    /* Scroll indicator shadow */
+    .account-sidebar::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 2rem;
+        background: linear-gradient(to left, rgba(0,0,0,0.3), transparent);
+        pointer-events: none;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .account-sidebar {
+        width: 200px !important;
+    }
+    
+    .sidebar-link {
+        padding: 0.625rem 0.875rem !important;
+        font-size: 0.875rem !important;
+    }
+}
+
+
+/* ============================================
+   Footer - Mobile Optimized
+   ============================================ */
+
+@media (max-width: 768px) {
+    /* Footer container */
+    footer {
+        padding: 2rem 0 !important;
+    }
+    
+    /* Footer grid - single column on mobile */
+    footer .grid {
+        grid-template-columns: 1fr !important;
+        gap: 2rem !important;
+        margin-bottom: 2rem !important;
+    }
+    
+    /* Footer sections */
+    footer > div > div > div {
+        text-align: center;
+    }
+    
+    /* Brand section */
+    footer h3 {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    footer p {
+        font-size: 0.875rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Social icons - center and larger touch targets */
+    footer .flex.space-x-4 {
+        justify-content: center !important;
+        gap: 1.5rem !important;
+    }
+    
+    footer .flex.space-x-4 a {
+        font-size: 1.5rem !important;
+        padding: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    /* Footer section headings */
+    footer h4 {
+        font-size: 1rem !important;
+        margin-bottom: 1rem !important;
+        text-align: center;
+    }
+    
+    /* Footer links */
+    footer ul {
+        text-align: center;
+    }
+    
+    footer ul li {
+        margin-bottom: 0.75rem !important;
+    }
+    
+    footer ul li a {
+        font-size: 0.875rem !important;
+        padding: 0.5rem 1rem;
+        display: inline-block;
+        min-height: 44px;
+        line-height: 1.5;
+    }
+    
+    /* Footer bottom section */
+    footer .border-t {
+        padding-top: 1.5rem !important;
+        text-align: center;
+    }
+    
+    footer .border-t p {
+        font-size: 0.75rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    footer .border-t .flex {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        margin-top: 1rem !important;
+    }
+    
+    footer .border-t .flex a {
+        font-size: 0.75rem !important;
+        padding: 0.5rem;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    footer .grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 2rem !important;
+    }
+}

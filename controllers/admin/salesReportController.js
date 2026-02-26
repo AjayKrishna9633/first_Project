@@ -38,12 +38,14 @@ const buildDateFilter = (period, startDate, endDate) => {
 };
 
 const calculateSalesMetrics = async (dateFilter) => {
+    const matchCondition = {
+        createdAt: dateFilter,
+        orderStatus: { $in: ['delivered', 'returned', 'cancelled'] }
+    };
+
     const pipeline = [
         {
-            $match: {
-                createdAt: dateFilter,
-                orderStatus: { $in: ['delivered', 'returned'] }
-            }
+            $match: matchCondition
         },
         {
             $facet: {
@@ -62,17 +64,38 @@ const calculateSalesMetrics = async (dateFilter) => {
                 refundedOrders: [
                     {
                         $match: {
-                            $or: [
-                                { orderStatus: 'returned' },
-                                { refundStatus: 'processed' }
+                            $and: [
+                                {
+                                    $or: [
+                                        { orderStatus: 'returned' },
+                                        { orderStatus: 'cancelled' }
+                                    ]
+                                },
+                                { refundAmount: { $exists: true, $gt: 0 } }
                             ]
                         }
                     },
                     {
                         $group: {
                             _id: null,
-                            totalRefundAmount: { $sum: { $ifNull: ['$refundAmount', 0] } },
+                            totalRefundAmount: { $sum: '$refundAmount' },
                             refundedOrderCount: { $sum: 1 }
+                        }
+                    }
+                ],
+                allRefundedOrders: [
+                    {
+                        $match: {
+                            $or: [
+                                { orderStatus: 'returned' },
+                                { orderStatus: 'cancelled' }
+                            ]
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            totalRefundedOrCancelled: { $sum: 1 }
                         }
                     }
                 ],
@@ -103,6 +126,10 @@ const calculateSalesMetrics = async (dateFilter) => {
         refundedOrderCount: 0
     };
 
+    const allRefundData = result[0].allRefundedOrders[0] || {
+        totalRefundedOrCancelled: 0
+    };
+
     const cancelledData = result[0].cancelledOrders[0] || {
         cancelledOrderCount: 0
     };
@@ -121,8 +148,9 @@ const calculateSalesMetrics = async (dateFilter) => {
         netSales,
         deliveredOrderCount: deliveredData.deliveredOrderCount,
         refundedOrderCount: refundData.refundedOrderCount,
+        totalRefundedOrCancelled: allRefundData.totalRefundedOrCancelled,
         cancelledOrderCount: cancelledData.cancelledOrderCount,
-        totalOrders: deliveredData.deliveredOrderCount + refundData.refundedOrderCount + cancelledData.cancelledOrderCount
+        totalOrders: deliveredData.deliveredOrderCount + allRefundData.totalRefundedOrCancelled
     };
 };
 
@@ -130,8 +158,10 @@ const getSalesReport = async (req, res) => {
     try {
         const { startDate, endDate, period } = req.query;
         const page = parseInt(req.query.page) || 1;
+        const refundPage = parseInt(req.query.refundPage) || 1;
         const limit = 10;
         const skip = (page - 1) * limit;
+        const refundSkip = (refundPage - 1) * limit;
 
         const { start, end } = buildDateFilter(period, startDate, endDate);
 
@@ -151,18 +181,26 @@ const getSalesReport = async (req, res) => {
             .skip(skip)
             .limit(limit);
 
-        const refundedOrders = await Order.find({
+        // Fetch refunded orders with pagination
+        const refundQuery = {
             $or: [
                 { orderStatus: 'returned' },
-                { refundStatus: 'processed' }
+                { orderStatus: 'cancelled' },
+                { refundAmount: { $gt: 0 } }
             ],
             ...(start && end ? { createdAt: dateFilter } : {})
-        })
+        };
+
+        const refundedOrders = await Order.find(refundQuery)
             .populate('userId', 'fullName email')
             .sort({ createdAt: -1 })
-            .limit(5);
+            .skip(refundSkip)
+            .limit(limit);
+
+        const totalRefundedOrders = await Order.countDocuments(refundQuery);
 
         const totalPages = Math.ceil(metrics.deliveredOrderCount / limit);
+        const totalRefundPages = Math.ceil(totalRefundedOrders / limit);
 
         res.render('admin/salesReport', {
             orders,
@@ -177,9 +215,12 @@ const getSalesReport = async (req, res) => {
             totalOrders: metrics.totalOrders,
             deliveredOrderCount: metrics.deliveredOrderCount,
             refundedOrderCount: metrics.refundedOrderCount,
+            totalRefundedOrCancelled: metrics.totalRefundedOrCancelled,
             cancelledOrderCount: metrics.cancelledOrderCount,
             currentPage: page,
             totalPages,
+            refundPage,
+            totalRefundPages,
             period: period || '',
             startDate: startDate || '',
             endDate: endDate || '',

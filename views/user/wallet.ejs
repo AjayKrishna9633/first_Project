@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/public/css/text-wrap.css">
+    <link rel="stylesheet" href="/public/css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     
@@ -37,6 +38,106 @@
         .copy-btn:hover {
             transform: scale(1.05);
         }
+
+        /* Mobile responsive fixes for wallet page */
+        @media (max-width: 768px) {
+            .wallet-container {
+                flex-direction: column !important;
+                gap: 0 !important;
+            }
+            .wallet-sidebar {
+                width: 100% !important;
+                margin-bottom: 1.5rem;
+            }
+            .wallet-content {
+                width: 100%;
+            }
+            
+            /* Transaction card mobile layout */
+            .transaction-card-layout {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 1rem !important;
+            }
+            
+            .transaction-info {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .transaction-amount-section {
+                width: 100%;
+                text-align: left !important;
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                padding-top: 0.75rem;
+                border-top: 1px solid rgba(75, 85, 99, 0.5);
+            }
+            
+            .transaction-amount-section > p:first-child {
+                order: 1;
+            }
+            
+            .transaction-amount-section > p:nth-child(2) {
+                order: 3;
+                font-size: 0.75rem !important;
+            }
+            
+            .transaction-amount-section > span {
+                order: 2;
+            }
+            
+            /* Better spacing for transaction description */
+            .transaction-item p.font-semibold {
+                font-size: 0.9rem;
+                line-height: 1.3rem;
+            }
+            
+            .transaction-item p.text-sm {
+                font-size: 0.75rem;
+            }
+            
+            .transaction-item p.text-xs {
+                font-size: 0.7rem;
+            }
+            
+            /* Amount on mobile */
+            .transaction-amount-section .text-xl {
+                font-size: 1.125rem !important;
+            }
+            
+            /* Icon size on mobile */
+            .transaction-item .w-12.h-12 {
+                width: 2.5rem !important;
+                height: 2.5rem !important;
+            }
+            
+            .transaction-item .w-12.h-12 i {
+                font-size: 1rem !important;
+            }
+            
+            /* Statistics cards stack on mobile */
+            .wallet-content .grid.grid-cols-1.md\\:grid-cols-3 {
+                grid-template-columns: 1fr !important;
+            }
+            
+            /* Filter inputs stack on mobile */
+            .wallet-content .md\\:col-span-1 {
+                grid-column: span 1 !important;
+            }
+            
+            /* Wallet balance card text size */
+            .wallet-card .text-5xl {
+                font-size: 2.5rem !important;
+            }
+            
+            /* Referral card adjustments */
+            .referral-card .text-2xl {
+                font-size: 1.5rem !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-black text-white">
@@ -66,12 +167,14 @@
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto py-12 px-6 pb-24">
-        <div class="flex gap-8">
+        <div class="flex gap-8 wallet-container">
             <!-- Sidebar -->
+            <div class="wallet-sidebar">
             <%- include('../partials/sideBar') %>
+            </div>
             
             <!-- Main Wallet Content -->
-            <div class="flex-1">
+            <div class="flex-1 wallet-content">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <!-- Left Column - Wallet Balance & Actions -->
@@ -261,8 +364,8 @@
                             <div class="space-y-3">
                                 <% transactions.forEach(transaction => { %>
                                     <div class="transaction-item bg-gray-800 rounded-lg p-4 border border-gray-700">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center gap-4">
+                                        <div class="flex items-center justify-between transaction-card-layout">
+                                            <div class="flex items-center gap-4 transaction-info">
                                                 <div class="w-12 h-12 rounded-full flex items-center justify-center <%= transaction.type === 'credit' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400' %>">
                                                     <i class="fas <%= transaction.type === 'credit' ? 'fa-arrow-down' : 'fa-arrow-up' %> text-xl"></i>
                                                 </div>
@@ -286,7 +389,7 @@
                                                     <% } %>
                                                 </div>
                                             </div>
-                                            <div class="text-right">
+                                            <div class="text-right transaction-amount-section">
                                                 <p class="text-xl font-bold <%= transaction.type === 'credit' ? 'text-green-400' : 'text-red-400' %>">
                                                     <%= transaction.type === 'credit' ? '+' : '-' %>₹<%= transaction.amount.toLocaleString() %>
                                                 </p>

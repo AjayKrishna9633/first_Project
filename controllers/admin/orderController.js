@@ -405,37 +405,124 @@ const updateReturnStatus = async (req, res) => {
             order.returnStatus = 'rejected';
             order.adminReturnNotes = adminNotes;
         } else if (action === 'complete') {
-            order.returnStatus = 'completed';
-            order.returnCompletedDate = new Date();
-            order.orderStatus = 'returned';
-            
-            // Calculate refund amount (total amount paid by user)
-            const refundAmount = order.totalAmount;
-            order.refundAmount = (order.refundAmount || 0) + refundAmount;
-            order.refundStatus = 'processed';
-            order.adminReturnNotes = adminNotes;
-            
-            // Credit User Wallet with refund
-            if (refundAmount > 0) {
-                const user = await User.findById(order.userId._id);
-                if (user) {
-                    // Add refund to wallet
-                    user.Wallet = (user.Wallet || 0) + refundAmount;
-                    await user.save();
+            // If order has coupon, use coupon-safe return calculation
+            if (order.couponCode) {
+                // Mark all items as returned
+                order.items.forEach(item => {
+                    item.status = 'returned';
+                    item.returnStatus = 'completed';
+                    item.returnCompletedDate = new Date();
+                    item.refundApproved = true;
+                    item.refundApprovedDate = new Date();
+                });
+                
+                // Use coupon recalculation service
+                const couponSafeCancellation = (await import('../user/couponSafeCancellation.js')).default;
+                const couponRecalculationService = (await import('../../utils/couponRecalculationService.js')).default;
+                
+                const recalcResult = await couponRecalculationService.recalculateOrder(order, 'return');
+                
+                if (recalcResult.success && recalcResult.action === 'refund') {
+                    const refundAmount = recalcResult.refundAmount;
                     
-                    // Create wallet transaction record
-                    await WalletTransaction.create({
-                        userId: user._id,
-                        amount: refundAmount,
-                        type: 'credit',
-                        balance: user.Wallet,
-                        paymentMethod: 'wallet',
-                        status: 'success',
-                        description: `Refund for Returned Order #${order.orderNumber}`,
-                        orderId: order._id
-                    });
+                    order.returnStatus = 'completed';
+                    order.returnCompletedDate = new Date();
+                    order.orderStatus = 'returned';
+                    order.adminReturnNotes = adminNotes;
+                    order.refundAmount = (order.refundAmount || 0) + refundAmount;
+                    order.refundStatus = 'processed';
                     
-                    console.log(`Refunded ₹${refundAmount} to user ${user._id} wallet. New balance: ₹${user.Wallet}`);
+                    // Update order totals
+                    order.subtotal = 0;
+                    order.totalAmount = 0;
+                    
+                    // Credit User Wallet with calculated refund
+                    if (refundAmount > 0) {
+                        const user = await User.findById(order.userId._id);
+                        if (user) {
+                            user.Wallet = (user.Wallet || 0) + refundAmount;
+                            await user.save();
+                            
+                            await WalletTransaction.create({
+                                userId: user._id,
+                                amount: refundAmount,
+                                type: 'credit',
+                                balance: user.Wallet,
+                                paymentMethod: 'wallet',
+                                status: 'success',
+                                description: `Refund for Returned Order #${order.orderNumber}`,
+                                orderId: order._id
+                            });
+                            
+                            console.log(`Refunded ₹${refundAmount} to user ${user._id} wallet (coupon-adjusted). New balance: ₹${user.Wallet}`);
+                        }
+                    }
+                } else {
+                    // Fallback to simple refund if recalculation fails
+                    order.returnStatus = 'completed';
+                    order.returnCompletedDate = new Date();
+                    order.orderStatus = 'returned';
+                    order.adminReturnNotes = adminNotes;
+                    
+                    const refundAmount = order.totalAmount;
+                    order.refundAmount = (order.refundAmount || 0) + refundAmount;
+                    order.refundStatus = 'processed';
+                    
+                    if (refundAmount > 0) {
+                        const user = await User.findById(order.userId._id);
+                        if (user) {
+                            user.Wallet = (user.Wallet || 0) + refundAmount;
+                            await user.save();
+                            
+                            await WalletTransaction.create({
+                                userId: user._id,
+                                amount: refundAmount,
+                                type: 'credit',
+                                balance: user.Wallet,
+                                paymentMethod: 'wallet',
+                                status: 'success',
+                                description: `Refund for Returned Order #${order.orderNumber}`,
+                                orderId: order._id
+                            });
+                            
+                            console.log(`Refunded ₹${refundAmount} to user ${user._id} wallet. New balance: ₹${user.Wallet}`);
+                        }
+                    }
+                }
+            } else {
+                // Regular return without coupon
+                order.returnStatus = 'completed';
+                order.returnCompletedDate = new Date();
+                order.orderStatus = 'returned';
+                
+                // Calculate refund amount (total amount paid by user)
+                const refundAmount = order.totalAmount;
+                order.refundAmount = (order.refundAmount || 0) + refundAmount;
+                order.refundStatus = 'processed';
+                order.adminReturnNotes = adminNotes;
+                
+                // Credit User Wallet with refund
+                if (refundAmount > 0) {
+                    const user = await User.findById(order.userId._id);
+                    if (user) {
+                        // Add refund to wallet
+                        user.Wallet = (user.Wallet || 0) + refundAmount;
+                        await user.save();
+                        
+                        // Create wallet transaction record
+                        await WalletTransaction.create({
+                            userId: user._id,
+                            amount: refundAmount,
+                            type: 'credit',
+                            balance: user.Wallet,
+                            paymentMethod: 'wallet',
+                            status: 'success',
+                            description: `Refund for Returned Order #${order.orderNumber}`,
+                            orderId: order._id
+                        });
+                        
+                        console.log(`Refunded ₹${refundAmount} to user ${user._id} wallet. New balance: ₹${user.Wallet}`);
+                    }
                 }
             }
 
@@ -584,6 +671,23 @@ const updateItemReturnStatus = async (req, res) => {
 
             // Update order total refund amount
             order.refundAmount = (order.refundAmount || 0) + refundAmount;
+            
+            // Update order totals to reflect the returned item
+            // Store original values if not already stored
+            if (!order.originalSubtotal) {
+                order.originalSubtotal = order.subtotal;
+                order.originalTotalAmount = order.totalAmount;
+            }
+            
+            // Recalculate subtotal (remove returned item)
+            const activeItems = order.items.filter(i => i.status === 'active');
+            order.subtotal = activeItems.reduce((sum, i) => {
+                const priceAfterOffer = i.priceAfterOffer || i.price;
+                return sum + (priceAfterOffer * i.quantity);
+            }, 0);
+            
+            // Recalculate total amount
+            order.totalAmount = order.subtotal + (order.shippingCost || 0) + (order.tax || 0);
         }
 
         console.log('Saving order with updated item return status');

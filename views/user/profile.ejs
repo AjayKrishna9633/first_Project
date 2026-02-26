@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/public/css/text-wrap.css">
+    <link rel="stylesheet" href="/public/css/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
     
@@ -66,6 +67,47 @@
                 transform: translateY(0);
             }
         }
+
+        /* Mobile responsive fixes for profile page */
+        @media (max-width: 768px) {
+            .profile-container {
+                flex-direction: column !important;
+            }
+            .profile-sidebar {
+                width: 100% !important;
+                margin-bottom: 1.5rem;
+                position: relative;
+            }
+            .profile-divider {
+                display: none !important;
+            }
+            .profile-content {
+                padding-left: 0 !important;
+                width: 100%;
+            }
+            .profile-form {
+                max-width: 100% !important;
+            }
+            .email-change-container {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            .email-change-container input {
+                margin-bottom: 0.75rem;
+            }
+            .email-change-container a {
+                width: 100%;
+                justify-content: center;
+            }
+            /* Button stacking on mobile */
+            .profile-form > div:last-of-type {
+                flex-direction: column !important;
+            }
+            .profile-form > div:last-of-type button,
+            .profile-form > div:last-of-type a {
+                width: 100% !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-black text-white">
@@ -92,15 +134,17 @@
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto py-8 px-6 bg-black">
-        <div class="flex gap-0">
+        <div class="flex gap-0 profile-container">
             <!-- Sidebar -->
+            <div class="profile-sidebar">
              <%- include('../partials/sidebar', { currentPage: 'profile' }) %>
+            </div>
 
             <!-- Vertical Divider -->
-            <div class="w-px bg-gray-800 mx-6"></div>
+            <div class="w-px bg-gray-800 mx-6 profile-divider"></div>
 
             <!-- Main Content Area -->
-            <div class="flex-1 pl-6">
+            <div class="flex-1 pl-6 profile-content">
                 <h2 class="text-xl font-semibold mb-6 text-white">Account Details</h2>
                 
                
@@ -130,7 +174,7 @@
          
 
                 <!-- Account Form -->
-                <form action="/profile" id="profilePage" method="patch" class="space-y-5 max-w-xl">
+                <form action="/profile" id="profilePage" method="patch" class="space-y-5 max-w-xl profile-form">
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-2">Full Name</label>
                         <input 
@@ -152,7 +196,7 @@
                 
                     <div class="mb-6">
                         <label class="block text-sm font-medium mb-2">Email Address</label>
-                        <div class="flex gap-3 items-center">
+                        <div class="flex gap-3 items-center email-change-container">
                             <input type="email" name="email" value="<%= user.email %>" readonly
                                 class="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white cursor-not-allowed opacity-75">
                             <a href="/changeEmail" 

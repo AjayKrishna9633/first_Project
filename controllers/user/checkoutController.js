@@ -504,7 +504,7 @@ const placeOrder=async(req,res)=>{
             items: orderItems,
             shippingAddress,
             paymentMethod, 
-            subtotal,
+            subtotal: subtotal - discountAmount, // Subtotal after coupon
             shippingCost,
             tax,
             couponCode: couponApplied,
@@ -515,8 +515,8 @@ const placeOrder=async(req,res)=>{
             // Initialize payment ledger
             paymentLedger: [],
             // Snapshot of original amounts for admin reference
-            snapshotSubtotalBeforeCoupon: subtotal + discountAmount,
-            snapshotSubtotalAfterCoupon: subtotal,
+            snapshotSubtotalBeforeCoupon: subtotal, // Subtotal after product offers, before coupon
+            snapshotSubtotalAfterCoupon: subtotal - discountAmount, // Subtotal after coupon
             snapshotCouponDiscount: discountAmount,
             snapshotFinalTotal: Math.round(actualOrderAmount) // Actual order amount before wallet deduction
         });

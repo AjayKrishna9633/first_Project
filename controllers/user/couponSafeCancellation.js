@@ -152,42 +152,16 @@ const cancelOrderItemWithCoupon = async (req, res) => {
             order.adjustmentReason = `Payment adjustment due to cancellation`;
             order.adjustmentCreatedAt = new Date();
 
-            // Try wallet auto-deduction
+            // Check wallet balance but DON'T auto-deduct
+            // Let user confirm first via popup
             const User = (await import('../../models/userModal.js')).default;
-            const WalletTransaction = (await import('../../models/WalletTransaction.js')).default;
-            
             const user = await User.findById(userId);
-            if (user && user.Wallet >= recalcResult.adjustmentAmount) {
-                // Sufficient wallet balance - deduct
-                user.Wallet -= recalcResult.adjustmentAmount;
-                await user.save();
-
-                // Create wallet transaction
-                await WalletTransaction.create({
-                    userId,
-                    amount: recalcResult.adjustmentAmount,
-                    type: 'debit',
-                    balance: user.Wallet,
-                    paymentMethod: 'wallet',
-                    status: 'success',
-                    description: `Payment adjustment for Order #${order.orderNumber}`,
-                    orderId: order._id
-                });
-
-                // Add to payment ledger
-                order.paymentLedger.push({
-                    type: 'wallet_adjustment',
-                    amount: recalcResult.adjustmentAmount,
-                    method: 'wallet',
-                    timestamp: new Date(),
-                    description: 'Auto-deducted from wallet',
-                    transactionId: `WADJ-${Date.now()}`
-                });
-
-                // Clear pending adjustment
-                order.pendingAdjustment = 0;
-                order.adjustmentReason = null;
-            }
+            
+            const hasWalletBalance = user && user.Wallet >= recalcResult.adjustmentAmount;
+            
+            // Store wallet balance info for response
+            recalcResult.hasWalletBalance = hasWalletBalance;
+            recalcResult.walletBalance = user ? user.Wallet : 0;
         }
 
         order.updatedAt = new Date();
@@ -225,6 +199,7 @@ const cancelOrderItemWithCoupon = async (req, res) => {
             message,
             orderStatus: order.orderStatus,
             newTotal: recalcResult.newTotalAmount,
+            requiresWalletConfirmation: recalcResult.action === 'adjustment' && recalcResult.hasWalletBalance,
             data: {
                 orderNumber: order.orderNumber,
                 cancelledItem: {
@@ -238,7 +213,9 @@ const cancelOrderItemWithCoupon = async (req, res) => {
                     newTotal: recalcResult.newTotalAmount,
                     action: recalcResult.action,
                     refundAmount: recalcResult.refundAmount,
-                    adjustmentAmount: recalcResult.adjustmentAmount
+                    adjustmentAmount: recalcResult.adjustmentAmount,
+                    hasWalletBalance: recalcResult.hasWalletBalance,
+                    walletBalance: recalcResult.walletBalance
                 },
                 activeItemsRemaining: recalcResult.activeItemsCount
             }
@@ -488,8 +465,103 @@ const getRecalculationPreview = async (req, res) => {
     }
 };
 
+/**
+ * Confirm wallet deduction for payment adjustment
+ * Called after user confirms in popup
+ */
+const confirmWalletDeduction = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { orderId } = req.body;
+
+        const order = await Order.findOne({ _id: orderId, userId });
+
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: ORDER_MESSAGES.ORDER_NOT_FOUND
+            });
+        }
+
+        if (!order.pendingAdjustment || order.pendingAdjustment <= 0) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'No pending adjustment found'
+            });
+        }
+
+        const User = (await import('../../models/userModal.js')).default;
+        const WalletTransaction = (await import('../../models/WalletTransaction.js')).default;
+        
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        if (user.Wallet < order.pendingAdjustment) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'Insufficient wallet balance'
+            });
+        }
+
+        // Deduct from wallet
+        user.Wallet -= order.pendingAdjustment;
+        await user.save();
+
+        // Create wallet transaction
+        await WalletTransaction.create({
+            userId,
+            amount: order.pendingAdjustment,
+            type: 'debit',
+            balance: user.Wallet,
+            paymentMethod: 'wallet',
+            status: 'success',
+            description: `Payment adjustment for Order #${order.orderNumber}`,
+            orderId: order._id
+        });
+
+        // Add to payment ledger
+        order.paymentLedger.push({
+            type: 'wallet_adjustment',
+            amount: order.pendingAdjustment,
+            method: 'wallet',
+            timestamp: new Date(),
+            description: 'Deducted from wallet after user confirmation',
+            transactionId: `WADJ-${Date.now()}`
+        });
+
+        const adjustedAmount = order.pendingAdjustment;
+
+        // Clear pending adjustment
+        order.pendingAdjustment = 0;
+        order.adjustmentReason = null;
+        order.updatedAt = new Date();
+
+        await order.save();
+
+        res.status(StatusCodes.OK).json({
+            success: true,
+            message: `₹${adjustedAmount} deducted from wallet successfully`,
+            newWalletBalance: user.Wallet
+        });
+
+    } catch (error) {
+        console.error('Confirm wallet deduction error:', error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to process wallet deduction'
+        });
+    }
+};
+
 export default {
     cancelOrderItemWithCoupon,
     approveReturnWithCoupon,
-    getRecalculationPreview
+    getRecalculationPreview,
+    confirmWalletDeduction
 };

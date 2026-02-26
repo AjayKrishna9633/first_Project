@@ -1,46 +1,46 @@
 <!-- Account Sidebar Navigation -->
-<div class="w-64 flex-shrink-0">
-    <div class="space-y-2">
+<div class="w-64 flex-shrink-0 account-sidebar">
+    <div class="space-y-2 sidebar-menu">
      <!-- Orders -->
-<a href="/orders" class="flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'orders' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
+<a href="/orders" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'orders' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
     <i class="fas fa-shopping-bag w-5"></i>
-    <span>Orders</span>
+    <span class="link-text">Orders</span>
 </a>
 
 <!-- Wishlist -->
-<a href="/wishlist" class="flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'wishlist' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
+<a href="/wishlist" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'wishlist' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
     <i class="fas fa-heart w-5"></i>
-    <span>Wishlist</span>
+    <span class="link-text">Wishlist</span>
 </a>
 
 <!-- Address -->
-<a href="/address" class="flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'address' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
+<a href="/address" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'address' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
     <i class="fas fa-map-marker-alt w-5"></i>
-    <span>Address</span>
+    <span class="link-text">Address</span>
 </a>
 
 <!-- Password -->
-<a href="/changePassword" class="flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'password' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
+<a href="/changePassword" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'password' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
     <i class="fas fa-key w-5"></i>
-    <span>Password</span>
+    <span class="link-text">Password</span>
 </a>
 
 <!-- Account Detail -->
-<a href="/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'profile' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
+<a href="/profile" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'profile' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
     <i class="fas fa-user w-5"></i>
-    <span>Account Detail</span>
+    <span class="link-text">Account Detail</span>
 </a>
 
 <!-- Wallet -->
-<a href="/wallet" class="flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'wallet' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
+<a href="/wallet" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition <%= currentPage === 'wallet' ? 'bg-white text-black font-medium' : 'text-white hover:bg-gray-900' %>">
     <i class="fas fa-wallet w-5"></i>
-    <span>Wallet</span>
+    <span class="link-text">Wallet</span>
 </a>
 
 <!-- Logout -->
-<a href="/logout" class="flex items-center gap-3 px-4 py-3 text-white hover:bg-gray-900 rounded-lg transition">
+<a href="/logout" class="sidebar-link flex items-center gap-3 px-4 py-3 text-white hover:bg-gray-900 rounded-lg transition">
     <i class="fas fa-sign-out-alt w-5"></i>
-    <span>Logout</span>
+    <span class="link-text">Logout</span>
 </a>
 
     </div>

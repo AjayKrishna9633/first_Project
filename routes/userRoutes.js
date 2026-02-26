@@ -172,6 +172,7 @@ router.post('/orders/:id/verify-adjustment-payment', protectUser, orderCtrl.veri
 
 // Coupon-safe cancellation routes
 router.get('/orders/:orderId/items/:itemId/cancel-preview', protectUser, couponSafeCancellation.getRecalculationPreview);
+router.post('/orders/confirm-wallet-deduction', protectUser, couponSafeCancellation.confirmWalletDeduction);
 router.get('/orders/pending-adjustments', protectUser, orderCtrl.getPendingAdjustments);
 
 //wallet routes

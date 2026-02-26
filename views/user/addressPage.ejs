@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/public/css/text-wrap.css">
+    <link rel="stylesheet" href="/public/css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- Address Form Validation -->
@@ -23,6 +24,31 @@
         /* Ensure long strings without spaces also break */
         .break-anywhere {
             overflow-wrap: anywhere;
+        }
+
+        /* Mobile responsive fixes for address page */
+        @media (max-width: 768px) {
+            .address-container {
+                flex-direction: column !important;
+                gap: 0 !important;
+            }
+            .address-sidebar {
+                width: 100% !important;
+                margin-bottom: 1.5rem;
+            }
+            .address-content {
+                width: 100%;
+            }
+            /* Stack address cards on mobile */
+            .address-content > div:first-child {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 1rem !important;
+            }
+            .address-content > div:first-child button {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -44,12 +70,14 @@
 
     <!-- Main Content -->
    <div class="max-w-7xl mx-auto px-6 py-12">
-    <div class="flex gap-8">
+    <div class="flex gap-8 address-container">
         <!-- Sidebar -->
+        <div class="address-sidebar">
         <%- include('../partials/sidebar', { currentPage: 'address' }) %>
+        </div>
 
             <!-- Address Content -->
-            <div class="flex-1">
+            <div class="flex-1 address-content">
                 <div class="flex items-center justify-between mb-6">
                     <div>
                         <h2 class="text-2xl font-bold">Shipping Address</h2>
