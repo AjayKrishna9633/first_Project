@@ -46,7 +46,7 @@
     .flex.items-center.justify-between.mb-6 {
         flex-direction: column !important;
         align-items: stretch !important;
-        gap: 0.75rem !important;
+        gap: 0 !important;
     }
     
     /* Search and filter container */
@@ -54,21 +54,28 @@
         width: 100%;
         flex-direction: column !important;
         gap: 0 !important;
+        margin-bottom: 0.75rem;
     }
     
-    /* Search form - full width */
+    /* Search form - full width, no margin */
     .flex.items-center.justify-between.mb-6 form {
         width: 100%;
-        margin-bottom: 0.75rem;
+        margin: 0;
     }
     
     /* Search input - full width */
     .flex.items-center.justify-between.mb-6 input[type="text"] {
         width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Search relative container */
+    .flex.items-center.justify-between.mb-6 .relative {
+        width: 100% !important;
     }
     
     /* Hide desktop filter button on mobile */
-    .flex.items-center.justify-between.mb-6 button[onclick="openFilterModal()"] {
+    .flex.items-center.justify-between.mb-6 > div:first-child > button[onclick="openFilterModal()"] {
         display: none !important;
     }
     
@@ -85,10 +92,10 @@
         border-top: 1px solid rgba(75, 85, 99, 0.5);
         border-bottom: 1px solid rgba(75, 85, 99, 0.5);
         width: calc(100% + 3rem);
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
+        display: flex !important;
+        flex-direction: row !important;
         gap: 0.5rem !important;
-        flex-direction: row-reverse !important;
+        justify-content: space-between !important;
     }
     
     /* Hide "SORT BY:" label on mobile */
@@ -96,20 +103,24 @@
         display: none !important;
     }
     
-    /* Sort select - right side */
+    /* Sort select - right side, 50% */
     .flex.items-center.justify-between.mb-6 select {
         width: 100%;
+        flex: 1;
         padding: 0.625rem 0.75rem;
         font-size: 0.875rem;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M7 10l5 5 5-5'/%3E%3C/svg%3E");
+        background-image: none !important;
         background-repeat: no-repeat;
         background-position: right 0.5rem center;
         background-size: 1.25rem;
-        padding-right: 2rem;
+        padding-right: 0.75rem;
         order: 2;
+        appearance: auto;
+        -webkit-appearance: menulist;
+        -moz-appearance: menulist;
     }
     
-    /* Mobile filter button - left side */
+    /* Mobile filter button - left side, 50% */
     .mobile-filter-btn {
         display: flex !important;
         align-items: center;
@@ -125,6 +136,8 @@
         transition: all 0.2s;
         border: none;
         order: 1;
+        flex: 1;
+        white-space: nowrap;
     }
     
     .mobile-filter-btn:hover {
@@ -146,6 +159,115 @@
 /* Hide mobile filter button on desktop */
 .mobile-filter-btn {
     display: none;
+}
+
+/* Mobile Filter Modal - Compact Design */
+@media (max-width: 768px) {
+    /* Modal container - full screen on mobile */
+    #filterModal .relative.z-10 {
+        padding: 0 !important;
+        align-items: flex-start !important;
+    }
+    
+    /* Modal content - full width, compact */
+    #filterModal .bg-gray-900 {
+        max-width: 100% !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Modal header - compact */
+    #filterModal .flex.items-center.justify-between.p-6 {
+        padding: 1rem !important;
+        border-bottom: 1px solid rgba(75, 85, 99, 0.5) !important;
+    }
+    
+    #filterModal .flex.items-center.justify-between.p-6 h2 {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+    }
+    
+    #filterModal .flex.items-center.justify-between.p-6 button i {
+        font-size: 1.125rem !important;
+    }
+    
+    /* Form container - compact padding */
+    #filterModal form.p-6 {
+        padding: 1rem !important;
+    }
+    
+    /* Section spacing - reduce margins */
+    #filterModal .mb-6 {
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Section headings - smaller */
+    #filterModal h3 {
+        font-size: 0.75rem !important;
+        margin-bottom: 0.5rem !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Radio/checkbox options - compact */
+    #filterModal .space-y-2 {
+        gap: 0.25rem !important;
+    }
+    
+    #filterModal label.flex.items-center {
+        padding: 0.5rem !important;
+        font-size: 0.8125rem !important;
+    }
+    
+    #filterModal label.flex.items-center span {
+        font-size: 0.8125rem !important;
+    }
+    
+    /* Radio buttons - smaller */
+    #filterModal input[type="radio"] {
+        width: 1rem !important;
+        height: 1rem !important;
+    }
+    
+    /* Color swatches - smaller */
+    #filterModal .w-5.h-5 {
+        width: 1rem !important;
+        height: 1rem !important;
+        margin-left: 0.5rem !important;
+    }
+    
+    /* Price inputs - compact */
+    #filterModal .grid.grid-cols-2 {
+        gap: 0.5rem !important;
+    }
+    
+    #filterModal input[type="number"] {
+        padding: 0.5rem !important;
+        font-size: 0.8125rem !important;
+    }
+    
+    #filterModal label.block.text-xs {
+        font-size: 0.6875rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+    
+    #filterModal .text-xs.text-gray-500 {
+        font-size: 0.6875rem !important;
+    }
+    
+    /* Action buttons - compact */
+    #filterModal .flex.gap-3.pt-4 {
+        padding-top: 0.75rem !important;
+        gap: 0.5rem !important;
+        margin-top: 0.5rem !important;
+    }
+    
+    #filterModal button[type="submit"],
+    #filterModal a[href="/shop"] {
+        padding: 0.625rem 1rem !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+    }
 }
 </style>
     <script src="https://cdn.tailwindcss.com"></script>
