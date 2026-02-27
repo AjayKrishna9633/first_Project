@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/public/css/text-wrap.css">
+    <link rel="stylesheet" href="/public/css/admin-responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         .stat-card {
@@ -19,6 +20,64 @@
         .chart-container {
             position: relative;
             height: 100px;
+        }
+        
+        /* Dashboard Mobile Fixes */
+        @media (max-width: 768px) {
+            /* Fix stat cards - prevent text wrapping */
+            .stat-card {
+                min-width: 280px !important;
+            }
+            
+            .stat-card p,
+            .stat-card span,
+            .stat-card div {
+                white-space: normal !important;
+                word-wrap: break-word !important;
+            }
+            
+            /* Stat card layout - stack vertically */
+            .stat-card > div:first-child {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+            }
+            
+            .stat-card .text-right {
+                text-align: left !important;
+                margin-top: 0.75rem !important;
+            }
+            
+            /* Filter form - better mobile layout */
+            .bg-white.rounded-xl.shadow-sm.border.border-gray-100.p-6.mb-8 form {
+                gap: 0.75rem !important;
+            }
+            
+            .bg-white.rounded-xl.shadow-sm.border.border-gray-100.p-6.mb-8 form > div {
+                min-width: 100% !important;
+            }
+            
+            /* Best selling section - compact */
+            .space-y-4 > div {
+                margin-bottom: 1rem !important;
+            }
+            
+            /* Chart containers - smaller on mobile */
+            .chart-container {
+                height: 80px !important;
+            }
+            
+            /* Category chart - smaller */
+            div[style*="width: 180px"] {
+                width: 140px !important;
+                height: 140px !important;
+            }
+        }
+        
+        /* Tablet adjustments */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .stat-card {
+                min-width: 220px !important;
+            }
         }
     </style>
 </head>

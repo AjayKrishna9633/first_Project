@@ -156,7 +156,8 @@ const calculateSalesMetrics = async (dateFilter) => {
 
 const getSalesReport = async (req, res) => {
     try {
-        const { startDate, endDate, period } = req.query;
+        const { startDate, endDate } = req.query;
+        const period = req.query.period || 'yearly'; // Default to yearly
         const page = parseInt(req.query.page) || 1;
         const refundPage = parseInt(req.query.refundPage) || 1;
         const limit = 10;

@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/public/css/text-wrap.css">
+    <link rel="stylesheet" href="/public/css/admin-responsive.css">
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
@@ -339,18 +340,71 @@
                         <!-- Refund Pagination -->
                         <% if (totalRefundPages > 1) { %>
                             <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                                <div class="flex-1 flex justify-between sm:hidden">
+                                <div class="flex-1 flex justify-center items-center gap-2 sm:hidden">
+                                    <!-- Previous Button -->
                                     <% if (refundPage > 1) { %>
                                         <a href="?page=<%= currentPage %>&refundPage=<%= refundPage - 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
-                                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                            Previous
+                                           class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    <% } else { %>
+                                        <span class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-100 cursor-not-allowed">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </span>
+                                    <% } %>
+                                    
+                                    <%
+                                        const showFirstRefund = refundPage > 2;
+                                        const showLastRefund = refundPage < totalRefundPages - 1;
+                                    %>
+                                    
+                                    <% if (showFirstRefund) { %>
+                                        <a href="?page=<%= currentPage %>&refundPage=1&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                           class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                            1
+                                        </a>
+                                        <% if (refundPage > 3) { %>
+                                            <span class="text-gray-500 px-1">...</span>
+                                        <% } %>
+                                    <% } %>
+                                    
+                                    <% if (refundPage > 1 && refundPage !== 2) { %>
+                                        <a href="?page=<%= currentPage %>&refundPage=<%= refundPage - 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                           class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                            <%= refundPage - 1 %>
                                         </a>
                                     <% } %>
+                                    
+                                    <span class="inline-flex items-center justify-center w-10 h-10 border-2 border-gray-800 text-sm font-bold rounded-md text-white bg-gray-800">
+                                        <%= refundPage %>
+                                    </span>
+                                    
+                                    <% if (refundPage < totalRefundPages && refundPage !== totalRefundPages - 1) { %>
+                                        <a href="?page=<%= currentPage %>&refundPage=<%= refundPage + 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                           class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                            <%= refundPage + 1 %>
+                                        </a>
+                                    <% } %>
+                                    
+                                    <% if (showLastRefund) { %>
+                                        <% if (refundPage < totalRefundPages - 2) { %>
+                                            <span class="text-gray-500 px-1">...</span>
+                                        <% } %>
+                                        <a href="?page=<%= currentPage %>&refundPage=<%= totalRefundPages %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                           class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                            <%= totalRefundPages %>
+                                        </a>
+                                    <% } %>
+                                    
                                     <% if (refundPage < totalRefundPages) { %>
                                         <a href="?page=<%= currentPage %>&refundPage=<%= refundPage + 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
-                                           class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                            Next
+                                           class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                            <i class="fas fa-chevron-right"></i>
                                         </a>
+                                    <% } else { %>
+                                        <span class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-100 cursor-not-allowed">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </span>
                                     <% } %>
                                 </div>
                                 <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
@@ -404,18 +458,71 @@
                 <!-- Pagination -->
                 <% if (totalPages > 1) { %>
                     <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-lg shadow">
-                        <div class="flex-1 flex justify-between sm:hidden">
+                        <div class="flex-1 flex justify-center items-center gap-2 sm:hidden">
+                            <!-- Previous Button -->
                             <% if (currentPage > 1) { %>
                                 <a href="?page=<%= currentPage - 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
-                                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                    Previous
+                                   class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            <% } else { %>
+                                <span class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-100 cursor-not-allowed">
+                                    <i class="fas fa-chevron-left"></i>
+                                </span>
+                            <% } %>
+                            
+                            <%
+                                const showFirst = currentPage > 2;
+                                const showLast = currentPage < totalPages - 1;
+                            %>
+                            
+                            <% if (showFirst) { %>
+                                <a href="?page=1&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                   class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    1
+                                </a>
+                                <% if (currentPage > 3) { %>
+                                    <span class="text-gray-500 px-1">...</span>
+                                <% } %>
+                            <% } %>
+                            
+                            <% if (currentPage > 1 && currentPage !== 2) { %>
+                                <a href="?page=<%= currentPage - 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                   class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <%= currentPage - 1 %>
                                 </a>
                             <% } %>
+                            
+                            <span class="inline-flex items-center justify-center w-10 h-10 border-2 border-gray-800 text-sm font-bold rounded-md text-white bg-gray-800">
+                                <%= currentPage %>
+                            </span>
+                            
+                            <% if (currentPage < totalPages && currentPage !== totalPages - 1) { %>
+                                <a href="?page=<%= currentPage + 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                   class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <%= currentPage + 1 %>
+                                </a>
+                            <% } %>
+                            
+                            <% if (showLast) { %>
+                                <% if (currentPage < totalPages - 2) { %>
+                                    <span class="text-gray-500 px-1">...</span>
+                                <% } %>
+                                <a href="?page=<%= totalPages %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
+                                   class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <%= totalPages %>
+                                </a>
+                            <% } %>
+                            
                             <% if (currentPage < totalPages) { %>
                                 <a href="?page=<%= currentPage + 1 %>&period=<%= period %>&startDate=<%= startDate %>&endDate=<%= endDate %>" 
-                                   class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                    Next
+                                   class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-chevron-right"></i>
                                 </a>
+                            <% } else { %>
+                                <span class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-100 cursor-not-allowed">
+                                    <i class="fas fa-chevron-right"></i>
+                                </span>
                             <% } %>
                         </div>
                         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">

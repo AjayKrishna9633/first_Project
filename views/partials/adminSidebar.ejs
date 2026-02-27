@@ -1,5 +1,5 @@
 <!-- Admin Sidebar -->
-<aside class="w-64 bg-white min-h-screen shadow-lg border-r border-gray-200">
+<aside class="w-64 bg-white min-h-screen shadow-lg border-r border-gray-200" id="adminSidebar">
     <div class="p-6 border-b border-gray-200">
         <h2 class="text-xl font-bold text-gray-800">Admin Panel</h2>
         <p class="text-xs text-gray-500 mt-1">Manage your store</p>
@@ -88,3 +88,50 @@
         }
     </style>
 </aside>
+
+<!-- Mobile Menu Button -->
+<button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+</button>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileMenu()"></div>
+
+<script>
+    function toggleMobileMenu() {
+        const sidebar = document.getElementById('adminSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+        
+        // Prevent body scroll when menu is open
+        if (sidebar.classList.contains('mobile-open')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+    }
+    
+    // Close menu when clicking on a link
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                toggleMobileMenu();
+            }
+        });
+    });
+    
+    // Close menu on window resize if opened
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    });
+</script>

@@ -83,7 +83,7 @@ const getDashboard = async (req, res) => {
         const admin = req.session.admin;
         
         // Get filter parameters
-        const period = req.query.period || 'daily'; // daily, weekly, monthly, yearly
+        const period = req.query.period || 'yearly'; // daily, weekly, monthly, yearly
         const specificDate = req.query.date; // For daily: specific date (YYYY-MM-DD)
         const specificMonth = req.query.month; // For monthly: specific month (YYYY-MM)
         const specificYear = req.query.year; // For yearly: specific year (YYYY)
