@@ -68,7 +68,7 @@ router.get('/home', protectUser, userCtrl.loadhomePage);
 
 //  PROFILE ROUTES 
 router.get('/profile', protectUser, userCtrl.getProfile);
-router.patch('/profile', protectUser, userCtrl.updateProfile);
+router.post('/profile', protectUser, userCtrl.updateProfile);
 //profile reset  password
 
 router.get('/changePassword', protectUser, userCtrl.getChangePassword)
