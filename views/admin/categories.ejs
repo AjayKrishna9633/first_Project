@@ -138,7 +138,7 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-600">
-                                            <%= new Date(category.createdAt).toLocaleDateString() %>
+                                            <%= new Date(category.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center justify-center gap-2">

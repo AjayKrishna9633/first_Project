@@ -93,24 +93,36 @@ const getAddProduct = async(req,res)=>{
             const { productName, description, category, variants } = req.body;
 
             console.log(variants)
-            // Validate basic fields
-            if (!productName || !description || !category) {
+            
+            // Validate product name
+            if (!productName || productName.trim().length < 3 || productName.trim().length > 100) {
                 const categories = await Category.find({ isListed: true });
                 return res.render('admin/addProduct', {
                     categories,
                     admin: req.session.admin,
-                    message: 'Product name, description, and category are required',
+                    message: 'Product name must be between 3 and 100 characters',
                     isError: true
                 });
             }
-
-            // Validate description length
-            if (description.trim().length < 10 || description.trim().length > 1000) {
+            
+            // Validate description
+            if (!description || description.trim().length < 10 || description.trim().length > 1000) {
                 const categories = await Category.find({ isListed: true });
                 return res.render('admin/addProduct', {
                     categories,
                     admin: req.session.admin,
                     message: 'Description must be between 10 and 1000 characters',
+                    isError: true
+                });
+            }
+            
+            // Validate category
+            if (!category) {
+                const categories = await Category.find({ isListed: true });
+                return res.render('admin/addProduct', {
+                    categories,
+                    admin: req.session.admin,
+                    message: 'Please select a category',
                     isError: true
                 });
             }
@@ -185,8 +197,63 @@ const getAddProduct = async(req,res)=>{
                     });
                 }
 
+                // Validate color is not just special characters
+                if (color.trim().length < 2 || /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color.trim())) {
+                    // Rollback: delete the created product
+                    await Product.findByIdAndDelete(product._id);
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/addProduct', {
+                        categories,
+                        admin: req.session.admin,
+                        message: `Variant ${parseInt(index) + 1}: Invalid color "${color}". Please enter a proper color name (e.g., Black, White, Red)`,
+                        isError: true
+                    });
+                }
+                
+                // Validate stock quantity
+                const parsedQuantity = parseInt(quantity);
+                if (isNaN(parsedQuantity) || parsedQuantity < 0 || parsedQuantity > 10000) {
+                    // Rollback: delete the created product
+                    await Product.findByIdAndDelete(product._id);
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/addProduct', {
+                        categories,
+                        admin: req.session.admin,
+                        message: `Variant ${parseInt(index) + 1}: Stock quantity must be between 0 and 10000`,
+                        isError: true
+                    });
+                }
+                
+                // Validate regular price
+                const parsedRegularPrice = parseFloat(regularPrice);
+                if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0 || parsedRegularPrice > 1000000) {
+                    // Rollback: delete the created product
+                    await Product.findByIdAndDelete(product._id);
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/addProduct', {
+                        categories,
+                        admin: req.session.admin,
+                        message: `Variant ${parseInt(index) + 1}: Regular price must be between 1 and 1000000`,
+                        isError: true
+                    });
+                }
+                
+                // Validate sale price
+                const parsedSalePrice = parseFloat(salePrice);
+                if (isNaN(parsedSalePrice) || parsedSalePrice <= 0 || parsedSalePrice > 1000000) {
+                    // Rollback: delete the created product
+                    await Product.findByIdAndDelete(product._id);
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/addProduct', {
+                        categories,
+                        admin: req.session.admin,
+                        message: `Variant ${parseInt(index) + 1}: Sale price must be between 1 and 1000000`,
+                        isError: true
+                    });
+                }
+
                 // Validate sale price <= regular price
-                if (parseFloat(salePrice) > parseFloat(regularPrice)) {
+                if (parsedSalePrice > parsedRegularPrice) {
                     // Rollback: delete the created product
                     await Product.findByIdAndDelete(product._id);
                     const categories = await Category.find({ isListed: true });
@@ -201,15 +268,28 @@ const getAddProduct = async(req,res)=>{
                
                 const variantImages = variantFilesMap[index] || [];
 
-                if (variantImages.length === 0) {
-                  
+                // Validate minimum 3 images per variant
+                if (variantImages.length < 3) {
                     await Product.findByIdAndDelete(product._id);
                     await Variant.deleteMany({ productId: product._id });
                     const categories = await Category.find({ isListed: true });
                     return res.render('admin/addProduct', {
                         categories,
                         admin: req.session.admin,
-                        message: `Variant ${parseInt(index) + 1}: At least one image is required`,
+                        message: `Variant ${parseInt(index) + 1}: Minimum 3 images required (currently: ${variantImages.length})`,
+                        isError: true
+                    });
+                }
+                
+                // Validate maximum 5 images per variant
+                if (variantImages.length > 5) {
+                    await Product.findByIdAndDelete(product._id);
+                    await Variant.deleteMany({ productId: product._id });
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/addProduct', {
+                        categories,
+                        admin: req.session.admin,
+                        message: `Variant ${parseInt(index) + 1}: Maximum 5 images allowed (currently: ${variantImages.length})`,
                         isError: true
                     });
                 }
@@ -305,6 +385,42 @@ const updateProduct = async (req, res) => {
             return res.redirect('/admin/products');
         }
 
+        // Validate product name
+        if (!productName || productName.trim().length < 3 || productName.trim().length > 100) {
+            const categories = await Category.find({ isListed: true });
+            return res.render('admin/editProduct', {
+                product,
+                categories,
+                admin: req.session.admin,
+                message: 'Product name must be between 3 and 100 characters',
+                isError: true
+            });
+        }
+        
+        // Validate description
+        if (!description || description.trim().length < 10 || description.trim().length > 1000) {
+            const categories = await Category.find({ isListed: true });
+            return res.render('admin/editProduct', {
+                product,
+                categories,
+                admin: req.session.admin,
+                message: 'Description must be between 10 and 1000 characters',
+                isError: true
+            });
+        }
+        
+        // Validate category
+        if (!category) {
+            const categories = await Category.find({ isListed: true });
+            return res.render('admin/editProduct', {
+                product,
+                categories,
+                admin: req.session.admin,
+                message: 'Please select a category',
+                isError: true
+            });
+        }
+
         // Update basic product info
         product.productName = productName;
         product.description = description;
@@ -357,8 +473,59 @@ const updateProduct = async (req, res) => {
                 
                 const variant = await Variant.findById(variantId);
                 if (variant) {
+                    // Validate color is not just special characters
+                    if (color.trim().length < 2 || /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color.trim())) {
+                        const categories = await Category.find({ isListed: true });
+                        return res.render('admin/editProduct', {
+                            product,
+                            categories,
+                            admin: req.session.admin,
+                            message: `Variant: Invalid color "${color}". Please enter a proper color name (e.g., Black, White, Red)`,
+                            isError: true
+                        });
+                    }
+                    
+                    // Validate stock quantity
+                    const parsedQuantity = parseInt(quantity);
+                    if (isNaN(parsedQuantity) || parsedQuantity < 0 || parsedQuantity > 10000) {
+                        const categories = await Category.find({ isListed: true });
+                        return res.render('admin/editProduct', {
+                            product,
+                            categories,
+                            admin: req.session.admin,
+                            message: `Variant "${color}": Stock quantity must be between 0 and 10000`,
+                            isError: true
+                        });
+                    }
+                    
+                    // Validate regular price
+                    const parsedRegularPrice = parseFloat(regularPrice);
+                    if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0 || parsedRegularPrice > 1000000) {
+                        const categories = await Category.find({ isListed: true });
+                        return res.render('admin/editProduct', {
+                            product,
+                            categories,
+                            admin: req.session.admin,
+                            message: `Variant "${color}": Regular price must be between 1 and 1000000`,
+                            isError: true
+                        });
+                    }
+                    
+                    // Validate sale price
+                    const parsedSalePrice = parseFloat(salePrice);
+                    if (isNaN(parsedSalePrice) || parsedSalePrice <= 0 || parsedSalePrice > 1000000) {
+                        const categories = await Category.find({ isListed: true });
+                        return res.render('admin/editProduct', {
+                            product,
+                            categories,
+                            admin: req.session.admin,
+                            message: `Variant "${color}": Sale price must be between 1 and 1000000`,
+                            isError: true
+                        });
+                    }
+                    
                     // Validate sale price <= regular price
-                    if (parseFloat(salePrice) > parseFloat(regularPrice)) {
+                    if (parsedSalePrice > parsedRegularPrice) {
                         const categories = await Category.find({ isListed: true });
                         return res.render('admin/editProduct', {
                             product,
@@ -370,9 +537,9 @@ const updateProduct = async (req, res) => {
                     }
                     
                     variant.color = color;
-                    variant.quantity = parseInt(quantity);
-                    variant.regularPrice = parseFloat(regularPrice);
-                    variant.salePrice = parseFloat(salePrice);
+                    variant.quantity = parsedQuantity;
+                    variant.regularPrice = parsedRegularPrice;
+                    variant.salePrice = parsedSalePrice;
                     
                     // Handle removed images
                     if (removedImages && removedImages.trim() !== '') {
@@ -385,21 +552,33 @@ const updateProduct = async (req, res) => {
                         variant.images = [...variant.images, ...existingVariantFilesMap[variantId]];
                     }
                     
-                    // Validate that variant has at least one image
-                    if (variant.images.length === 0) {
+                    // Validate minimum 3 images (after adding new and removing old)
+                    if (variant.images.length < 3) {
                         const categories = await Category.find({ isListed: true });
                         return res.render('admin/editProduct', {
                             product,
                             categories,
                             admin: req.session.admin,
-                            message: `Variant "${color}" must have at least one image`,
+                            message: `Variant "${color}": Minimum 3 images required. Currently has ${variant.images.length} image(s). Please add ${3 - variant.images.length} more image(s).`,
+                            isError: true
+                        });
+                    }
+                    
+                    // Validate maximum 5 images (after adding new and removing old)
+                    if (variant.images.length > 5) {
+                        const categories = await Category.find({ isListed: true });
+                        return res.render('admin/editProduct', {
+                            product,
+                            categories,
+                            admin: req.session.admin,
+                            message: `Variant "${color}": Maximum 5 images allowed. Currently has ${variant.images.length} image(s). Please remove ${variant.images.length - 5} image(s).`,
                             isError: true
                         });
                     }
                     
                     await variant.save();
                     variantIds.push(variant._id);
-                    totalQuantity += parseInt(quantity);
+                    totalQuantity += parsedQuantity;
                 }
             }
         }
@@ -413,8 +592,59 @@ const updateProduct = async (req, res) => {
                     continue; // Skip incomplete variants
                 }
 
+                // Validate color is not just special characters
+                if (color.trim().length < 2 || /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color.trim())) {
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/editProduct', {
+                        product,
+                        categories,
+                        admin: req.session.admin,
+                        message: `New Variant: Invalid color "${color}". Please enter a proper color name (e.g., Black, White, Red)`,
+                        isError: true
+                    });
+                }
+                
+                // Validate stock quantity
+                const parsedQuantity = parseInt(quantity);
+                if (isNaN(parsedQuantity) || parsedQuantity < 0 || parsedQuantity > 10000) {
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/editProduct', {
+                        product,
+                        categories,
+                        admin: req.session.admin,
+                        message: `New Variant "${color}": Stock quantity must be between 0 and 10000`,
+                        isError: true
+                    });
+                }
+                
+                // Validate regular price
+                const parsedRegularPrice = parseFloat(regularPrice);
+                if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0 || parsedRegularPrice > 1000000) {
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/editProduct', {
+                        product,
+                        categories,
+                        admin: req.session.admin,
+                        message: `New Variant "${color}": Regular price must be between 1 and 1000000`,
+                        isError: true
+                    });
+                }
+                
+                // Validate sale price
+                const parsedSalePrice = parseFloat(salePrice);
+                if (isNaN(parsedSalePrice) || parsedSalePrice <= 0 || parsedSalePrice > 1000000) {
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/editProduct', {
+                        product,
+                        categories,
+                        admin: req.session.admin,
+                        message: `New Variant "${color}": Sale price must be between 1 and 1000000`,
+                        isError: true
+                    });
+                }
+
                 // Validate sale price <= regular price
-                if (parseFloat(salePrice) > parseFloat(regularPrice)) {
+                if (parsedSalePrice > parsedRegularPrice) {
                     const categories = await Category.find({ isListed: true });
                     return res.render('admin/editProduct', {
                         product,
@@ -427,22 +657,42 @@ const updateProduct = async (req, res) => {
 
                 const variantImages = variantFilesMap[index] || [];
 
-                if (variantImages.length === 0) {
-                    continue; // Skip variants without images
+                // Validate minimum 3 images
+                if (variantImages.length < 3) {
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/editProduct', {
+                        product,
+                        categories,
+                        admin: req.session.admin,
+                        message: `New Variant "${color}": Minimum 3 images required (currently: ${variantImages.length})`,
+                        isError: true
+                    });
+                }
+                
+                // Validate maximum 5 images
+                if (variantImages.length > 5) {
+                    const categories = await Category.find({ isListed: true });
+                    return res.render('admin/editProduct', {
+                        product,
+                        categories,
+                        admin: req.session.admin,
+                        message: `New Variant "${color}": Maximum 5 images allowed (currently: ${variantImages.length})`,
+                        isError: true
+                    });
                 }
 
                 const variant = new Variant({
                     productId: product._id,
                     color,
-                    quantity: parseInt(quantity),
-                    regularPrice: parseFloat(regularPrice),
-                    salePrice: parseFloat(salePrice),
+                    quantity: parsedQuantity,
+                    regularPrice: parsedRegularPrice,
+                    salePrice: parsedSalePrice,
                     images: variantImages
                 });
 
                 await variant.save();
                 variantIds.push(variant._id);
-                totalQuantity += parseInt(quantity);
+                totalQuantity += parsedQuantity;
             }
         }
 

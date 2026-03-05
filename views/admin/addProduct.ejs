@@ -84,10 +84,12 @@
                             <input 
                                 type="text" 
                                 name="productName" 
+                                id="productName"
                                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
                                 placeholder="e.g., Gaming Keyboard RGB"
                             >
                             <p class="text-xs text-gray-500 mt-1">3-100 characters</p>
+                            <p class="text-xs text-red-600 mt-1 hidden" id="productName-error"></p>
                         </div>
 
                         <!-- Description -->
@@ -95,11 +97,13 @@
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
                             <textarea 
                                 name="description" 
+                                id="description"
                                 rows="4"
                                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition resize-none"
                                 placeholder="Describe your product features, specifications, and benefits..."
                             ></textarea>
                             <p class="text-xs text-gray-500 mt-1">10-1000 characters</p>
+                            <p class="text-xs text-red-600 mt-1 hidden" id="description-error"></p>
                         </div>
 
                         <!-- Category -->
@@ -107,6 +111,7 @@
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
                             <select 
                                 name="category" 
+                                id="category"
                                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
                             >
                                 <option value="">Select a category</option>
@@ -114,6 +119,7 @@
                                     <option value="<%= category._id %>"><%= category.name %></option>
                                 <% }); %>
                             </select>
+                            <p class="text-xs text-red-600 mt-1 hidden" id="category-error"></p>
                         </div>
                     </div>
 
@@ -157,9 +163,12 @@
                                         <input 
                                             type="text" 
                                             name="variants[0][color]" 
+                                            data-color
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                             placeholder="e.g., Black, White, Red"
                                         >
+                                        <p class="color-error text-xs text-red-600 mt-1 hidden"></p>
+                                        <p class="text-xs text-gray-500 mt-1">Enter color name (e.g., Black, Red)</p>
                                     </div>
 
                                     <div>
@@ -202,7 +211,7 @@
 
                                 <!-- Variant Images -->
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-2">Variant Images * (Max 5)</label>
+                                    <label class="block text-xs font-medium text-gray-700 mb-2">Variant Images * (Min 3, Max 5)</label>
                                     <input 
                                         type="file" 
                                         multiple
@@ -218,7 +227,7 @@
                                     >
                                         <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
                                         <p class="text-xs text-gray-600 mb-1">Click to upload and crop images</p>
-                                        <p class="text-xs text-gray-500">PNG, JPG, WEBP (Max 5 images, 5MB each)</p>
+                                        <p class="text-xs text-gray-500">PNG, JPG, WEBP (Min 3, Max 5 images, 5MB each)</p>
                                     </button>
                                     <div id="imagePreview0" class="grid grid-cols-5 gap-2 mt-3"></div>
                                 </div>
@@ -294,6 +303,9 @@
             container.insertAdjacentHTML('beforeend', variantHTML);
             croppedFiles[variantIndex] = [];
             variantCount++;
+            
+            // Update submit button state
+            updateSubmitButtonState();
         }
 
         // Create Variant HTML Template
@@ -318,12 +330,15 @@
                             <input 
                                 type="text" 
                                 name="variants[${variantIndex}][color]" 
+                                data-color
                                 required
                                 minlength="2"
                                 maxlength="30"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                 placeholder="e.g., Black, White, Red"
                             >
+                            <p class="color-error text-xs text-red-600 mt-1 hidden"></p>
+                            <p class="text-xs text-gray-500 mt-1">Enter color name</p>
                         </div>
 
                         <div>
@@ -374,7 +389,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-2">Variant Images * (Max 5)</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-2">Variant Images * (Min 3, Max 5)</label>
                         <input 
                             type="file" 
                             multiple
@@ -390,7 +405,7 @@
                         >
                             <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
                             <p class="text-xs text-gray-600 mb-1">Click to upload and crop images</p>
-                            <p class="text-xs text-gray-500">PNG, JPG, WEBP (Max 5 images, 5MB each)</p>
+                            <p class="text-xs text-gray-500">PNG, JPG, WEBP (Min 3, Max 5 images, 5MB each)</p>
                         </button>
                         <div id="imagePreview${variantIndex}" class="grid grid-cols-5 gap-2 mt-3"></div>
                     </div>
@@ -419,6 +434,9 @@
             variantItem.remove();
             
             updateVariantNumbers();
+            
+            // Update submit button state
+            updateSubmitButtonState();
         }
 
         // Update Variant Numbers
@@ -730,6 +748,161 @@
                 };
                 reader.readAsDataURL(file);
             });
+            
+            // Show feedback message about image count
+            showImageCountFeedback(currentVariantIndex, files.length);
+        }
+        
+        // Show image count feedback
+        function showImageCountFeedback(variantIndex, count) {
+            const variantItem = document.querySelector(`[data-variant-index="${variantIndex}"]`);
+            if (!variantItem) return;
+            
+            // Remove existing feedback
+            const existingFeedback = variantItem.querySelector('.image-count-feedback');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+            
+            // Create feedback message
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = 'image-count-feedback mt-2 p-2 rounded-lg text-sm font-medium';
+            
+            if (count < 3) {
+                feedbackDiv.className += ' bg-red-50 text-red-700 border border-red-200';
+                feedbackDiv.innerHTML = `
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    Need ${3 - count} more image(s). Minimum 3 images required. (Currently: ${count})
+                `;
+            } else if (count >= 3 && count < 5) {
+                feedbackDiv.className += ' bg-green-50 text-green-700 border border-green-200';
+                feedbackDiv.innerHTML = `
+                    <i class="fas fa-check-circle mr-1"></i>
+                    ${count} images added. You can add ${5 - count} more. (Min: 3, Max: 5)
+                `;
+            } else {
+                feedbackDiv.className += ' bg-blue-50 text-blue-700 border border-blue-200';
+                feedbackDiv.innerHTML = `
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Maximum 5 images reached.
+                `;
+            }
+            
+            // Insert after the preview container
+            const preview = document.getElementById(`imagePreview${variantIndex}`);
+            if (preview && preview.parentElement) {
+                preview.parentElement.appendChild(feedbackDiv);
+            }
+            
+            // Update submit button state
+            updateSubmitButtonState();
+        }
+        
+        // Check if form is valid and update submit button
+        function updateSubmitButtonState() {
+            const submitBtn = document.getElementById('submitBtn');
+            if (!submitBtn) return;
+            
+            let hasErrors = false;
+            let errorMessage = '';
+            
+            // Check product name
+            const productNameInput = document.getElementById('productName');
+            if (productNameInput) {
+                const value = productNameInput.value.trim();
+                if (value.length > 0 && value.length < 3) {
+                    hasErrors = true;
+                    errorMessage = 'Product name must be at least 3 characters';
+                }
+            }
+            
+            // Check description
+            if (!hasErrors) {
+                const descriptionInput = document.getElementById('description');
+                if (descriptionInput) {
+                    const value = descriptionInput.value.trim();
+                    if (value.length > 0 && value.length < 10) {
+                        hasErrors = true;
+                        errorMessage = 'Description must be at least 10 characters';
+                    }
+                }
+            }
+            
+            // Check category
+            if (!hasErrors) {
+                const categoryInput = document.getElementById('category');
+                if (categoryInput && !categoryInput.value) {
+                    hasErrors = true;
+                    errorMessage = 'Please select a category';
+                }
+            }
+            
+            // Check variants for color validation
+            if (!hasErrors) {
+                const variantItems = document.querySelectorAll('.variant-item');
+                for (let item of variantItems) {
+                    const colorInput = item.querySelector('[data-color]');
+                    if (colorInput) {
+                        const color = colorInput.value.trim();
+                        if (color.length > 0 && color.length < 2) {
+                            hasErrors = true;
+                            errorMessage = 'All colors must be at least 2 characters';
+                            break;
+                        }
+                        if (color.length >= 2 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color)) {
+                            hasErrors = true;
+                            errorMessage = 'Invalid color detected. Use proper color names';
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Check each variant for minimum images
+            if (!hasErrors) {
+                const variantItems = document.querySelectorAll('.variant-item');
+                for (let item of variantItems) {
+                    const variantIndex = item.getAttribute('data-variant-index');
+                    const files = croppedFiles[variantIndex] || [];
+                    
+                    if (files.length < 3) {
+                        hasErrors = true;
+                        errorMessage = 'All variants must have minimum 3 images';
+                        break;
+                    }
+                }
+            }
+            
+            // Check price validation
+            if (!hasErrors) {
+                const variantItems = document.querySelectorAll('.variant-item');
+                for (let item of variantItems) {
+                    const regularInput = item.querySelector('[data-regular]');
+                    const saleInput = item.querySelector('[data-sale]');
+                    
+                    if (regularInput && saleInput) {
+                        const regular = parseFloat(regularInput.value) || 0;
+                        const sale = parseFloat(saleInput.value) || 0;
+                        
+                        if (sale > regular && regular > 0) {
+                            hasErrors = true;
+                            errorMessage = 'Sale price cannot exceed regular price';
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Disable/enable button based on validation
+            if (hasErrors) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitBtn.title = errorMessage;
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.title = '';
+            }
         }
 
         // Remove Image
@@ -750,22 +923,111 @@
                 
                 submitForm();
             });
+            
+            // Initialize submit button state
+            updateSubmitButtonState();
         });
 
         // Validate Form
         function validateForm() {
+            // Validate product name
+            const productNameInput = document.querySelector('input[name="productName"]');
+            const productName = productNameInput.value.trim();
+            
+            if (productName.length < 3) {
+                Swal.fire({
+                    title: 'Invalid Product Name',
+                    text: 'Product name must be at least 3 characters long',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+                productNameInput.focus();
+                return false;
+            }
+            
+            // Validate description
+            const descriptionInput = document.querySelector('textarea[name="description"]');
+            const description = descriptionInput.value.trim();
+            
+            if (description.length < 10) {
+                Swal.fire({
+                    title: 'Invalid Description',
+                    text: 'Description must be at least 10 characters long',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+                descriptionInput.focus();
+                return false;
+            }
+            
+            // Validate category
+            const categoryInput = document.querySelector('select[name="category"]');
+            if (!categoryInput.value) {
+                Swal.fire({
+                    title: 'Category Required',
+                    text: 'Please select a category',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+                categoryInput.focus();
+                return false;
+            }
+            
             const variantItems = document.querySelectorAll('.variant-item');
             
             for (let item of variantItems) {
                 const variantIndex = item.getAttribute('data-variant-index');
+                const variantNumber = item.querySelector('h3').textContent.split('#')[1];
+                
+                // Validate color
+                const colorInput = item.querySelector('input[name*="[color]"]');
+                const color = colorInput.value.trim();
+                
+                if (color.length < 2) {
+                    Swal.fire({
+                        title: 'Invalid Color',
+                        text: `Variant #${variantNumber}: Color must be at least 2 characters`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    colorInput.focus();
+                    return false;
+                }
+                
+                // Check for invalid characters (only dashes, underscores, or special chars)
+                if (/^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color)) {
+                    Swal.fire({
+                        title: 'Invalid Color',
+                        text: `Variant #${variantNumber}: "${color}" is not a valid color name. Please enter a proper color (e.g., Black, White, Red)`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    colorInput.focus();
+                    return false;
+                }
+                
+                // Validate stock quantity
+                const quantityInput = item.querySelector('input[name*="[quantity]"]');
+                const quantity = parseInt(quantityInput.value);
+                
+                if (isNaN(quantity) || quantity < 0) {
+                    Swal.fire({
+                        title: 'Invalid Stock',
+                        text: `Variant #${variantNumber}: Stock quantity must be 0 or greater`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    quantityInput.focus();
+                    return false;
+                }
+                
                 const files = croppedFiles[variantIndex] || [];
                 
-                // Check images
-                if (files.length === 0) {
-                    const variantNumber = item.querySelector('h3').textContent.split('#')[1];
+                // Check minimum 3 images required
+                if (files.length < 3) {
                     Swal.fire({
-                        title: 'Missing Images',
-                        text: `Variant #${variantNumber} needs at least one image!`,
+                        title: 'Insufficient Images',
+                        text: `Variant #${variantNumber} requires minimum 3 images! Currently: ${files.length} image(s)`,
                         icon: 'error',
                         confirmButtonColor: '#1f2937'
                     });
@@ -776,8 +1038,27 @@
                 const regularPrice = parseFloat(item.querySelector('[data-regular]').value) || 0;
                 const salePrice = parseFloat(item.querySelector('[data-sale]').value) || 0;
                 
-                if (salePrice > regularPrice && regularPrice > 0) {
-                    const variantNumber = item.querySelector('h3').textContent.split('#')[1];
+                if (regularPrice <= 0) {
+                    Swal.fire({
+                        title: 'Invalid Price',
+                        text: `Variant #${variantNumber}: Regular price must be greater than 0`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+                
+                if (salePrice <= 0) {
+                    Swal.fire({
+                        title: 'Invalid Price',
+                        text: `Variant #${variantNumber}: Sale price must be greater than 0`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+                
+                if (salePrice > regularPrice) {
                     Swal.fire({
                         title: 'Invalid Price',
                         text: `Variant #${variantNumber}: Sale price (₹${salePrice}) cannot be greater than regular price (₹${regularPrice})`,
@@ -863,28 +1144,104 @@
         // Expose submitForm globally for validation script
         window.submitForm = submitForm;
 
-        // Real-time Price Validation
+        // Real-time Validation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Product Name Validation
+            const productNameInput = document.getElementById('productName');
+            const productNameError = document.getElementById('productName-error');
+            
+            productNameInput.addEventListener('input', function() {
+                const value = this.value.trim();
+                if (value.length > 0 && value.length < 3) {
+                    this.classList.add('border-red-500');
+                    productNameError.textContent = 'Product name must be at least 3 characters';
+                    productNameError.classList.remove('hidden');
+                } else {
+                    this.classList.remove('border-red-500');
+                    productNameError.classList.add('hidden');
+                }
+                updateSubmitButtonState();
+            });
+            
+            // Description Validation
+            const descriptionInput = document.getElementById('description');
+            const descriptionError = document.getElementById('description-error');
+            
+            descriptionInput.addEventListener('input', function() {
+                const value = this.value.trim();
+                if (value.length > 0 && value.length < 10) {
+                    this.classList.add('border-red-500');
+                    descriptionError.textContent = 'Description must be at least 10 characters';
+                    descriptionError.classList.remove('hidden');
+                } else {
+                    this.classList.remove('border-red-500');
+                    descriptionError.classList.add('hidden');
+                }
+                updateSubmitButtonState();
+            });
+            
+            // Category Validation
+            const categoryInput = document.getElementById('category');
+            const categoryError = document.getElementById('category-error');
+            
+            categoryInput.addEventListener('change', function() {
+                if (!this.value) {
+                    this.classList.add('border-red-500');
+                    categoryError.textContent = 'Please select a category';
+                    categoryError.classList.remove('hidden');
+                } else {
+                    this.classList.remove('border-red-500');
+                    categoryError.classList.add('hidden');
+                }
+                updateSubmitButtonState();
+            });
+        });
+        
+        // Real-time Price and Color Validation
         document.addEventListener('input', function(e) {
             const variant = e.target.closest('.variant-item');
             if (!variant) return;
             
+            // Price validation
             const regularInput = variant.querySelector('[data-regular]');
             const saleInput = variant.querySelector('[data-sale]');
-            const errorMsg = variant.querySelector('.price-error');
+            const priceErrorMsg = variant.querySelector('.price-error');
             
-            if (!regularInput || !saleInput || !errorMsg) return;
-            
-            const regular = parseFloat(regularInput.value) || 0;
-            const sale = parseFloat(saleInput.value) || 0;
-            
-            if (sale > regular && regular > 0) {
-                saleInput.classList.add('border-red-500');
-                errorMsg.textContent = `Sale price cannot exceed ₹${regular}`;
-                errorMsg.classList.remove('hidden');
-            } else {
-                saleInput.classList.remove('border-red-500');
-                errorMsg.classList.add('hidden');
+            if (regularInput && saleInput && priceErrorMsg) {
+                const regular = parseFloat(regularInput.value) || 0;
+                const sale = parseFloat(saleInput.value) || 0;
+                
+                if (sale > regular && regular > 0) {
+                    saleInput.classList.add('border-red-500');
+                    priceErrorMsg.textContent = `Sale price cannot exceed ₹${regular}`;
+                    priceErrorMsg.classList.remove('hidden');
+                } else {
+                    saleInput.classList.remove('border-red-500');
+                    priceErrorMsg.classList.add('hidden');
+                }
             }
+            
+            // Color validation
+            if (e.target.hasAttribute('data-color')) {
+                const colorInput = e.target;
+                const colorError = variant.querySelector('.color-error');
+                const color = colorInput.value.trim();
+                
+                if (color.length > 0 && color.length < 2) {
+                    colorInput.classList.add('border-red-500');
+                    colorError.textContent = 'Color must be at least 2 characters';
+                    colorError.classList.remove('hidden');
+                } else if (color.length >= 2 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color)) {
+                    colorInput.classList.add('border-red-500');
+                    colorError.textContent = 'Invalid color. Use proper color names (e.g., Black, Red)';
+                    colorError.classList.remove('hidden');
+                } else {
+                    colorInput.classList.remove('border-red-500');
+                    colorError.classList.add('hidden');
+                }
+            }
+            
+            updateSubmitButtonState();
         });
     </script>
 </body>

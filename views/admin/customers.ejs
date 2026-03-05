@@ -163,7 +163,7 @@
                     </label>
                 </td>
                 <td class="py-4 px-4 text-gray-700">
-                    <%= new Date(customer.createdOn).toLocaleDateString() %>
+                    <%= new Date(customer.createdOn).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
                 </td>
             </tr>
                            <% }); %>

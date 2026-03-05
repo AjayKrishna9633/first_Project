@@ -80,9 +80,11 @@
                         <input 
                             type="text" 
                             name="productName" 
+                            id="productName"
                             value="<%= product.productName %>"
                             class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
                         >
+                        <p class="text-xs text-gray-500 mt-1">3-100 characters</p>
                         <p class="text-xs text-red-600 mt-1 hidden error-message" id="productName-error"></p>
                     </div>
 
@@ -91,6 +93,7 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
                         <textarea 
                             name="description" 
+                            id="description"
                             rows="4"
                             class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition resize-none"
                         ><%= product.description %></textarea>
@@ -103,6 +106,7 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
                         <select 
                             name="category" 
+                            id="category"
                             class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
                         >
                             <option value="">Select a category</option>
@@ -163,6 +167,8 @@
                                                     data-color
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                                 >
+                                                <p class="color-error text-xs text-red-600 mt-1 hidden"></p>
+                                                <p class="text-xs text-gray-500 mt-1">Enter color name</p>
                                             </div>
 
                                             <div>
@@ -337,6 +343,51 @@
                 croppedFiles['<%= variant._id %>'] = [];
             <% }); %>
         <% } %>
+        
+        // Price validation function
+        function validatePrices(variantElement) {
+            const regularPriceInput = variantElement.querySelector('[data-regular]');
+            const salePriceInput = variantElement.querySelector('[data-sale]');
+            const priceError = variantElement.querySelector('.price-error');
+            
+            if (!regularPriceInput || !salePriceInput || !priceError) return true;
+            
+            const regularPrice = parseFloat(regularPriceInput.value) || 0;
+            const salePrice = parseFloat(salePriceInput.value) || 0;
+            
+            if (salePrice > regularPrice && regularPrice > 0) {
+                priceError.textContent = `Sale price (₹${salePrice}) cannot exceed regular price (₹${regularPrice})`;
+                priceError.classList.remove('hidden');
+                salePriceInput.classList.add('border-red-500');
+                return false;
+            } else {
+                priceError.textContent = '';
+                priceError.classList.add('hidden');
+                salePriceInput.classList.remove('border-red-500');
+                return true;
+            }
+        }
+        
+        // Setup price validation for a variant
+        function setupPriceValidation(variantElement) {
+            const regularPriceInput = variantElement.querySelector('[data-regular]');
+            const salePriceInput = variantElement.querySelector('[data-sale]');
+            
+            if (regularPriceInput && salePriceInput) {
+                regularPriceInput.addEventListener('input', () => validatePrices(variantElement));
+                salePriceInput.addEventListener('input', () => validatePrices(variantElement));
+                regularPriceInput.addEventListener('blur', () => validatePrices(variantElement));
+                salePriceInput.addEventListener('blur', () => validatePrices(variantElement));
+            }
+        }
+        
+        // Initialize price validation for existing variants on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const existingVariants = document.querySelectorAll('[data-variant-id]');
+            existingVariants.forEach(variant => {
+                setupPriceValidation(variant);
+            });
+        });
 
         function addNewVariant() {
             const container = document.getElementById('newVariantsContainer');
@@ -368,6 +419,8 @@
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
                                 placeholder="e.g., Black, White, Red"
                             >
+                            <p class="color-error text-xs text-red-600 mt-1 hidden"></p>
+                            <p class="text-xs text-gray-500 mt-1">Enter color name</p>
                         </div>
 
                         <div>
@@ -412,7 +465,7 @@
                     <p class="price-error text-xs text-red-600 mt-1 hidden"></p>
 
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-2">Variant Images * (Max 5)</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-2">Variant Images * (Min 3, Max 5)</label>
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition">
                             <input 
                                 type="file" 
@@ -440,6 +493,13 @@
             container.insertAdjacentHTML('beforeend', variantHTML);
             croppedFiles[variantIndex] = [];
             newVariantCount++;
+            
+            // Setup price validation for the new variant
+            const newVariantElement = container.lastElementChild;
+            setupPriceValidation(newVariantElement);
+            
+            // Update submit button state
+            updateSubmitButtonState();
         }
 
         function removeNewVariant(button) {
@@ -447,6 +507,9 @@
             const variantIndex = variantItem.getAttribute('data-new-variant-index');
             delete croppedFiles[variantIndex];
             variantItem.remove();
+            
+            // Update submit button state
+            updateSubmitButtonState();
         }
 
         // Handle Image Selection
@@ -593,6 +656,195 @@
                 };
                 reader.readAsDataURL(file);
             });
+            
+            // Show feedback message about image count for new variants
+            if (!isNaN(currentVariantIndex)) {
+                showImageCountFeedback(currentVariantIndex, files.length, false);
+            } else {
+                // For existing variants, count existing + new images
+                const variantItem = document.querySelector(`[data-variant-id="${currentVariantIndex}"]`);
+                if (variantItem) {
+                    const currentImagesContainer = document.getElementById(`currentImages_${currentVariantIndex}`);
+                    const existingCount = currentImagesContainer ? currentImagesContainer.querySelectorAll('[data-image-url]').length : 0;
+                    showImageCountFeedback(currentVariantIndex, existingCount + files.length, true);
+                }
+            }
+        }
+        
+        // Show image count feedback
+        function showImageCountFeedback(variantIndex, count, isExisting) {
+            const variantItem = document.querySelector(`[data-variant-${isExisting ? 'id' : 'new-variant-index'}="${variantIndex}"]`);
+            if (!variantItem) return;
+            
+            // Remove existing feedback
+            const existingFeedback = variantItem.querySelector('.image-count-feedback');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+            
+            // Create feedback message
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = 'image-count-feedback mt-2 p-2 rounded-lg text-sm font-medium';
+            
+            if (count < 3) {
+                feedbackDiv.className += ' bg-red-50 text-red-700 border border-red-200';
+                feedbackDiv.innerHTML = `
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    Need ${3 - count} more image(s). Minimum 3 images required. (Currently: ${count})
+                `;
+            } else if (count >= 3 && count < 5) {
+                feedbackDiv.className += ' bg-green-50 text-green-700 border border-green-200';
+                feedbackDiv.innerHTML = `
+                    <i class="fas fa-check-circle mr-1"></i>
+                    ${count} images added. You can add ${5 - count} more. (Min: 3, Max: 5)
+                `;
+            } else {
+                feedbackDiv.className += ' bg-blue-50 text-blue-700 border border-blue-200';
+                feedbackDiv.innerHTML = `
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Maximum 5 images reached.
+                `;
+            }
+            
+            // Insert after the last image-related element
+            const preview = document.getElementById(`imagePreview${variantIndex}`) || 
+                           document.getElementById(`imagePreview_${variantIndex}`);
+            if (preview && preview.parentElement) {
+                preview.parentElement.appendChild(feedbackDiv);
+            }
+            
+            // Update submit button state
+            updateSubmitButtonState();
+        }
+        
+        // Check if form is valid and update submit button
+        function updateSubmitButtonState() {
+            const submitBtn = document.getElementById('submitBtn');
+            if (!submitBtn) return;
+            
+            let hasErrors = false;
+            let errorMessage = '';
+            
+            // Check product name
+            const productNameInput = document.getElementById('productName');
+            if (productNameInput) {
+                const value = productNameInput.value.trim();
+                if (value.length > 0 && value.length < 3) {
+                    hasErrors = true;
+                    errorMessage = 'Product name must be at least 3 characters';
+                }
+            }
+            
+            // Check description
+            if (!hasErrors) {
+                const descriptionInput = document.getElementById('description');
+                if (descriptionInput) {
+                    const value = descriptionInput.value.trim();
+                    if (value.length > 0 && value.length < 10) {
+                        hasErrors = true;
+                        errorMessage = 'Description must be at least 10 characters';
+                    }
+                }
+            }
+            
+            // Check category
+            if (!hasErrors) {
+                const categoryInput = document.getElementById('category');
+                if (categoryInput && !categoryInput.value) {
+                    hasErrors = true;
+                    errorMessage = 'Please select a category';
+                }
+            }
+            
+            // Check variants for color validation
+            if (!hasErrors) {
+                const allVariants = [...document.querySelectorAll('[data-variant-id]'), ...document.querySelectorAll('[data-new-variant-index]')];
+                for (let variant of allVariants) {
+                    const colorInput = variant.querySelector('[data-color]');
+                    if (colorInput) {
+                        const color = colorInput.value.trim();
+                        if (color.length > 0 && color.length < 2) {
+                            hasErrors = true;
+                            errorMessage = 'All colors must be at least 2 characters';
+                            break;
+                        }
+                        if (color.length >= 2 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color)) {
+                            hasErrors = true;
+                            errorMessage = 'Invalid color detected. Use proper color names';
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Check existing variants
+            if (!hasErrors) {
+                const existingVariants = document.querySelectorAll('[data-variant-id]');
+                for (let variant of existingVariants) {
+                    const variantId = variant.getAttribute('data-variant-id');
+                    
+                    // Count existing images
+                    const currentImagesContainer = document.getElementById(`currentImages_${variantId}`);
+                    const existingImages = currentImagesContainer ? currentImagesContainer.querySelectorAll('[data-image-url]').length : 0;
+                    
+                    // Count new images
+                    const newImages = croppedFiles[variantId] ? croppedFiles[variantId].length : 0;
+                    
+                    const totalImages = existingImages + newImages;
+                    
+                    if (totalImages < 3) {
+                        hasErrors = true;
+                        errorMessage = 'All variants must have minimum 3 images';
+                        break;
+                    }
+                }
+            }
+            
+            // Check new variants
+            if (!hasErrors) {
+                const newVariants = document.querySelectorAll('[data-new-variant-index]');
+                for (let variant of newVariants) {
+                    const variantIndex = variant.getAttribute('data-new-variant-index');
+                    const images = croppedFiles[variantIndex] ? croppedFiles[variantIndex].length : 0;
+                    
+                    if (images < 3) {
+                        hasErrors = true;
+                        errorMessage = 'All variants must have minimum 3 images';
+                        break;
+                    }
+                }
+            }
+            
+            // Check price validation
+            if (!hasErrors) {
+                const allVariants = [...document.querySelectorAll('[data-variant-id]'), ...document.querySelectorAll('[data-new-variant-index]')];
+                for (let variant of allVariants) {
+                    const regularInput = variant.querySelector('[data-regular]');
+                    const saleInput = variant.querySelector('[data-sale]');
+                    
+                    if (regularInput && saleInput) {
+                        const regular = parseFloat(regularInput.value) || 0;
+                        const sale = parseFloat(saleInput.value) || 0;
+                        
+                        if (sale > regular && regular > 0) {
+                            hasErrors = true;
+                            errorMessage = 'Sale price cannot exceed regular price';
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Disable/enable button based on validation
+            if (hasErrors) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitBtn.title = errorMessage;
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.title = '';
+            }
         }
 
         // Remove Image
@@ -636,7 +888,254 @@
         // Form submission handling with validation
         let isSubmitting = false; // Flag to prevent double submission
         
+        function validateEditForm() {
+            // Validate product name
+            const productNameInput = document.querySelector('input[name="productName"]');
+            const productName = productNameInput.value.trim();
+            
+            if (productName.length < 3) {
+                Swal.fire({
+                    title: 'Invalid Product Name',
+                    text: 'Product name must be at least 3 characters long',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+                productNameInput.focus();
+                return false;
+            }
+            
+            // Validate description
+            const descriptionInput = document.querySelector('textarea[name="description"]');
+            const description = descriptionInput.value.trim();
+            
+            if (description.length < 10) {
+                Swal.fire({
+                    title: 'Invalid Description',
+                    text: 'Description must be at least 10 characters long',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+                descriptionInput.focus();
+                return false;
+            }
+            
+            // Validate category
+            const categoryInput = document.querySelector('select[name="category"]');
+            if (!categoryInput.value) {
+                Swal.fire({
+                    title: 'Category Required',
+                    text: 'Please select a category',
+                    icon: 'error',
+                    confirmButtonColor: '#1f2937'
+                });
+                categoryInput.focus();
+                return false;
+            }
+            
+            // Validate existing variants
+            const existingVariants = document.querySelectorAll('[data-variant-id]');
+            for (let variant of existingVariants) {
+                const variantId = variant.getAttribute('data-variant-id');
+                const variantColor = variant.querySelector('[data-color]').value.trim();
+                
+                // Validate color
+                if (variantColor.length < 2) {
+                    Swal.fire({
+                        title: 'Invalid Color',
+                        text: `Variant "${variantColor || 'Empty'}": Color must be at least 2 characters`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    variant.querySelector('[data-color]').focus();
+                    return false;
+                }
+                
+                // Check for invalid characters (only dashes, underscores, or special chars)
+                if (/^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(variantColor)) {
+                    Swal.fire({
+                        title: 'Invalid Color',
+                        text: `Variant: "${variantColor}" is not a valid color name. Please enter a proper color (e.g., Black, White, Red)`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    variant.querySelector('[data-color]').focus();
+                    return false;
+                }
+                
+                // Validate stock quantity
+                const quantityInput = variant.querySelector('[data-stock]');
+                const quantity = parseInt(quantityInput.value);
+                
+                if (isNaN(quantity) || quantity < 0) {
+                    Swal.fire({
+                        title: 'Invalid Stock',
+                        text: `Variant "${variantColor}": Stock quantity must be 0 or greater`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    quantityInput.focus();
+                    return false;
+                }
+                
+                // Validate prices
+                const regularPrice = parseFloat(variant.querySelector('[data-regular]').value) || 0;
+                const salePrice = parseFloat(variant.querySelector('[data-sale]').value) || 0;
+                
+                if (regularPrice <= 0) {
+                    Swal.fire({
+                        title: 'Invalid Price',
+                        text: `Variant "${variantColor}": Regular price must be greater than 0`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+                
+                if (salePrice <= 0) {
+                    Swal.fire({
+                        title: 'Invalid Price',
+                        text: `Variant "${variantColor}": Sale price must be greater than 0`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+                
+                // Validate prices first
+                if (!validatePrices(variant)) {
+                    Swal.fire({
+                        title: 'Invalid Price',
+                        text: `Variant "${variantColor}": Sale price cannot exceed regular price`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+                
+                // Count existing images
+                const currentImagesContainer = document.getElementById(`currentImages_${variantId}`);
+                const existingImages = currentImagesContainer ? currentImagesContainer.querySelectorAll('[data-image-url]').length : 0;
+                
+                // Count new images
+                const newImages = croppedFiles[variantId] ? croppedFiles[variantId].length : 0;
+                
+                const totalImages = existingImages + newImages;
+                
+                // Minimum 3 images required
+                if (totalImages < 3) {
+                    Swal.fire({
+                        title: 'Insufficient Images',
+                        text: `Variant "${variantColor}" requires minimum 3 images! Currently: ${totalImages} image(s)`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+            }
+            
+            // Validate new variants
+            const newVariants = document.querySelectorAll('[data-new-variant-index]');
+            for (let variant of newVariants) {
+                const variantIndex = variant.getAttribute('data-new-variant-index');
+                const variantColor = variant.querySelector('[data-color]').value.trim();
+                
+                // Validate color
+                if (variantColor.length < 2) {
+                    Swal.fire({
+                        title: 'Invalid Color',
+                        text: `New variant: Color must be at least 2 characters`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    variant.querySelector('[data-color]').focus();
+                    return false;
+                }
+                
+                // Check for invalid characters
+                if (/^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(variantColor)) {
+                    Swal.fire({
+                        title: 'Invalid Color',
+                        text: `New variant: "${variantColor}" is not a valid color name. Please enter a proper color (e.g., Black, White, Red)`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    variant.querySelector('[data-color]').focus();
+                    return false;
+                }
+                
+                // Validate stock quantity
+                const quantityInput = variant.querySelector('[data-stock]');
+                const quantity = parseInt(quantityInput.value);
+                
+                if (isNaN(quantity) || quantity < 0) {
+                    Swal.fire({
+                        title: 'Invalid Stock',
+                        text: `New variant "${variantColor}": Stock quantity must be 0 or greater`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    quantityInput.focus();
+                    return false;
+                }
+                
+                // Validate prices
+                const regularPrice = parseFloat(variant.querySelector('[data-regular]').value) || 0;
+                const salePrice = parseFloat(variant.querySelector('[data-sale]').value) || 0;
+                
+                if (regularPrice <= 0) {
+                    Swal.fire({
+                        title: 'Invalid Price',
+                        text: `New variant "${variantColor}": Regular price must be greater than 0`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+                
+                if (salePrice <= 0) {
+                    Swal.fire({
+                        title: 'Invalid Price',
+                        text: `New variant "${variantColor}": Sale price must be greater than 0`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+                
+                // Validate prices first
+                if (!validatePrices(variant)) {
+                    Swal.fire({
+                        title: 'Invalid Price',
+                        text: `New variant "${variantColor || 'Unnamed'}": Sale price cannot exceed regular price`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+                
+                const images = croppedFiles[variantIndex] ? croppedFiles[variantIndex].length : 0;
+                
+                // Minimum 3 images required
+                if (images < 3) {
+                    Swal.fire({
+                        title: 'Insufficient Images',
+                        text: `New variant "${variantColor || 'Unnamed'}" requires minimum 3 images! Currently: ${images} image(s)`,
+                        icon: 'error',
+                        confirmButtonColor: '#1f2937'
+                    });
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
         function submitEditForm() {
+            // Validate before submission
+            if (!validateEditForm()) {
+                return;
+            }
+            
             // Prevent double submission
             if (isSubmitting) {
                 console.log('Form is already being submitted, ignoring duplicate call');
@@ -660,13 +1159,22 @@
                 input.remove();
             });
 
-            // Add cropped images for new variants
+            // Add cropped images for both new and existing variants
             for (const variantIndex in croppedFiles) {
                 const files = croppedFiles[variantIndex];
-                if (files.length > 0 && !isNaN(variantIndex)) { // Only for new variants (numeric indices)
-                    files.forEach(file => {
-                        formData.append(`variants[${variantIndex}][images]`, file);
-                    });
+                
+                if (files.length > 0) {
+                    if (!isNaN(variantIndex)) {
+                        // New variants (numeric indices)
+                        files.forEach(file => {
+                            formData.append(`variants[${variantIndex}][images]`, file);
+                        });
+                    } else {
+                        // Existing variants (MongoDB ObjectId)
+                        files.forEach(file => {
+                            formData.append(`existingVariants[${variantIndex}][newImages]`, file);
+                        });
+                    }
                 }
             }
 
@@ -705,6 +1213,18 @@
 
         // Expose submitEditForm globally for validation script
         window.submitForm = submitEditForm;
+        
+        // Add form submit event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('editProductForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log('Form submit event triggered');
+                    submitEditForm();
+                });
+            }
+        });
 
         async function removeExistingImage(button, variantId, imageUrl) {
             const result = await Swal.fire({
@@ -734,26 +1254,140 @@
             const imageContainer = button.closest('[data-image-url]');
             imageContainer.remove();
 
-            // Check if there are any images left
+            // Check remaining images and update feedback
             const currentImagesContainer = document.getElementById(`currentImages_${variantId}`);
             const remainingImages = currentImagesContainer.querySelectorAll('[data-image-url]').length;
             
-            if (remainingImages === 0) {
-                // Show a message that at least one image should be added
-                const fileInput = document.getElementById(`addImages_${variantId}`);
-                fileInput.required = true;
-                const label = fileInput.nextElementSibling;
-                label.querySelector('p').textContent = 'At least one image is required';
-                label.querySelector('p').classList.add('text-red-600', 'font-semibold');
-                
+            // Count new images too
+            const newImages = croppedFiles[variantId] ? croppedFiles[variantId].length : 0;
+            const totalImages = remainingImages + newImages;
+            
+            // Update feedback message
+            showImageCountFeedback(variantId, totalImages, true);
+            
+            // Update submit button state
+            updateSubmitButtonState();
+            
+            if (totalImages < 3) {
                 Swal.fire({
                     title: 'Warning',
-                    text: 'At least one image is required for this variant. Please add a new image.',
+                    text: `This variant now has ${totalImages} image(s). Minimum 3 images required. Please add ${3 - totalImages} more image(s).`,
                     icon: 'warning',
                     confirmButtonColor: '#1f2937'
                 });
             }
         }
+        
+        // Real-time Validation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Product Name Validation
+            const productNameInput = document.getElementById('productName');
+            const productNameError = document.getElementById('productName-error');
+            
+            if (productNameInput && productNameError) {
+                productNameInput.addEventListener('input', function() {
+                    const value = this.value.trim();
+                    if (value.length > 0 && value.length < 3) {
+                        this.classList.add('border-red-500');
+                        productNameError.textContent = 'Product name must be at least 3 characters';
+                        productNameError.classList.remove('hidden');
+                    } else {
+                        this.classList.remove('border-red-500');
+                        productNameError.classList.add('hidden');
+                    }
+                    updateSubmitButtonState();
+                });
+            }
+            
+            // Description Validation
+            const descriptionInput = document.getElementById('description');
+            const descriptionError = document.getElementById('description-error');
+            
+            if (descriptionInput && descriptionError) {
+                descriptionInput.addEventListener('input', function() {
+                    const value = this.value.trim();
+                    if (value.length > 0 && value.length < 10) {
+                        this.classList.add('border-red-500');
+                        descriptionError.textContent = 'Description must be at least 10 characters';
+                        descriptionError.classList.remove('hidden');
+                    } else {
+                        this.classList.remove('border-red-500');
+                        descriptionError.classList.add('hidden');
+                    }
+                    updateSubmitButtonState();
+                });
+            }
+            
+            // Category Validation
+            const categoryInput = document.getElementById('category');
+            const categoryError = document.getElementById('category-error');
+            
+            if (categoryInput && categoryError) {
+                categoryInput.addEventListener('change', function() {
+                    if (!this.value) {
+                        this.classList.add('border-red-500');
+                        categoryError.textContent = 'Please select a category';
+                        categoryError.classList.remove('hidden');
+                    } else {
+                        this.classList.remove('border-red-500');
+                        categoryError.classList.add('hidden');
+                    }
+                    updateSubmitButtonState();
+                });
+            }
+            
+            // Initialize submit button state
+            updateSubmitButtonState();
+        });
+        
+        // Real-time Price and Color Validation
+        document.addEventListener('input', function(e) {
+            const variant = e.target.closest('.variant-item');
+            if (!variant) return;
+            
+            // Price validation
+            const regularInput = variant.querySelector('[data-regular]');
+            const saleInput = variant.querySelector('[data-sale]');
+            const priceErrorMsg = variant.querySelector('.price-error');
+            
+            if (regularInput && saleInput && priceErrorMsg) {
+                const regular = parseFloat(regularInput.value) || 0;
+                const sale = parseFloat(saleInput.value) || 0;
+                
+                if (sale > regular && regular > 0) {
+                    saleInput.classList.add('border-red-500');
+                    priceErrorMsg.textContent = `Sale price cannot exceed ₹${regular}`;
+                    priceErrorMsg.classList.remove('hidden');
+                } else {
+                    saleInput.classList.remove('border-red-500');
+                    priceErrorMsg.classList.add('hidden');
+                }
+            }
+            
+            // Color validation
+            if (e.target.hasAttribute('data-color')) {
+                const colorInput = e.target;
+                const colorError = variant.querySelector('.color-error');
+                const color = colorInput.value.trim();
+                
+                if (colorError) {
+                    if (color.length > 0 && color.length < 2) {
+                        colorInput.classList.add('border-red-500');
+                        colorError.textContent = 'Color must be at least 2 characters';
+                        colorError.classList.remove('hidden');
+                    } else if (color.length >= 2 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color)) {
+                        colorInput.classList.add('border-red-500');
+                        colorError.textContent = 'Invalid color. Use proper color names (e.g., Black, Red)';
+                        colorError.classList.remove('hidden');
+                    } else {
+                        colorInput.classList.remove('border-red-500');
+                        colorError.classList.add('hidden');
+                    }
+                }
+            }
+            
+            updateSubmitButtonState();
+        });
     </script>
 </body>
 </html>

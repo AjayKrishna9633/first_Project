@@ -158,9 +158,9 @@
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap">
                                                         <div class="text-xs text-gray-900">
-                                                            <div><%= new Date(coupon.startDate).toLocaleDateString() %></div>
+                                                            <div><%= new Date(coupon.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %></div>
                                                             <div class="text-gray-500">to</div>
-                                                            <div><%= new Date(coupon.endDate).toLocaleDateString() %></div>
+                                                            <div><%= new Date(coupon.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %></div>
                                                         </div>
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap">

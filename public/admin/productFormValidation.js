@@ -340,6 +340,57 @@ function variantHasImages(variantElement, variantIndex) {
 }
 
 function validateVariantImages(variantElement, variantIndex) {
+    // Count existing images
+    let existingImageCount = 0;
+    const currentImagesContainer = variantElement.querySelector(`[id^="currentImages_"]`);
+    if (currentImagesContainer) {
+        const existingImages = currentImagesContainer.querySelectorAll('[data-image-url]');
+        existingImageCount = existingImages.length;
+    }
+    
+    // Count new cropped images
+    let newImageCount = 0;
+    if (typeof window.croppedFiles !== 'undefined' && window.croppedFiles[variantIndex]) {
+        newImageCount = window.croppedFiles[variantIndex].length;
+    }
+    
+    // Count preview images for new variants
+    const previewContainer = variantElement.querySelector(`[id^="imagePreview"]`);
+    if (previewContainer && !currentImagesContainer) {
+        const previewImages = previewContainer.querySelectorAll('img');
+        newImageCount = previewImages.length;
+    }
+    
+    const totalImages = existingImageCount + newImageCount;
+    
+    // Minimum 3 images required
+    if (totalImages < 3) {
+        const imageUploadSection = variantElement.querySelector('[type="file"]');
+        if (imageUploadSection) {
+            const errorDiv = document.createElement('p');
+            errorDiv.className = 'text-xs text-red-600 mt-2 image-error';
+            errorDiv.textContent = `Minimum 3 images required. Currently: ${totalImages} image(s)`;
+            
+            // Remove existing error if any
+            const existingError = variantElement.querySelector('.image-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Add error after the upload button/section
+            const uploadButton = variantElement.querySelector('[class*="border-dashed"]');
+            if (uploadButton && uploadButton.parentElement) {
+                uploadButton.parentElement.appendChild(errorDiv);
+            }
+        }
+        return false;
+    }
+    
+    // Clear any existing image errors
+    const existingError = variantElement.querySelector('.image-error');
+    if (existingError) {
+        existingError.remove();
+    }
     
     return true;
 }

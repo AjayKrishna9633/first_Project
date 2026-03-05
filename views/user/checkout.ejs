@@ -439,7 +439,7 @@
                                             Min. purchase: <span class="font-semibold">₹${coupon.minimumPrice}</span>${maxDiscountText}
                                         </p>
                                         <p class="text-sm text-gray-600 mt-1">
-                                            Valid till: ${new Date(coupon.endDate).toLocaleDateString()}
+                                            Valid till: ${new Date(coupon.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                         </p>
                                     </div>
                                     <button class="text-cyan-500 hover:text-cyan-600 text-sm font-semibold px-3 py-1 border-2 border-cyan-500 rounded-lg hover:bg-cyan-50 transition">
