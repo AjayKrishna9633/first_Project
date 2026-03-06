@@ -48,14 +48,6 @@
                             <h2 class="text-2xl font-bold text-gray-900">Add New Product</h2>
                             <p class="text-sm text-gray-600 mt-1">Create a new product for your store</p>
                         </div>
-                        <button 
-                            type="submit"
-                            form="addProductForm"
-                            id="submitBtn"
-                            class="px-3 py-1.5 bg-gray-900 text-white rounded text-sm font-medium hover:bg-gray-800 transition"
-                        >
-                            Add Product
-                        </button>
                     </div>
                 </div>
 
@@ -233,6 +225,26 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="flex gap-3 pt-6 mt-6 border-t border-gray-200">
+                        <button 
+                            type="submit"
+                            id="submitBtn"
+                            class="flex-1 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium flex items-center justify-center gap-2"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            <span>Add Product</span>
+                        </button>
+                        <a 
+                            href="/admin/products"
+                            class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                        >
+                            Cancel
+                        </a>
                     </div>
                 </form>
             </main>
@@ -810,7 +822,12 @@
             const productNameInput = document.getElementById('productName');
             if (productNameInput) {
                 const value = productNameInput.value.trim();
-                if (value.length > 0 && value.length < 3) {
+                
+                // Check if only special characters/symbols
+                if (value.length > 0 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(value)) {
+                    hasErrors = true;
+                    errorMessage = 'Product name cannot contain only symbols and numbers';
+                } else if (value.length > 0 && value.length < 3) {
                     hasErrors = true;
                     errorMessage = 'Product name must be at least 3 characters';
                 }
@@ -821,7 +838,12 @@
                 const descriptionInput = document.getElementById('description');
                 if (descriptionInput) {
                     const value = descriptionInput.value.trim();
-                    if (value.length > 0 && value.length < 10) {
+                    
+                    // Check if only special characters/symbols
+                    if (value.length > 0 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(value)) {
+                        hasErrors = true;
+                        errorMessage = 'Description cannot contain only symbols and numbers';
+                    } else if (value.length > 0 && value.length < 10) {
                         hasErrors = true;
                         errorMessage = 'Description must be at least 10 characters';
                     }
@@ -849,9 +871,9 @@
                             errorMessage = 'All colors must be at least 2 characters';
                             break;
                         }
-                        if (color.length >= 2 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color)) {
+                        if (color.length >= 2 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(color)) {
                             hasErrors = true;
-                            errorMessage = 'Invalid color detected. Use proper color names';
+                            errorMessage = 'Invalid color detected. Use proper color names with letters';
                             break;
                         }
                     }
@@ -994,11 +1016,11 @@
                     return false;
                 }
                 
-                // Check for invalid characters (only dashes, underscores, or special chars)
-                if (/^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color)) {
+                // Check for invalid characters (only dashes, underscores, numbers, or special chars)
+                if (/^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(color)) {
                     Swal.fire({
                         title: 'Invalid Color',
-                        text: `Variant #${variantNumber}: "${color}" is not a valid color name. Please enter a proper color (e.g., Black, White, Red)`,
+                        text: `Variant #${variantNumber}: "${color}" is not a valid color name. Please enter a proper color with letters (e.g., Black, White, Red)`,
                         icon: 'error',
                         confirmButtonColor: '#1f2937'
                     });
@@ -1152,7 +1174,13 @@
             
             productNameInput.addEventListener('input', function() {
                 const value = this.value.trim();
-                if (value.length > 0 && value.length < 3) {
+                
+                // Check if only special characters/symbols
+                if (value.length > 0 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(value)) {
+                    this.classList.add('border-red-500');
+                    productNameError.textContent = 'Product name cannot contain only symbols and numbers';
+                    productNameError.classList.remove('hidden');
+                } else if (value.length > 0 && value.length < 3) {
                     this.classList.add('border-red-500');
                     productNameError.textContent = 'Product name must be at least 3 characters';
                     productNameError.classList.remove('hidden');
@@ -1169,7 +1197,13 @@
             
             descriptionInput.addEventListener('input', function() {
                 const value = this.value.trim();
-                if (value.length > 0 && value.length < 10) {
+                
+                // Check if only special characters/symbols
+                if (value.length > 0 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(value)) {
+                    this.classList.add('border-red-500');
+                    descriptionError.textContent = 'Description cannot contain only symbols and numbers';
+                    descriptionError.classList.remove('hidden');
+                } else if (value.length > 0 && value.length < 10) {
                     this.classList.add('border-red-500');
                     descriptionError.textContent = 'Description must be at least 10 characters';
                     descriptionError.classList.remove('hidden');
@@ -1231,9 +1265,9 @@
                     colorInput.classList.add('border-red-500');
                     colorError.textContent = 'Color must be at least 2 characters';
                     colorError.classList.remove('hidden');
-                } else if (color.length >= 2 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color)) {
+                } else if (color.length >= 2 && /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(color)) {
                     colorInput.classList.add('border-red-500');
-                    colorError.textContent = 'Invalid color. Use proper color names (e.g., Black, Red)';
+                    colorError.textContent = 'Invalid color. Use proper color names with letters (e.g., Black, Red)';
                     colorError.classList.remove('hidden');
                 } else {
                     colorInput.classList.remove('border-red-500');

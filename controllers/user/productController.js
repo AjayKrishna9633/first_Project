@@ -187,7 +187,7 @@ const getProductDetail = async (req, res) => {
             .populate('category', 'name offerType offerValue isListed')
             .populate('variants');
 
-        if (!product || product.IsBlocked) {
+        if (!product) {
             return res.status(StatusCodes.NOT_FOUND).redirect('/shop');
         }
 
@@ -235,6 +235,7 @@ res.render('user/productDetail', {
     isInWishlist,
     hasStock,
     totalStock,
+    isBlocked: product.IsBlocked || false,
     user: req.session.user || null,
     hideHeaderSearch: false
 });

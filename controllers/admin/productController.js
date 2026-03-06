@@ -105,6 +105,17 @@ const getAddProduct = async(req,res)=>{
                 });
             }
             
+            // Check if product name contains only symbols/numbers
+            if (/^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(productName.trim())) {
+                const categories = await Category.find({ isListed: true });
+                return res.render('admin/addProduct', {
+                    categories,
+                    admin: req.session.admin,
+                    message: 'Product name cannot contain only symbols and numbers. Please include letters.',
+                    isError: true
+                });
+            }
+            
             // Validate description
             if (!description || description.trim().length < 10 || description.trim().length > 1000) {
                 const categories = await Category.find({ isListed: true });
@@ -112,6 +123,17 @@ const getAddProduct = async(req,res)=>{
                     categories,
                     admin: req.session.admin,
                     message: 'Description must be between 10 and 1000 characters',
+                    isError: true
+                });
+            }
+            
+            // Check if description contains only symbols/numbers
+            if (/^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(description.trim())) {
+                const categories = await Category.find({ isListed: true });
+                return res.render('admin/addProduct', {
+                    categories,
+                    admin: req.session.admin,
+                    message: 'Description cannot contain only symbols and numbers. Please include letters.',
                     isError: true
                 });
             }
@@ -198,14 +220,14 @@ const getAddProduct = async(req,res)=>{
                 }
 
                 // Validate color is not just special characters
-                if (color.trim().length < 2 || /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color.trim())) {
+                if (color.trim().length < 2 || /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(color.trim())) {
                     // Rollback: delete the created product
                     await Product.findByIdAndDelete(product._id);
                     const categories = await Category.find({ isListed: true });
                     return res.render('admin/addProduct', {
                         categories,
                         admin: req.session.admin,
-                        message: `Variant ${parseInt(index) + 1}: Invalid color "${color}". Please enter a proper color name (e.g., Black, White, Red)`,
+                        message: `Variant ${parseInt(index) + 1}: Invalid color "${color}". Please enter a proper color name with letters (e.g., Black, White, Red)`,
                         isError: true
                     });
                 }
@@ -397,6 +419,18 @@ const updateProduct = async (req, res) => {
             });
         }
         
+        // Check if product name contains only symbols/numbers
+        if (/^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(productName.trim())) {
+            const categories = await Category.find({ isListed: true });
+            return res.render('admin/editProduct', {
+                product,
+                categories,
+                admin: req.session.admin,
+                message: 'Product name cannot contain only symbols and numbers. Please include letters.',
+                isError: true
+            });
+        }
+        
         // Validate description
         if (!description || description.trim().length < 10 || description.trim().length > 1000) {
             const categories = await Category.find({ isListed: true });
@@ -405,6 +439,18 @@ const updateProduct = async (req, res) => {
                 categories,
                 admin: req.session.admin,
                 message: 'Description must be between 10 and 1000 characters',
+                isError: true
+            });
+        }
+        
+        // Check if description contains only symbols/numbers
+        if (/^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(description.trim())) {
+            const categories = await Category.find({ isListed: true });
+            return res.render('admin/editProduct', {
+                product,
+                categories,
+                admin: req.session.admin,
+                message: 'Description cannot contain only symbols and numbers. Please include letters.',
                 isError: true
             });
         }
@@ -474,13 +520,13 @@ const updateProduct = async (req, res) => {
                 const variant = await Variant.findById(variantId);
                 if (variant) {
                     // Validate color is not just special characters
-                    if (color.trim().length < 2 || /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color.trim())) {
+                    if (color.trim().length < 2 || /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(color.trim())) {
                         const categories = await Category.find({ isListed: true });
                         return res.render('admin/editProduct', {
                             product,
                             categories,
                             admin: req.session.admin,
-                            message: `Variant: Invalid color "${color}". Please enter a proper color name (e.g., Black, White, Red)`,
+                            message: `Variant: Invalid color "${color}". Please enter a proper color name with letters (e.g., Black, White, Red)`,
                             isError: true
                         });
                     }
@@ -593,13 +639,13 @@ const updateProduct = async (req, res) => {
                 }
 
                 // Validate color is not just special characters
-                if (color.trim().length < 2 || /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~]+$/.test(color.trim())) {
+                if (color.trim().length < 2 || /^[-_\s!@#$%^&*()+=\[\]{};:'",.<>?\/\\|`~0-9]+$/.test(color.trim())) {
                     const categories = await Category.find({ isListed: true });
                     return res.render('admin/editProduct', {
                         product,
                         categories,
                         admin: req.session.admin,
-                        message: `New Variant: Invalid color "${color}". Please enter a proper color name (e.g., Black, White, Red)`,
+                        message: `New Variant: Invalid color "${color}". Please enter a proper color name with letters (e.g., Black, White, Red)`,
                         isError: true
                     });
                 }

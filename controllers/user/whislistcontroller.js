@@ -87,15 +87,17 @@ const skip = (page-1)*limit;
 
             wishlist.products = wishlist.products.filter(item => {
                 const product = item.productId;
-                return product && !product.IsBlocked && product.category && product.category.isListed;
+                // Keep product if it exists and category is listed (don't filter by IsBlocked)
+                return product && product.category && product.category.isListed;
             });
 
-            // Add stock status to each wishlist item
+            // Add stock status and blocked status to each wishlist item
             wishlist.products.forEach(item => {
                 if (item.productId && item.productId.variants) {
                     const totalStock = item.productId.variants.reduce((sum, v) => sum + v.quantity, 0);
                     item.isOutOfStock = totalStock === 0;
                     item.totalStock = totalStock;
+                    item.isBlocked = item.productId.IsBlocked || false;
                 }
             });
 

@@ -87,7 +87,11 @@
                                 </button>
 
                                 <!-- Stock Status -->
-                                <% if (item.isOutOfStock) { %>
+                                <% if (item.isBlocked) { %>
+                                    <div class="absolute top-3 left-3 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold">
+                                        UNLISTED
+                                    </div>
+                                <% } else if (item.isOutOfStock) { %>
                                     <div class="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
                                         OUT OF STOCK
                                     </div>
@@ -144,7 +148,12 @@
 
                                 <!-- Action Buttons -->
                                 <div class="flex gap-2">
-                                    <% if (!item.isOutOfStock) { %>
+                                    <% if (item.isBlocked) { %>
+                                        <button disabled
+                                            class="flex-1 bg-gray-700 text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed font-medium text-sm">
+                                            <i class="fas fa-ban mr-1"></i> Unlisted
+                                        </button>
+                                    <% } else if (!item.isOutOfStock) { %>
                                         <button onclick="moveToCart('<%= item.productId._id %>', '<%= item.productId.variants[0]._id %>')"
                                             class="flex-1 bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition font-medium text-sm">
                                             <i class="fas fa-shopping-cart mr-1"></i> Add to Cart

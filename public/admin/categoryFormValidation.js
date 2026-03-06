@@ -183,19 +183,6 @@ function validateOfferFields() {
         return true;
     }
     
-    // If "Flat" is selected
-    if (offerType === 'flat') {
-        const result = validateNumeric(offerValue, 'Offer value', 0.01);
-        
-        if (!result.valid) {
-            showError(offerValueInput, result.message);
-            return false;
-        }
-        
-        clearError(offerValueInput);
-        return true;
-    }
-    
     return true;
 }
 
@@ -279,17 +266,12 @@ function handleOfferTypeChange() {
         offerValueInput.disabled = false;
         offerValueInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
         
-        // Set placeholder based on type
+        // Set placeholder for percentage
         if (offerType === 'percentage') {
             offerValueInput.placeholder = 'Enter percentage (1-90)';
             offerValueInput.min = '1';
             offerValueInput.max = '90';
             offerValueInput.step = '1';
-        } else if (offerType === 'flat') {
-            offerValueInput.placeholder = 'Enter amount';
-            offerValueInput.min = '0.01';
-            offerValueInput.max = '';
-            offerValueInput.step = '0.01';
         }
     }
 }

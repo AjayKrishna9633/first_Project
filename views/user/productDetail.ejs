@@ -153,6 +153,19 @@
                     <%= product.category ? product.category.name : 'Uncategorized' %>
                 </p>
 
+                <!-- Unlisted Product Warning -->
+                <% if (isBlocked) { %>
+                    <div class="mb-6 p-4 bg-yellow-900/30 border-2 border-yellow-500 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl"></i>
+                            <div>
+                                <h3 class="text-yellow-500 font-semibold text-lg">Product Unlisted</h3>
+                                <p class="text-gray-300 text-sm">This product is currently unavailable for purchase. You can still add it to your wishlist.</p>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+
                 <!-- Price -->
                 <div class="mb-6">
                     <% 
@@ -263,7 +276,8 @@
                 <div class="mb-8">
                     <div class="flex gap-3 mb-3">
                         <button id="addToCartBtn" onclick="addToCart()" 
-                        class="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200">
+                        class="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200 <%= isBlocked ? 'opacity-50 cursor-not-allowed' : '' %>"
+                        <%= isBlocked ? 'disabled' : '' %>>
                         <i class="fas fa-shopping-cart"></i> Add to Cart
                     </button>
 
@@ -275,7 +289,8 @@
                     </button>
                     </div>
                     <button onclick="buyNow()" 
-                        class="w-full bg-cyan-400 text-black py-4 rounded-lg font-semibold hover:bg-cyan-500 transition flex items-center justify-center gap-2">
+                        class="w-full bg-cyan-400 text-black py-4 rounded-lg font-semibold hover:bg-cyan-500 transition flex items-center justify-center gap-2 <%= isBlocked ? 'opacity-50 cursor-not-allowed' : '' %>"
+                        <%= isBlocked ? 'disabled' : '' %>>
                         <i class="fas fa-bolt"></i>
                         BUY IT NOW
                     </button>
@@ -477,6 +492,16 @@
         }
 
         async function addToCart() {
+            <% if (isBlocked) { %>
+                Swal.fire({
+                    title: 'Product Unlisted',
+                    text: 'This product is currently unavailable for purchase',
+                    icon: 'warning',
+                    confirmButtonColor: '#1f2937'
+                });
+                return;
+            <% } %>
+            
             const quantity = parseInt(document.getElementById('quantity').value);
             
             if (maxQuantity === 0) {
@@ -637,6 +662,16 @@
         }
 
        async function buyNow() {
+    <% if (isBlocked) { %>
+        Swal.fire({
+            title: 'Product Unlisted',
+            text: 'This product is currently unavailable for purchase',
+            icon: 'warning',
+            confirmButtonColor: '#1f2937'
+        });
+        return;
+    <% } %>
+    
     const quantity = parseInt(document.getElementById('quantity').value);
     
     if (maxQuantity === 0) {
