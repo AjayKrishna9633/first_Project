@@ -492,6 +492,25 @@
         }
 
         async function addToCart() {
+            // Check if user is logged in
+            <% if (!user) { %>
+                const loginResult = await Swal.fire({
+                    title: 'Login Required',
+                    text: 'Please login to add items to cart',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1f2937',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Login Now',
+                    cancelButtonText: 'Cancel'
+                });
+                
+                if (loginResult.isConfirmed) {
+                    window.location.href = '/login';
+                }
+                return;
+            <% } %>
+            
             <% if (isBlocked) { %>
                 Swal.fire({
                     title: 'Product Unlisted',
@@ -557,6 +576,24 @@
 
                 const result = await response.json();
 
+                if (result.requiresLogin) {
+                    const loginResult = await Swal.fire({
+                        title: 'Login Required',
+                        text: 'Please login to add items to cart',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonColor: '#1f2937',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Login Now',
+                        cancelButtonText: 'Cancel'
+                    });
+                    
+                    if (loginResult.isConfirmed) {
+                        window.location.href = '/login';
+                    }
+                    return;
+                }
+
                 if (result.success) {
                     Swal.fire({
                         title: 'Added to Cart!',
@@ -588,6 +625,25 @@
         let isInWishlist = <%= isInWishlist ? 'true' : 'false' %>;
 
         async function toggleWishlist(productId) {
+            // Check if user is logged in
+            <% if (!user) { %>
+                const loginResult = await Swal.fire({
+                    title: 'Login Required',
+                    text: 'Please login to manage your wishlist',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1f2937',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Login Now',
+                    cancelButtonText: 'Cancel'
+                });
+                
+                if (loginResult.isConfirmed) {
+                    window.location.href = '/login';
+                }
+                return;
+            <% } %>
+            
             try {
                 const endpoint = isInWishlist ? '/wishlist/remove' : '/wishlist/add';
                 
@@ -598,6 +654,24 @@
                 });
 
                 const result = await response.json();
+
+                if (result.requiresLogin) {
+                    const loginResult = await Swal.fire({
+                        title: 'Login Required',
+                        text: 'Please login to manage your wishlist',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonColor: '#1f2937',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Login Now',
+                        cancelButtonText: 'Cancel'
+                    });
+                    
+                    if (loginResult.isConfirmed) {
+                        window.location.href = '/login';
+                    }
+                    return;
+                }
 
                 if (result.success) {
                     isInWishlist = !isInWishlist;
@@ -660,8 +734,26 @@
                 timer: 2000
             });
         }
-
        async function buyNow() {
+    // Check if user is logged in
+    <% if (!user) { %>
+        const loginResult = await Swal.fire({
+            title: 'Login Required',
+            text: 'Please login to make a purchase',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#1f2937',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Login Now',
+            cancelButtonText: 'Cancel'
+        });
+        
+        if (loginResult.isConfirmed) {
+            window.location.href = '/login';
+        }
+        return;
+    <% } %>
+    
     <% if (isBlocked) { %>
         Swal.fire({
             title: 'Product Unlisted',
@@ -781,6 +873,24 @@
             });
 
             const result = await response.json();
+
+            if (result.requiresLogin) {
+                const loginResult = await Swal.fire({
+                    title: 'Login Required',
+                    text: 'Please login to make a purchase',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1f2937',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Login Now',
+                    cancelButtonText: 'Cancel'
+                });
+                
+                if (loginResult.isConfirmed) {
+                    window.location.href = '/login';
+                }
+                return;
+            }
 
             if (result.success) {
                 // Show success message briefly before redirect

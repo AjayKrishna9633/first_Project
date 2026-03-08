@@ -235,12 +235,14 @@
                             Save Changes
                         </button>
                         
+                        <% if (!user || !user.googleId) { %>
                         <a 
                             href="/changePassword"
                             class="btn-secondary px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-black inline-flex items-center justify-center"
                         >
                             Change Password
                         </a>
+                        <% } %>
                     </div>
                 </form>
 

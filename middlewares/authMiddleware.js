@@ -3,6 +3,14 @@ import StatusCodes from '../utils/statusCodes.js';
 
 export const protectUser = async (req, res, next) => {
     if (!req.session?.user) {
+        // Check if it's an AJAX request
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+            return res.status(StatusCodes.UNAUTHORIZED).json({
+                success: false,
+                message: 'Please login to continue',
+                requiresLogin: true
+            });
+        }
         return res.redirect('/login');
     }
 
@@ -11,12 +19,25 @@ export const protectUser = async (req, res, next) => {
         
         if (!user) {
             req.session.destroy();
+            if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+                return res.status(StatusCodes.UNAUTHORIZED).json({
+                    success: false,
+                    message: 'Please login to continue',
+                    requiresLogin: true
+                });
+            }
             return res.redirect('/login');
         }
 
         if (user.isBlocked) {
             req.session.destroy((err) => {
                 if (err) console.error('Session destroy error:', err);
+                if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+                    return res.status(StatusCodes.FORBIDDEN).json({
+                        success: false,
+                        message: 'Your account has been blocked. Please contact support.'
+                    });
+                }
                 return res.render('user/login', {
                     message: 'Your account has been blocked. Please contact support.',
                     isError: true,
@@ -29,6 +50,12 @@ export const protectUser = async (req, res, next) => {
         return next();
     } catch (error) {
         console.error('Error in isAuthenticated middleware:', error);
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                message: 'An error occurred. Please try again.'
+            });
+        }
         return res.redirect('/login');
     }
 };
