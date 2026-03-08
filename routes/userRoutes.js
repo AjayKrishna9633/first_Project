@@ -57,6 +57,7 @@ router.get('/auth/google/callback',
             id: req.user._id,
             fullName: req.user.fullName,
             email: req.user.email,
+            googleId: req.user.googleId || null,
             role: 'user'
         };
         res.redirect('/');

@@ -142,6 +142,7 @@ export const loginUser = async (req, res) => {
             id: findUser._id,
             fullName: findUser.fullName,
             email: findUser.email,
+            googleId: findUser.googleId || null,
             role: 'user'
         };
 
@@ -432,6 +433,7 @@ export const verifyOtp = async (req, res) => {
             id: savedUser._id,
             fullName: savedUser.fullName,
             email: savedUser.email,
+            googleId: savedUser.googleId || null,
             role: 'user'
         };
 
@@ -747,7 +749,8 @@ export const getProfile = async (req, res) => {
                 fullName: user.fullName,
                 email: user.email,
                 phone: user.phone || '',
-                 profileImage: user.avatar?.url || null  
+                profileImage: user.avatar?.url || null,
+                googleId: user.googleId || null
             },
             message: null,
             isError: false
@@ -941,7 +944,9 @@ const updateProfile = async(req,res)=>{
             user: {
                 fullName: updatedUser.fullName,
                 email: updatedUser.email,
-                phone: updatedUser.phone || ''
+                phone: updatedUser.phone || '',
+                profileImage: updatedUser.avatar?.url || null,
+                googleId: updatedUser.googleId || null
             },
             message: 'Profile updated successfully!',
             isError: false
@@ -954,6 +959,8 @@ const updateProfile = async(req,res)=>{
                 fullName:req.body.fullName || '',
                 email:req.session.user.email || '',
                 phone: req.body.phone||'',
+                profileImage: null,
+                googleId: req.session.user.googleId || null
             },
             message : "Error while updating the profile",
             isError : true ,
