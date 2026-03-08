@@ -931,6 +931,69 @@ const updateProfile = async(req,res)=>{
         const userId = req.session.user.id;
         const {fullName , phone} = req.body;
 
+        // Validate phone number
+        if (phone) {
+            // Check if phone is only digits
+            if (!/^\d+$/.test(phone)) {
+                return res.render('user/profile', {
+                    user: {
+                        fullName: fullName || req.session.user.fullName,
+                        email: req.session.user.email,
+                        phone: phone,
+                        profileImage: null,
+                        googleId: req.session.user.googleId || null
+                    },
+                    message: 'Phone number should contain only digits',
+                    isError: true
+                });
+            }
+
+            // Check if phone is exactly 10 digits
+            if (phone.length !== 10) {
+                return res.render('user/profile', {
+                    user: {
+                        fullName: fullName || req.session.user.fullName,
+                        email: req.session.user.email,
+                        phone: phone,
+                        profileImage: null,
+                        googleId: req.session.user.googleId || null
+                    },
+                    message: 'Phone number must be exactly 10 digits',
+                    isError: true
+                });
+            }
+
+            // Check if phone starts with 6-9 (Indian mobile numbers)
+            if (!/^[6-9]/.test(phone)) {
+                return res.render('user/profile', {
+                    user: {
+                        fullName: fullName || req.session.user.fullName,
+                        email: req.session.user.email,
+                        phone: phone,
+                        profileImage: null,
+                        googleId: req.session.user.googleId || null
+                    },
+                    message: 'Phone number must start with 6, 7, 8, or 9',
+                    isError: true
+                });
+            }
+
+            // Check if all digits are the same (e.g., 0000000000, 1111111111)
+            if (/^(\d)\1{9}$/.test(phone)) {
+                return res.render('user/profile', {
+                    user: {
+                        fullName: fullName || req.session.user.fullName,
+                        email: req.session.user.email,
+                        phone: phone,
+                        profileImage: null,
+                        googleId: req.session.user.googleId || null
+                    },
+                    message: 'Phone number cannot have all same digits',
+                    isError: true
+                });
+            }
+        }
+
         await User.findByIdAndUpdate(userId,{
             fullName:fullName,
             phone:phone

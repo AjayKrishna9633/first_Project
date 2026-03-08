@@ -57,6 +57,15 @@ if(!number){
 } else if(number.length !== 10){
     isValid = false;
     showError(errorNumber, `Phone number must be exactly 10 digits`)
+} else if(!/^[6-9]/.test(number)){
+    isValid = false;
+    showError(errorNumber, `Phone number must start with 6, 7, 8, or 9`)
+} else if(/^(\d)\1{9}$/.test(number)){
+    isValid = false;
+    showError(errorNumber, `Phone number cannot have all same digits`)
+} else if(/^(0{10}|1{10}|2{10}|3{10}|4{10}|5{10})$/.test(number)){
+    isValid = false;
+    showError(errorNumber, `Invalid phone number pattern`)
 }
 
 
