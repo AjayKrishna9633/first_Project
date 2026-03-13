@@ -12,10 +12,10 @@ const getOrders = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
        
-        // Get filter parameters
+       
         const { status, paymentStatus, returnStatus, search, sortBy, sortOrder } = req.query;
         
-        // Build filter object
+        
         let filter = {};
         if (status && status !== 'all') {
             filter.orderStatus = status;
@@ -25,30 +25,55 @@ const getOrders = async (req, res) => {
         }
         if (returnStatus && returnStatus !== 'all') {
             if (returnStatus === 'none') {
-                filter.$or = [
-                    { returnStatus: { $exists: false } },
-                    { returnStatus: 'none' }
+                filter.$and = [
+                    {
+                        $or: [
+                            { returnStatus: { $exists: false } },
+                            { returnStatus: 'none' }
+                        ]
+                    },
+                    {
+                        $or: [
+                            { 'items.returnStatus': { $exists: false } },
+                            { 'items.returnStatus': 'none' }
+                        ]
+                    }
                 ];
             } else {
-                filter.returnStatus = returnStatus;
+             
+                filter.$or = [
+                    { returnStatus: returnStatus },
+                    { 'items.returnStatus': returnStatus }
+                ];
             }
         }
         
-        // Build sort object
+        
         let sort = {};
         if (sortBy) {
             sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
         } else {
-            sort.createdAt = -1; // Default: newest first
+            sort.createdAt = -1; 
         }
         
         // Search functionality
         if (search) {
-            filter.$or = [
+            const searchConditions = [
                 { orderNumber: { $regex: search, $options: 'i' } },
                 { 'shippingAddress.fullName': { $regex: search, $options: 'i' } },
                 { 'shippingAddress.phone': { $regex: search, $options: 'i' } }
             ];
+            
+            // If there's already an $or condition (from returnStatus), combine them with $and
+            if (filter.$or) {
+                filter.$and = [
+                    { $or: filter.$or },
+                    { $or: searchConditions }
+                ];
+                delete filter.$or;
+            } else {
+                filter.$or = searchConditions;
+            }
         }
         
         // Get orders with pagination

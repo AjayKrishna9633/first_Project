@@ -80,6 +80,8 @@ export const ORDER_MESSAGES = {
     ORDER_PLACED: 'Order placed successfully',
     ORDER_FAILED: 'Failed to place order',
     ORDER_CANCELLED: 'Order cancelled successfully',
+    ORDER_CANCELLED_NO_REFUND: 'Order cancelled successfully',
+    ORDER_CANCELLED_WITH_REFUND: 'Order cancelled successfully. Refund will be processed to your wallet within 3-5 business days',
     ORDER_CANCEL_FAILED: 'Failed to cancel order',
     ORDER_CANNOT_CANCEL: 'Order cannot be cancelled at this stage',
     ORDER_UPDATED: 'Order updated successfully',

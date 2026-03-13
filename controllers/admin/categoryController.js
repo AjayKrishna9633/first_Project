@@ -201,8 +201,8 @@ const toggleListCategory = async (req, res) => {
                 message: CATEGORY_MESSAGES.CATEGORY_NOT_FOUND
             });
         }
-
         category.isListed = !category.isListed;
+
         await category.save();
 
         res.json({

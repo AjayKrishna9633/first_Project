@@ -47,6 +47,7 @@ const getUserOrders = async (req, res) => {
             .skip(skip)
             .limit(limit);
         
+          
         const totalOrders = await Order.countDocuments(filter);
         const totalPages = Math.ceil(totalOrders / limit);
         
@@ -138,8 +139,7 @@ const getOrderDetails = async (req, res) => {
                 message: ORDER_MESSAGES.ORDER_CANNOT_CANCEL 
             });
         }
-        
-        
+      
         order.orderStatus = 'cancelled';
         order.cancellationReason = reason || 'No reason provided';
         order.cancelledAt = new Date();
@@ -216,9 +216,14 @@ const getOrderDetails = async (req, res) => {
         
         await restoreProductStock(order.items);
         
+        // Determine the appropriate message based on refund status
+        const message = refundAmount > 0 
+            ? ORDER_MESSAGES.ORDER_CANCELLED_WITH_REFUND 
+            : ORDER_MESSAGES.ORDER_CANCELLED_NO_REFUND;
+        
         res.json({
             success: true,
-            message: ORDER_MESSAGES.ORDER_CANCELLED
+            message: message
         });
         
     } catch (error) {
@@ -738,9 +743,15 @@ const cancelOrderItem = async (req, res) => {
             { $inc: { quantity: item.quantity } }
         );
         
+        // Determine message based on whether refund was processed
+        const wasRefunded = (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid');
+        const message = wasRefunded 
+            ? 'Item cancelled successfully. Refund will be processed to your wallet within 3-5 business days'
+            : 'Item cancelled successfully';
+        
         res.status(StatusCodes.OK).json({
             success: true,
-            message: 'Item cancelled successfully',
+            message: message,
             orderStatus: order.orderStatus,
             newTotal: order.totalAmount
         });
